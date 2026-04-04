@@ -4,7 +4,7 @@ import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
-import { collectState, type DashboardState } from "../dashboard.js";
+import { collectState, type DashboardState, type PlanInfo } from "../dashboard.js";
 
 function makeTmpProject(): string {
   const dir = join(tmpdir(), `omc-dash-test-${randomUUID()}`);
@@ -30,6 +30,7 @@ describe("collectState", () => {
   it("returns empty state for fresh project", () => {
     const state: DashboardState = collectState();
     assert.equal(state.session, null);
+    assert.equal(state.activeTask, null);
     assert.deepEqual(state.activeModes, []);
     assert.deepEqual(state.completedModes, []);
     assert.deepEqual(state.plans, []);
@@ -75,16 +76,32 @@ describe("collectState", () => {
     assert.equal(state.completedModes[0].mode, "blueprint");
   });
 
-  it("reads plans", () => {
+  it("reads plans with content preview", () => {
     const plansDir = join(tmp, ".omc", "plans");
     mkdirSync(plansDir, { recursive: true });
-    writeFileSync(join(plansDir, "prd-auth.md"), "# Auth PRD");
-    writeFileSync(join(plansDir, "test-spec-auth.md"), "# Auth Tests");
+    writeFileSync(join(plansDir, "prd-auth.md"), "# Auth PRD\n\nDesign the auth flow.");
+    writeFileSync(join(plansDir, "test-spec-auth.md"), "# Auth Tests\n\nUnit + integration.");
 
     const state = collectState();
     assert.equal(state.plans.length, 2);
-    assert.ok(state.plans.includes("prd-auth.md"));
-    assert.ok(state.plans.includes("test-spec-auth.md"));
+    const names = state.plans.map((p: PlanInfo) => p.name);
+    assert.ok(names.includes("prd-auth.md"));
+    assert.ok(names.includes("test-spec-auth.md"));
+    const prd = state.plans.find((p: PlanInfo) => p.name === "prd-auth.md")!;
+    assert.ok(prd.preview.includes("Auth PRD"));
+  });
+
+  it("extracts activeTask from mode metadata", () => {
+    const stateDir = join(tmp, ".omc", "state");
+    mkdirSync(stateDir, { recursive: true });
+    writeFileSync(join(stateDir, "forge-state.json"), JSON.stringify({
+      mode: "forge", active: true, phase: "verify", iteration: 2,
+      started_at: "2026-04-04T10:00:00Z", updated_at: "2026-04-04T10:05:00Z",
+      metadata: { task: "Build the auth module" },
+    }));
+
+    const state = collectState();
+    assert.equal(state.activeTask, "Build the auth module");
   });
 
   it("reads project memory", () => {
