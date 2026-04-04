@@ -1,0 +1,19 @@
+{
+  "$schema": "https://github.com/TaoXieSZ/oh-my-cursor/blob/main/templates/init/omc-config.json",
+  "version": "0.1.0",
+  "scope": "project",
+  "workflow": {
+    "default_entry": "$deep-interview",
+    "planning_skill": "$blueprint",
+    "execution_skill": "$forge",
+    "parallel_skill": "$team"
+  },
+  "roles": {
+    "default": "executor",
+    "routing": true
+  },
+  "state": {
+    "persist_plans": true,
+    "persist_memory": true
+  }
+}
