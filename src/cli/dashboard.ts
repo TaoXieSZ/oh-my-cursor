@@ -58,6 +58,7 @@ export function collectState(): DashboardState {
       if (!file.endsWith("-state.json")) continue;
       try {
         const data: ModeInfo = JSON.parse(readFileSync(join(stateDir, file), "utf-8"));
+        if (!data.mode) data.mode = file.replace(/-state\.json$/, "");
         if (data.active) activeModes.push(data);
         else completedModes.push(data);
       } catch { /* skip */ }
