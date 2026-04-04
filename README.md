@@ -94,6 +94,13 @@ Think of OMC as **better task routing + better workflow + durable state**, not a
 | `$forge` | "keep going", "don't stop" | Persistent completion loop |
 | `$team` | "team", "parallel" | Multi-agent parallel coordination |
 
+### Advanced
+
+| Skill | Trigger | Purpose |
+|-------|---------|---------|
+| `$autopilot` | "build me", "autopilot" | Full lifecycle: idea → spec → plan → build → QA → validate |
+| `$web-clone` | "clone site", "web-clone" | Clone a website from URL with visual/functional verification |
+
 ### Supporting
 
 | Skill | Trigger | Purpose |

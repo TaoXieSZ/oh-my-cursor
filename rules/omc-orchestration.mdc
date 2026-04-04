@@ -27,6 +27,8 @@ Do not ask for confirmation.
 | "analyze", "investigate" | `$analyze` | Read omc-analyze skill, run deep analysis |
 | "tdd", "test first" | `$tdd` | Read omc-tdd skill, start test-driven workflow |
 | "review code", "code review" | `$code-review` | Read omc-code-review skill, run review |
+| "autopilot", "build me", "create me", "full auto" | `$autopilot` | Read omc-autopilot skill, run full lifecycle pipeline |
+| "web-clone", "clone site", "clone website", "copy webpage" | `$web-clone` | Read omc-web-clone skill, clone target URL |
 | "cancel", "stop", "abort" | `$cancel` | Read omc-cancel skill, cancel active modes |
 | "eco", "budget", "ecomode" | `$ecomode` | Read omc-ecomode skill, enable token-efficient mode |
 
