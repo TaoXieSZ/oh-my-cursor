@@ -11,23 +11,23 @@ Use when the request is broad, intent or boundaries are unclear, or the user say
 - Ask one focused question per round.
 - Do NOT implement during this stage.
 - Output: a clarified task brief with scope, non-goals, and acceptance criteria.
-- Hand off to `$ralplan` or direct execution.
+- Hand off to `$blueprint` or direct execution.
 
-### Stage 2: Plan — `$ralplan`
+### Stage 2: Plan — `$blueprint`
 
 Use when requirements are clear enough but the plan, tradeoffs, or test shape still need review.
 
 - Produce a structured plan with architecture, tradeoffs, and test strategy.
 - Write plan artifacts to `.omc/plans/`.
 - Output: approved PRD (`prd-*.md`) and test spec (`test-spec-*.md`).
-- Hand off to `$ralph` or `$team`.
+- Hand off to `$forge` or `$team`.
 
-### Stage 3a: Execute (single owner) — `$ralph`
+### Stage 3a: Execute (single owner) — `$forge`
 
 Use when the approved plan should stay with one persistent owner who keeps pushing to completion.
 
 - Work in a verify-fix loop until done.
-- Track progress in `.omc/state/ralph-state.json`.
+- Track progress in `.omc/state/forge-state.json`.
 - Do not stop until: task verified complete, user cancels, or no recovery path remains.
 
 ### Stage 3b: Execute (parallel) — `$team`
@@ -43,8 +43,8 @@ Use when the approved plan has independent lanes that benefit from parallel exec
 | Situation | Start at |
 |-----------|----------|
 | Vague request, unclear scope | `$deep-interview` |
-| Clear goal, needs planning | `$ralplan` |
-| Clear goal + approved plan, one track | `$ralph` |
+| Clear goal, needs planning | `$blueprint` |
+| Clear goal + approved plan, one track | `$forge` |
 | Clear goal + approved plan, multiple tracks | `$team` |
 | Small, obvious task | Direct execution |
 

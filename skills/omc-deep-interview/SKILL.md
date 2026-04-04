@@ -56,7 +56,7 @@ Default: `--standard`
 **Non-goals**: [what's explicitly excluded]
 **Acceptance criteria**: [how to verify success]
 **Key decisions**: [choices made during interview]
-**Suggested next step**: $ralplan / $ralph / direct execution
+**Suggested next step**: $blueprint / $forge / direct execution
 ```
 
 6. **Hand off**: Do NOT start implementation. Suggest the next workflow stage.

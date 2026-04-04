@@ -26,9 +26,26 @@ Dispatch work to parallel subagents via Cursor's Task tool. The leader agent coo
 $team <count>:<role> "<task description>"
 ```
 
+The `<role>` maps to a role prompt file installed by `omc setup`. Available roles:
+
+**Core**: `executor`, `architect`, `debugger`, `verifier`, `explorer`, `planner`
+**Specialist**: `code-reviewer`, `test-engineer`, `writer`, `security-reviewer`
+
+Default role if omitted: `executor`.
+
 Examples:
 - `$team 3:executor "implement the three API endpoints in parallel"`
 - `$team 2:executor "frontend and backend changes simultaneously"`
+- `$team 2:test-engineer "write tests for auth and billing modules"`
+
+## Role prompt loading
+
+Role prompts are markdown files with identity, constraints, execution loop, and output contract sections. They are loaded at runtime from the install location:
+
+- **User scope**: `~/.cursor/omc-prompts/{role}.md`
+- **Project scope**: `.omc/prompts/{role}.md`
+
+The leader reads the role prompt file and injects it into the Task tool's `prompt` parameter when spawning each worker. If a role prompt file is not found, fall back to the generic worker instructions below.
 
 ## Execution protocol
 
@@ -37,21 +54,28 @@ Examples:
 1. Read the approved plan from `.omc/plans/`.
 2. Split work into independent lanes (max 6 workers).
 3. For each lane, define: scope, assigned files, expected output, verification criteria.
+4. Determine the role for each lane (from invocation or keyword routing).
 
 ### Phase 2: Launch workers
 
-Use Cursor's **Task tool** to spawn parallel subagents:
+For each worker, read the role prompt and compose the Task tool invocation:
 
 ```
 For each worker:
+  1. Read role prompt from ~/.cursor/omc-prompts/{role}.md (or .omc/prompts/{role}.md)
+  2. Spawn via Task tool:
+
   Task(subagent_type="generalPurpose", prompt="""
+    {contents of prompts/{role}.md}
+
+    --- ASSIGNMENT ---
     You are Worker {N} in a team of {total}.
-    
+
     Your assignment:
     - Scope: {lane_scope}
     - Files: {assigned_files}
     - Expected output: {expected_output}
-    
+
     Rules:
     - Stay inside your assigned file scope.
     - Do NOT modify files assigned to other workers.
@@ -59,6 +83,11 @@ For each worker:
     - When done, write completion status to your progress file.
   """)
 ```
+
+**Model routing**: Use the role's `complexity` metadata to choose the Task model parameter:
+- `low` complexity → `model: "fast"`
+- `standard` complexity → omit model (inherit parent)
+- `high` complexity → omit model (inherit parent, or use more capable if available)
 
 ### Phase 3: Coordinate
 

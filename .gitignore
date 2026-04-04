@@ -1,6 +1,8 @@
 node_modules/
 dist/
 .omc/
+.cursor/
+output/
 *.tsbuildinfo
 coverage/
 .DS_Store

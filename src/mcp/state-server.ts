@@ -34,7 +34,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
       inputSchema: {
         type: "object" as const,
         properties: {
-          mode: { type: "string", description: "Mode name (e.g. ralph, team, deep-interview)" },
+          mode: { type: "string", description: "Mode name (e.g. forge, team, deep-interview)" },
         },
         required: ["mode"],
       },

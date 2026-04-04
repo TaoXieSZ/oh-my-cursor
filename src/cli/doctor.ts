@@ -7,6 +7,7 @@ import {
   omcPlansDir,
   omcStatePath,
   omcSetupScopePath,
+  omcPromptsDir,
   isCursorInstalled,
 } from "../utils/paths.js";
 import { ok, warn, fail, info, heading, dim } from "../utils/log.js";
@@ -39,6 +40,7 @@ export async function doctor(options: DoctorOptions): Promise<void> {
     { name: "Cursor installation", fn: checkCursorInstalled },
     { name: "OMC rules", fn: () => checkRulesInstalled(scope) },
     { name: "OMC skills", fn: () => checkSkillsInstalled(scope) },
+    { name: "OMC prompts", fn: () => checkPromptsInstalled(scope) },
     { name: "MCP servers", fn: () => checkMcpRegistered(scope) },
     { name: "State directory", fn: checkStateDir },
     { name: "Setup metadata", fn: checkSetupMeta },
@@ -136,6 +138,24 @@ function checkSkillsInstalled(scope: "user" | "project"): CheckResult {
     ok: true,
     message: `${omcSkills.length} OMC skills installed`,
     detail: omcSkills.join(", "),
+  };
+}
+
+function checkPromptsInstalled(scope: "user" | "project"): CheckResult {
+  const dir = omcPromptsDir(scope);
+  if (!existsSync(dir)) {
+    return { ok: false, message: `Prompts directory missing: ${dir}` };
+  }
+
+  const prompts = readdirSync(dir).filter((f) => f.endsWith(".md"));
+  if (prompts.length === 0) {
+    return { ok: false, message: `No prompt files found in ${dir}` };
+  }
+
+  return {
+    ok: true,
+    message: `${prompts.length} role prompts installed`,
+    detail: prompts.map((f) => f.replace(".md", "")).join(", "),
   };
 }
 

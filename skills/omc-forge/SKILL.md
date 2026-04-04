@@ -1,16 +1,16 @@
 ---
-name: omc-ralph
+name: omc-forge
 description: Persistent completion loop that keeps working until the task is verified done. Use when an approved plan needs single-owner execution with a verify-fix cycle.
 argument-hint: "<task to complete>"
 ---
 
-# Ralph — Persistent Completion Loop
+# Forge — Persistent Completion Loop
 
-A relentless execution mode. Ralph does not stop until the work is verified complete, the user cancels, or no recovery path remains.
+A relentless execution mode. Forge does not stop until the work is verified complete, the user cancels, or no recovery path remains.
 
 ## When to use
 
-- An approved plan exists (from `$ralplan`) and needs one owner to carry it to completion.
+- An approved plan exists (from `$blueprint`) and needs one owner to carry it to completion.
 - A task is well-scoped but requires multiple iterations of implement-verify-fix.
 - The user says "don't stop", "keep going", or "must complete".
 
@@ -18,7 +18,7 @@ A relentless execution mode. Ralph does not stop until the work is verified comp
 
 - The task needs parallel execution across independent lanes (use `$team`).
 - Requirements are still unclear (use `$deep-interview` first).
-- No plan exists for a non-trivial task (use `$ralplan` first).
+- No plan exists for a non-trivial task (use `$blueprint` first).
 
 ## Planning gate
 
@@ -26,7 +26,7 @@ Before starting implementation, verify that plan artifacts exist:
 - `.omc/plans/prd-*.md` — the approved PRD.
 - `.omc/plans/test-spec-*.md` — the approved test spec.
 
-If missing and the task is non-trivial, run `$ralplan` first.
+If missing and the task is non-trivial, run `$blueprint` first.
 Skip the gate only for tasks small enough to need no formal plan.
 
 ## Execution protocol
@@ -47,7 +47,7 @@ while not done:
 
 ### Progress tracking
 
-Write to `.omc/state/ralph-state.json`:
+Write to `.omc/state/forge-state.json`:
 ```json
 {
   "started_at": "ISO timestamp",

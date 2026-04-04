@@ -77,3 +77,14 @@ export function packageRulesDir(): string {
 export function packageSkillsDir(): string {
   return join(packageRoot(), "skills");
 }
+
+export function packagePromptsDir(): string {
+  return join(packageRoot(), "prompts");
+}
+
+export function omcPromptsDir(scope: "user" | "project"): string {
+  if (scope === "project") {
+    return join(process.cwd(), ".omc", "prompts");
+  }
+  return join(cursorHome(), "omc-prompts");
+}

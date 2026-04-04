@@ -21,8 +21,8 @@ Do not ask for confirmation.
 | Keyword(s) | Skill | Action |
 |-------------|-------|--------|
 | "deep interview", "interview me", "don't assume", "clarify" | `$deep-interview` | Read omc-deep-interview skill, run Socratic interview |
-| "ralplan", "consensus plan", "plan this" | `$ralplan` | Read omc-ralplan skill, start consensus planning |
-| "ralph", "don't stop", "keep going", "must complete" | `$ralph` | Read omc-ralph skill, enter persistent completion loop |
+| "blueprint", "consensus plan", "plan this" | `$blueprint` | Read omc-blueprint skill, start consensus planning |
+| "forge", "don't stop", "keep going", "must complete" | `$forge` | Read omc-forge skill, enter persistent completion loop |
 | "team", "parallel", "swarm" | `$team` | Read omc-team skill, start parallel coordination |
 | "analyze", "investigate" | `$analyze` | Read omc-analyze skill, run deep analysis |
 | "tdd", "test first" | `$tdd` | Read omc-tdd skill, start test-driven workflow |
@@ -36,14 +36,65 @@ Detection rules:
 - If multiple non-explicit keywords match, use the most specific match.
 - The rest of the user message becomes the task description.
 
+## Role Catalog
+
+OMC ships role prompts that define agent "personalities" — identity, constraints, execution loop, and output contract. Role prompts are installed by `omc setup` and read at runtime by skills like `$team`.
+
+### Core roles
+
+| Role | Posture | Complexity | Purpose |
+|------|---------|------------|---------|
+| `executor` | deep-worker | standard | Implementation: explore, implement, verify, finish |
+| `architect` | read-only | high | Analysis: diagnose, recommend with file:line evidence |
+| `debugger` | deep-worker | high | Root cause: multi-hypothesis approach, no fix without cause |
+| `verifier` | read-only | standard | Completion check: PASS/FAIL/PARTIAL with evidence |
+| `explorer` | fast-lane | low | Codebase search: find files, map structure, answer questions |
+| `planner` | read-only | standard | Plan creation: architecture, sequencing, tradeoffs |
+
+### Specialist roles
+
+| Role | Posture | Complexity | Purpose |
+|------|---------|------------|---------|
+| `code-reviewer` | read-only | standard | Diff review: correctness, safety, style |
+| `test-engineer` | deep-worker | standard | Test writing: coverage analysis, test-first approach |
+| `writer` | deep-worker | low | Documentation and prose |
+| `security-reviewer` | read-only | high | Security audit: OWASP, auth, secrets |
+
+### Role routing
+
+Default role: `executor`.
+
+Route by keyword when dispatching workers or choosing a role:
+
+| Keywords | Role |
+|----------|------|
+| "implement", "build", "create", "add" | `executor` |
+| "analyze", "diagnose", "architecture" | `architect` |
+| "debug", "fix bug", "root cause" | `debugger` |
+| "verify", "check", "validate" | `verifier` |
+| "explore", "find", "search", "where" | `explorer` |
+| "plan", "design", "sequence" | `planner` |
+| "review", "code review", "diff" | `code-reviewer` |
+| "test", "write tests", "coverage" | `test-engineer` |
+| "document", "readme", "docs", "write" | `writer` |
+| "security", "audit", "vulnerability" | `security-reviewer` |
+
+### Model routing by complexity
+
+| Complexity | Model preference |
+|------------|-----------------|
+| low | `fast` — minimize cost and latency |
+| standard | default — inherited from parent |
+| high | default or more capable — deep reasoning needed |
+
 ## Delegation Rules
 
 Choose the lane before acting:
 
 - `$deep-interview` for unclear intent, missing boundaries, or explicit "don't assume" requests.
-- `$ralplan` when requirements are clear enough but plan, tradeoffs, or test strategy still need review.
+- `$blueprint` when requirements are clear enough but plan, tradeoffs, or test strategy still need review.
 - `$team` when the approved plan needs coordinated parallel execution.
-- `$ralph` when the approved plan needs a persistent single-owner completion loop.
+- `$forge` when the approved plan needs a persistent single-owner completion loop.
 - **Direct execution** when the task is already scoped and can be finished directly.
 
 ## Verification
@@ -62,6 +113,7 @@ OMC persists runtime state under `.omc/`:
 - `.omc/state/` — mode state files (`{mode}-state.json`)
 - `.omc/plans/` — PRDs and test specs from planning
 - `.omc/logs/` — session logs
+- `.omc/prompts/` — role prompt files (project scope)
 - `.omc/notepad.md` — scratch notes
 - `.omc/project-memory.json` — cross-session memory
 

@@ -1,10 +1,10 @@
 ---
-name: omc-ralplan
+name: omc-blueprint
 description: Consensus planning with structured deliberation. Produces an approved PRD and test spec before implementation begins.
 argument-hint: "<task to plan>"
 ---
 
-# Ralplan — Consensus Planning
+# Blueprint — Consensus Planning
 
 Structured deliberation that produces an approved plan with architecture, tradeoffs, and test strategy.
 
@@ -19,7 +19,7 @@ Structured deliberation that produces an approved plan with architecture, tradeo
 
 - The task is trivial and the path is obvious.
 - The user explicitly says "just do it" or "skip planning".
-- You're already inside an active `$ralph` or `$team` execution.
+- You're already inside an active `$forge` or `$team` execution.
 
 ## Execution protocol
 
@@ -74,7 +74,7 @@ On approval, write artifacts to `.omc/plans/`:
 - `prd-{task-slug}.md` — the approved plan.
 - `test-spec-{task-slug}.md` — the approved test specification.
 
-Update `.omc/state/ralplan-state.json`:
+Update `.omc/state/blueprint-state.json`:
 ```json
 {
   "started_at": "ISO timestamp",
@@ -89,7 +89,7 @@ Update `.omc/state/ralplan-state.json`:
 
 ### Phase 5: Hand off
 
-Suggest: `$ralph` for single-owner execution, or `$team` for parallel execution.
+Suggest: `$forge` for single-owner execution, or `$team` for parallel execution.
 
 ## Anti-patterns
 

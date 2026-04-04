@@ -13,6 +13,8 @@ import {
   omcProjectMemoryPath,
   packageRulesDir,
   packageSkillsDir,
+  packagePromptsDir,
+  omcPromptsDir,
   isCursorInstalled,
 } from "../utils/paths.js";
 import { ensureDir, copyDir, copyFile } from "../utils/fs.js";
@@ -35,6 +37,7 @@ export async function setup(options: SetupOptions): Promise<void> {
   const steps = [
     { name: "Install rules", fn: () => installRules(options) },
     { name: "Install skills", fn: () => installSkills(options) },
+    { name: "Install prompts", fn: () => installPrompts(options) },
     { name: "Register MCP servers", fn: () => registerMcp(options) },
     { name: "Create state directories", fn: () => createStateDirs(options) },
     { name: "Write setup metadata", fn: () => writeSetupMeta(options) },
@@ -86,6 +89,18 @@ function installSkills(options: SetupOptions): void {
 
   const count = copyDir(srcDir, destDir);
   ok(`Installed ${count} skill files → ${destDir}`);
+}
+
+function installPrompts(options: SetupOptions): void {
+  const srcDir = packagePromptsDir();
+  const destDir = omcPromptsDir(options.scope);
+
+  if (!existsSync(srcDir)) {
+    throw new Error(`Prompts source not found: ${srcDir}`);
+  }
+
+  const count = copyDir(srcDir, destDir);
+  ok(`Installed ${count} prompt files → ${destDir}`);
 }
 
 function registerMcp(options: SetupOptions): void {
