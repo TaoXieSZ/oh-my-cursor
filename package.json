@@ -15,7 +15,8 @@
     "test:quick": "node --test dist/utils/__tests__/fs.test.js dist/utils/__tests__/paths.test.js dist/state/__tests__/paths.test.js dist/state/__tests__/mode-state.test.js dist/state/__tests__/session.test.js dist/cli/__tests__/cli.test.js dist/cli/__tests__/dashboard.test.js dist/mcp/__tests__/mcp.test.js",
     "setup": "node dist/cli/omc.js setup",
     "doctor": "node dist/cli/omc.js doctor",
-    "dashboard": "node dist/cli/omc.js dashboard"
+    "dashboard": "node dist/cli/omc.js dashboard",
+    "prepublishOnly": "npm run lint && npm test"
   },
   "engines": {
     "node": ">=20"
@@ -25,7 +26,9 @@
     "rules/",
     "skills/",
     "prompts/",
-    "templates/"
+    "templates/",
+    "LICENSE",
+    "README.md"
   ],
   "keywords": [
     "cursor",

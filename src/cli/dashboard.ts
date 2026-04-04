@@ -1,5 +1,6 @@
 import { createServer, IncomingMessage, ServerResponse } from "node:http";
 import { watch, existsSync, readFileSync, readdirSync } from "node:fs";
+import { exec } from "node:child_process";
 import { join } from "node:path";
 import { ensureDir } from "../utils/fs.js";
 import {
@@ -118,7 +119,7 @@ function handleRequest(req: IncomingMessage, res: ServerResponse): void {
   res.end("Not found");
 }
 
-export async function dashboard(options: { port?: number }): Promise<void> {
+export async function dashboard(options: { port?: number; open?: boolean }): Promise<void> {
   const port = options.port ?? 3721;
   const stateDir = getBaseStateDir();
   ensureDir(stateDir);
@@ -132,11 +133,17 @@ export async function dashboard(options: { port?: number }): Promise<void> {
   } catch { /* watcher not critical */ }
 
   const server = createServer(handleRequest);
+  const url = "http://localhost:" + port;
 
   server.listen(port, () => {
     log.heading("OMC Dashboard");
-    log.ok("Running at http://localhost:" + port);
+    log.ok("Running at " + url);
     log.info("Watching .omc/ for changes. Ctrl+C to stop.");
+
+    if (options.open !== false) {
+      const cmd = process.platform === "darwin" ? "open" : process.platform === "win32" ? "start" : "xdg-open";
+      exec(cmd + " " + url, () => {});
+    }
   });
 }
 
@@ -365,8 +372,11 @@ footer a:hover{text-decoration:underline}
   ];
 
   function timeAgo(iso) {
-    if (!iso) return '—';
-    var s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+    if (!iso) return '\\u{2014}';
+    var ms = Date.now() - new Date(iso).getTime();
+    if (ms < 0) return 'just now';
+    var s = Math.floor(ms / 1000);
+    if (s < 5) return 'just now';
     if (s < 60) return s + 's ago';
     if (s < 3600) return Math.floor(s/60) + 'm ago';
     if (s < 86400) return Math.floor(s/3600) + 'h ago';
@@ -425,9 +435,11 @@ footer a:hover{text-decoration:underline}
       html += '</div>';
     });
     state.completedModes.forEach(function(m) {
+      var name = m.mode || 'unknown';
+      var phase = m.phase || m.status || 'completed';
       html += '<div class="mode-item completed-mode">';
-      html += '<div class="mode-name">' + escapeHtml(m.mode) + ' <span class="badge badge-done">done</span></div>';
-      html += '<div class="mode-row"><span class="label">Final phase</span><span class="value">' + escapeHtml(m.phase) + '</span></div>';
+      html += '<div class="mode-name">' + escapeHtml(name) + ' <span class="badge badge-done">done</span></div>';
+      html += '<div class="mode-row"><span class="label">Final phase</span><span class="value">' + escapeHtml(phase) + '</span></div>';
       html += '<div class="mode-row"><span class="label">Completed</span><span class="value">' + timeAgo(m.completed_at) + '</span></div>';
       html += '</div>';
     });
@@ -463,13 +475,22 @@ footer a:hover{text-decoration:underline}
     el.innerHTML = html;
   }
 
+  function miniMarkdown(text) {
+    return escapeHtml(text)
+      .replace(/^### (.+)$/gm, '<h4 style="color:var(--text);margin:12px 0 4px;font-size:0.85rem">$1</h4>')
+      .replace(/^## (.+)$/gm, '<h3 style="color:var(--text);margin:14px 0 4px;font-size:0.9rem">$1</h3>')
+      .replace(/^# (.+)$/gm, '<h2 style="color:var(--text);margin:0 0 8px;font-size:1rem">$1</h2>')
+      .replace(/^- (.+)$/gm, '<div style="padding-left:16px;position:relative"><span style="position:absolute;left:4px;color:var(--orange)">\\u{2022}</span>$1</div>')
+      .replace(/\\n/g, '<br>');
+  }
+
   function renderNotepad(state) {
     var el = document.getElementById('notepad-body');
     if (!state.notepad) {
       el.innerHTML = '<div class="empty">Empty.</div>';
       return;
     }
-    el.innerHTML = '<div class="notepad-content">' + escapeHtml(state.notepad) + '</div>';
+    el.innerHTML = '<div class="notepad-content" style="white-space:normal">' + miniMarkdown(state.notepad) + '</div>';
   }
 
   function render(state) {
@@ -488,16 +509,29 @@ footer a:hover{text-decoration:underline}
   // Initial fetch
   fetch('/api/state').then(function(r) { return r.json(); }).then(render);
 
-  // SSE for live updates
-  var evtSource = new EventSource('/events');
-  evtSource.onmessage = function(e) {
-    if (e.data === 'connected') return;
-    try { render(JSON.parse(e.data)); } catch(err) { console.error(err); }
-  };
-  evtSource.onerror = function() {
-    document.querySelector('.live').style.color = 'var(--red)';
-    document.querySelector('.live .dot').style.background = 'var(--red)';
-  };
+  // SSE with auto-reconnect
+  var liveEl = document.querySelector('.live');
+  var dotEl = document.querySelector('.live .dot');
+
+  function connectSSE() {
+    var evtSource = new EventSource('/events');
+    evtSource.onmessage = function(e) {
+      if (e.data === 'connected') {
+        liveEl.style.color = 'var(--green)';
+        dotEl.style.background = 'var(--green)';
+        liveEl.querySelector('span:last-child') && (liveEl.lastChild.textContent = 'Live');
+        return;
+      }
+      try { render(JSON.parse(e.data)); } catch(err) { console.error(err); }
+    };
+    evtSource.onerror = function() {
+      evtSource.close();
+      liveEl.style.color = 'var(--red)';
+      dotEl.style.background = 'var(--red)';
+      setTimeout(connectSSE, 3000);
+    };
+  }
+  connectSSE();
 })();
 </script>
 

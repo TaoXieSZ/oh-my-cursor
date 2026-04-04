@@ -51,7 +51,7 @@ export async function main(args: string[]): Promise<void> {
       await status(options);
       break;
     case "dashboard":
-      await dashboard({ port: options.port });
+      await dashboard({ port: options.port, open: options.open });
       break;
     case "version":
     case "--version":
@@ -75,6 +75,7 @@ interface CliOptions {
   force: boolean;
   verbose: boolean;
   port?: number;
+  open?: boolean;
 }
 
 function parseOptions(args: string[]): CliOptions {
@@ -97,6 +98,8 @@ function parseOptions(args: string[]): CliOptions {
     } else if (arg === "--port" && args[i + 1]) {
       const p = parseInt(args[++i], 10);
       if (!isNaN(p)) opts.port = p;
+    } else if (arg === "--no-open") {
+      opts.open = false;
     } else if (arg === "--force") {
       opts.force = true;
     } else if (arg === "--verbose") {

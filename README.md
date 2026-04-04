@@ -2,6 +2,7 @@
 
 > Start Cursor stronger, then let OMC add better workflows, skills, and runtime state when the work grows.
 
+[![CI](https://github.com/TaoXieSZ/oh-my-cursor/actions/workflows/ci.yml/badge.svg)](https://github.com/TaoXieSZ/oh-my-cursor/actions/workflows/ci.yml)
 [![npm version](https://img.shields.io/npm/v/oh-my-cursor)](https://www.npmjs.com/package/oh-my-cursor)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](https://nodejs.org)
@@ -236,6 +237,10 @@ OMC is inspired by [oh-my-codex (OMX)](https://github.com/Yeachan-Heo/oh-my-code
 | State | `.omx/` | `.omc/` |
 | Install | `npm install -g oh-my-codex` | `npm install -g oh-my-cursor` |
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, project structure, and how to add skills, roles, or CLI commands.
+
 ## License
 
-MIT
+[MIT](LICENSE)
