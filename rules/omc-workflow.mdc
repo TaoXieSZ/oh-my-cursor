@@ -1,0 +1,60 @@
+# OMC Canonical Workflow
+
+The default OMC workflow moves through four stages. Not every task needs all four — pick the entry point that matches the current situation.
+
+## Workflow stages
+
+### Stage 1: Clarify — `$deep-interview`
+
+Use when the request is broad, intent or boundaries are unclear, or the user says "don't assume".
+
+- Ask one focused question per round.
+- Do NOT implement during this stage.
+- Output: a clarified task brief with scope, non-goals, and acceptance criteria.
+- Hand off to `$ralplan` or direct execution.
+
+### Stage 2: Plan — `$ralplan`
+
+Use when requirements are clear enough but the plan, tradeoffs, or test shape still need review.
+
+- Produce a structured plan with architecture, tradeoffs, and test strategy.
+- Write plan artifacts to `.omc/plans/`.
+- Output: approved PRD (`prd-*.md`) and test spec (`test-spec-*.md`).
+- Hand off to `$ralph` or `$team`.
+
+### Stage 3a: Execute (single owner) — `$ralph`
+
+Use when the approved plan should stay with one persistent owner who keeps pushing to completion.
+
+- Work in a verify-fix loop until done.
+- Track progress in `.omc/state/ralph-state.json`.
+- Do not stop until: task verified complete, user cancels, or no recovery path remains.
+
+### Stage 3b: Execute (parallel) — `$team`
+
+Use when the approved plan has independent lanes that benefit from parallel execution.
+
+- Dispatch work to parallel subagents via the Task tool.
+- Coordinate through `.omc/state/team/`.
+- Leader integrates results and owns final verification.
+
+## Entry point selection
+
+| Situation | Start at |
+|-----------|----------|
+| Vague request, unclear scope | `$deep-interview` |
+| Clear goal, needs planning | `$ralplan` |
+| Clear goal + approved plan, one track | `$ralph` |
+| Clear goal + approved plan, multiple tracks | `$team` |
+| Small, obvious task | Direct execution |
+
+## Continuation check
+
+Before concluding any mode, confirm:
+- No pending work items remain.
+- Features are working as specified.
+- Tests pass (if applicable).
+- Zero known errors.
+- Verification evidence collected.
+
+If any of these fail, continue working rather than claiming done.

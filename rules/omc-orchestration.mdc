@@ -1,0 +1,72 @@
+# OMC Orchestration Contract
+
+You are running with oh-my-cursor (OMC), a workflow orchestration layer for Cursor IDE.
+This rule is the top-level operating contract. Skill-level instructions are narrower; they follow this rule, not override it.
+
+## Operating Principles
+
+- Solve the task directly when you can do so safely and well.
+- Delegate only when it materially improves quality, speed, or correctness.
+- Keep progress short, concrete, and useful.
+- Prefer evidence over assumption; verify before claiming completion.
+- Default to compact, information-dense responses; expand only when risk, ambiguity, or the user explicitly calls for detail.
+- Proceed automatically on clear, low-risk, reversible next steps; ask only for irreversible or materially branching actions.
+- Check official documentation before implementing with unfamiliar SDKs, frameworks, or APIs.
+
+## Keyword Detection
+
+When the user message contains a mapped keyword, activate the corresponding skill immediately.
+Do not ask for confirmation.
+
+| Keyword(s) | Skill | Action |
+|-------------|-------|--------|
+| "deep interview", "interview me", "don't assume", "clarify" | `$deep-interview` | Read omc-deep-interview skill, run Socratic interview |
+| "ralplan", "consensus plan", "plan this" | `$ralplan` | Read omc-ralplan skill, start consensus planning |
+| "ralph", "don't stop", "keep going", "must complete" | `$ralph` | Read omc-ralph skill, enter persistent completion loop |
+| "team", "parallel", "swarm" | `$team` | Read omc-team skill, start parallel coordination |
+| "analyze", "investigate" | `$analyze` | Read omc-analyze skill, run deep analysis |
+| "tdd", "test first" | `$tdd` | Read omc-tdd skill, start test-driven workflow |
+| "review code", "code review" | `$code-review` | Read omc-code-review skill, run review |
+| "cancel", "stop", "abort" | `$cancel` | Read omc-cancel skill, cancel active modes |
+| "eco", "budget", "ecomode" | `$ecomode` | Read omc-ecomode skill, enable token-efficient mode |
+
+Detection rules:
+- Keywords are case-insensitive and match anywhere in the user message.
+- Explicit `$name` invocations take priority over implicit keyword matching.
+- If multiple non-explicit keywords match, use the most specific match.
+- The rest of the user message becomes the task description.
+
+## Delegation Rules
+
+Choose the lane before acting:
+
+- `$deep-interview` for unclear intent, missing boundaries, or explicit "don't assume" requests.
+- `$ralplan` when requirements are clear enough but plan, tradeoffs, or test strategy still need review.
+- `$team` when the approved plan needs coordinated parallel execution.
+- `$ralph` when the approved plan needs a persistent single-owner completion loop.
+- **Direct execution** when the task is already scoped and can be finished directly.
+
+## Verification
+
+Before claiming completion:
+- Identify what proves the claim.
+- Run the verification.
+- Read the output.
+- Report with evidence.
+
+If verification fails, continue iterating rather than reporting incomplete work.
+
+## State Management
+
+OMC persists runtime state under `.omc/`:
+- `.omc/state/` — mode state files (`{mode}-state.json`)
+- `.omc/plans/` — PRDs and test specs from planning
+- `.omc/logs/` — session logs
+- `.omc/notepad.md` — scratch notes
+- `.omc/project-memory.json` — cross-session memory
+
+Mode lifecycle:
+- Write state on start.
+- Update state on phase or iteration change.
+- Mark inactive with `completed_at` on completion.
+- Clear state on cancel/abort.

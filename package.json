@@ -1,0 +1,50 @@
+{
+  "name": "oh-my-cursor",
+  "version": "0.1.0",
+  "description": "Workflow orchestration layer for Cursor IDE — better sessions, canonical workflows, and durable state",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "omc": "dist/cli/omc.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "tsc --noEmit",
+    "test": "node --test $(find dist -name '*.test.js' 2>/dev/null)",
+    "setup": "node dist/cli/omc.js setup",
+    "doctor": "node dist/cli/omc.js doctor"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "dist/",
+    "rules/",
+    "skills/",
+    "templates/"
+  ],
+  "keywords": [
+    "cursor",
+    "ai",
+    "workflow",
+    "orchestration",
+    "skills",
+    "rules",
+    "mcp",
+    "agent"
+  ],
+  "author": "txie",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/txie/oh-my-cursor"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  }
+}

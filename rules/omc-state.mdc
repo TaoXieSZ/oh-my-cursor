@@ -1,0 +1,51 @@
+# OMC State Management
+
+All OMC runtime state lives under `.omc/` in the project root.
+
+## Directory layout
+
+```
+.omc/
+├── state/
+│   ├── session.json            # current session metadata
+│   ├── {mode}-state.json       # per-mode state (ralph, team, etc.)
+│   └── team/
+│       ├── team-state.json     # team metadata and status
+│       └── {worker}/
+│           └── progress.json   # per-worker progress
+├── plans/
+│   ├── prd-{task}.md           # PRD from ralplan
+│   └── test-spec-{task}.md     # test spec from ralplan
+├── logs/
+│   └── {session}.log           # session activity logs
+├── notepad.md                  # scratch notes (append-only during session)
+├── project-memory.json         # cross-session persistent memory
+└── setup-scope.json            # installation metadata
+```
+
+## Mode state lifecycle
+
+Every workflow mode (ralph, team, deep-interview, ralplan) follows this lifecycle:
+
+1. **Start**: Write `{mode}-state.json` with `started_at`, initial `phase`.
+2. **Progress**: Update on each phase transition or iteration increment.
+3. **Complete**: Set `completed_at` and `status: "complete"`.
+4. **Cancel**: Set `cancelled_at` and `status: "cancelled"`.
+
+## Plan artifacts
+
+The `$ralplan` skill writes to `.omc/plans/`:
+- `prd-{task-slug}.md` — the approved PRD.
+- `test-spec-{task-slug}.md` — the approved test specification.
+
+The `$ralph` and `$team` skills check for these before starting implementation.
+
+## Project memory
+
+`.omc/project-memory.json` stores cross-session knowledge as key-value pairs.
+Skills and rules may read from it to maintain context across conversations.
+
+## Notepad
+
+`.omc/notepad.md` is an append-only scratch space for the current session.
+Use it for observations, blockers, and decisions that should persist beyond the chat.
