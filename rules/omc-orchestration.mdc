@@ -29,6 +29,7 @@ Do not ask for confirmation.
 | "review code", "code review" | `$code-review` | Read omc-code-review skill, run review |
 | "autopilot", "build me", "create me", "full auto" | `$autopilot` | Read omc-autopilot skill, run full lifecycle pipeline |
 | "web-clone", "clone site", "clone website", "copy webpage" | `$web-clone` | Read omc-web-clone skill, clone target URL |
+| "dashboard", "show status", "show dashboard" | `$dashboard` | Read omc-dashboard skill, render workflow dashboard |
 | "cancel", "stop", "abort" | `$cancel` | Read omc-cancel skill, cancel active modes |
 | "eco", "budget", "ecomode" | `$ecomode` | Read omc-ecomode skill, enable token-efficient mode |
 

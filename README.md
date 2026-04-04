@@ -101,6 +101,12 @@ Think of OMC as **better task routing + better workflow + durable state**, not a
 | `$autopilot` | "build me", "autopilot" | Full lifecycle: idea → spec → plan → build → QA → validate |
 | `$web-clone` | "clone site", "web-clone" | Clone a website from URL with visual/functional verification |
 
+### Observability
+
+| Skill | Trigger | Purpose |
+|-------|---------|---------|
+| `$dashboard` | "dashboard", "show status" | Live workflow dashboard (Canvas or web server) |
+
 ### Supporting
 
 | Skill | Trigger | Purpose |
@@ -163,12 +169,33 @@ When no role is specified, keywords in the task description route to the appropr
 | "document", "readme" | `writer` |
 | "security", "audit" | `security-reviewer` |
 
+## Dashboard
+
+OMC includes a live web dashboard that visualizes your workflow state in real time.
+
+```bash
+omc dashboard              # Launch at http://localhost:3721
+omc dashboard --port 4000  # Custom port
+```
+
+The dashboard shows:
+- **Pipeline tracker** — which workflow stage is active (Interview → Blueprint → Execute → Done)
+- **Active modes** — phase, iteration, and progress for each running mode
+- **Plans** — list of PRDs and test specs
+- **Project memory** — cross-session key-value pairs
+- **Notepad** — scratch notes
+
+State updates are pushed via SSE — no manual refresh needed.
+
+You can also invoke `$dashboard` inside Cursor to render the dashboard as an inline Canvas.
+
 ## CLI reference
 
 ```bash
 omc setup [--scope user|project] [--force]   # Install rules, skills, MCP
 omc doctor [--scope user|project] [--verbose] # Verify installation
 omc status                                    # Show active mode and state
+omc dashboard [--port <number>]               # Launch live web dashboard
 omc help                                      # Show help
 omc version                                   # Print version
 ```

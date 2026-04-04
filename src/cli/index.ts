@@ -1,6 +1,7 @@
 import { setup } from "./setup.js";
 import { doctor } from "./doctor.js";
 import { status } from "./status.js";
+import { dashboard } from "./dashboard.js";
 
 const VERSION = "0.1.0";
 
@@ -12,22 +13,26 @@ Usage:
   omc <command> [options]
 
 Commands:
-  setup    Install rules, skills, and MCP servers into Cursor
-  doctor   Verify installation health
-  status   Show active mode, session, and state
-  help     Show this help message
-  version  Print version
+  setup      Install rules, skills, and MCP servers into Cursor
+  doctor     Verify installation health
+  status     Show active mode, session, and state
+  dashboard  Launch live web dashboard (http://localhost:3721)
+  help       Show this help message
+  version    Print version
 
 Options:
   --scope <user|project>  Installation scope (default: user)
   --force                 Overwrite existing files without backup prompt
   --verbose               Show detailed output
+  --port <number>         Dashboard port (default: 3721)
 
 Examples:
   omc setup                  # Install to user scope
   omc setup --scope project  # Install to current project
   omc doctor                 # Check installation health
   omc status                 # Show current state
+  omc dashboard              # Launch live web dashboard
+  omc dashboard --port 4000  # Custom port
 `.trim();
 
 export async function main(args: string[]): Promise<void> {
@@ -44,6 +49,9 @@ export async function main(args: string[]): Promise<void> {
       break;
     case "status":
       await status(options);
+      break;
+    case "dashboard":
+      await dashboard({ port: options.port });
       break;
     case "version":
     case "--version":
@@ -66,6 +74,7 @@ interface CliOptions {
   scope: "user" | "project";
   force: boolean;
   verbose: boolean;
+  port?: number;
 }
 
 function parseOptions(args: string[]): CliOptions {
@@ -85,6 +94,9 @@ function parseOptions(args: string[]): CliOptions {
         console.error(`Invalid scope: ${val}. Use "user" or "project".`);
         process.exit(1);
       }
+    } else if (arg === "--port" && args[i + 1]) {
+      const p = parseInt(args[++i], 10);
+      if (!isNaN(p)) opts.port = p;
     } else if (arg === "--force") {
       opts.force = true;
     } else if (arg === "--verbose") {
