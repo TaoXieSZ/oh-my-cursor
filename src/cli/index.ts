@@ -2,6 +2,8 @@ import { setup } from "./setup.js";
 import { doctor } from "./doctor.js";
 import { status } from "./status.js";
 import { dashboard } from "./dashboard.js";
+import { archiveCurrentSession, listArchives } from "../state/archive.js";
+import * as log from "../utils/log.js";
 
 const VERSION = "0.1.0";
 
@@ -17,6 +19,8 @@ Commands:
   doctor     Verify installation health
   status     Show active mode, session, and state
   dashboard  Launch live web dashboard (http://localhost:3721)
+  archive    Archive current session to .omc/archive/ and reset state
+  archives   List all archived sessions
   help       Show this help message
   version    Print version
 
@@ -33,6 +37,8 @@ Examples:
   omc status                 # Show current state
   omc dashboard              # Launch live web dashboard
   omc dashboard --port 4000  # Custom port
+  omc archive                # Archive current session
+  omc archives               # List archived sessions
 `.trim();
 
 export async function main(args: string[]): Promise<void> {
@@ -53,6 +59,23 @@ export async function main(args: string[]): Promise<void> {
     case "dashboard":
       await dashboard({ port: options.port, open: options.open });
       break;
+    case "archive": {
+      const path = archiveCurrentSession();
+      if (path) log.ok("Session archived → " + path);
+      else log.info("Nothing to archive.");
+      break;
+    }
+    case "archives": {
+      const list = listArchives();
+      if (list.length === 0) { log.info("No archived sessions."); break; }
+      log.heading("Archived Sessions");
+      for (const a of list) {
+        const task = a.task ?? "(no task)";
+        const modes = a.modes.map((m: Record<string, unknown>) => m.mode ?? "?").join(", ");
+        log.info(`${a.session.id.slice(0, 8)}  ${a.session.archived_at.slice(0, 16)}  ${task}  [${modes}]`);
+      }
+      break;
+    }
     case "version":
     case "--version":
     case "-v":

@@ -11,6 +11,7 @@ import {
 } from "../state/paths.js";
 import * as log from "../utils/log.js";
 import { getHTML } from "./dashboard-html.js";
+import { isSessionStale, archiveCurrentSession } from "../state/archive.js";
 
 export interface PlanInfo {
   name: string;
@@ -155,6 +156,11 @@ export async function dashboard(options: { port?: number; open?: boolean }): Pro
   const port = options.port ?? 3721;
   const stateDir = getBaseStateDir();
   ensureDir(stateDir);
+
+  if (isSessionStale()) {
+    const archived = archiveCurrentSession();
+    if (archived) log.info("Archived stale session → " + archived);
+  }
 
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
   try {

@@ -3,3 +3,5 @@ export { readModeState, writeModeState, startMode, updateMode, completeMode, can
 export type { ModeState } from "./mode-state.js";
 export { getOrCreateSession, readSession } from "./session.js";
 export type { Session } from "./session.js";
+export { archiveCurrentSession, isSessionStale, listArchives } from "./archive.js";
+export type { ArchivedSession } from "./archive.js";
