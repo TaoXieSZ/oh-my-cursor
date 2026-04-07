@@ -125,7 +125,7 @@ Type `/skills` in Cursor chat or run `omc skills` in the terminal to see all ins
 
 ## Roles
 
-OMC ships 10 role prompts that define agent "personalities" — each with a focused identity, constraints, execution loop, and output contract. Roles are used by `$team` when dispatching workers and can be referenced in any skill.
+OMC ships 20 role prompts that define agent "personalities" — each with a focused identity, constraints, execution loop, and output contract. Roles are used by `$team` when dispatching workers and can be referenced in any skill.
 
 ### Core roles
 
@@ -142,10 +142,20 @@ OMC ships 10 role prompts that define agent "personalities" — each with a focu
 
 | Role | Posture | Purpose |
 |------|---------|---------|
+| `build-fixer` | deep-worker | Build/compile error resolution: minimal diffs, no architecture changes |
 | `code-reviewer` | read-only | Diff review: correctness, safety, style |
+| `critic` | read-only | Plan review: verify plans are clear, complete, and actionable |
+| `designer` | deep-worker | UI/UX: visually striking, production-grade interfaces |
+| `git-master` | deep-worker | Git: atomic commits, style-matched messages, rebasing |
+| `researcher` | read-only | External docs: find reliable answers with source citations |
 | `test-engineer` | deep-worker | Test writing: coverage analysis, test-first approach |
 | `writer` | deep-worker | Documentation and prose |
 | `security-reviewer` | read-only | Security audit: OWASP, auth, secrets |
+| `performance-reviewer` | read-only | Performance: hotspots, complexity, memory/latency tradeoffs |
+| `quality-reviewer` | read-only | Quality: logic defects, anti-patterns, SOLID violations |
+| `style-reviewer` | read-only | Style: formatting, naming, idioms, lint conventions |
+| `api-reviewer` | read-only | API: contracts, backward compatibility, error semantics |
+| `code-simplifier` | deep-worker | Simplify: reduce complexity, remove duplication, preserve behavior |
 
 ### Using roles with `$team`
 
@@ -169,10 +179,20 @@ When no role is specified, keywords in the task description route to the appropr
 | "verify", "check", "validate" | `verifier` |
 | "explore", "find", "search" | `explorer` |
 | "plan", "design" | `planner` |
+| "build error", "compile error", "fix build" | `build-fixer` |
 | "review", "code review" | `code-reviewer` |
+| "review plan", "critique" | `critic` |
+| "UI", "UX", "frontend", "visual" | `designer` |
+| "git", "commit", "rebase" | `git-master` |
+| "research", "docs lookup" | `researcher` |
 | "test", "write tests" | `test-engineer` |
 | "document", "readme" | `writer` |
 | "security", "audit" | `security-reviewer` |
+| "performance", "slow", "latency" | `performance-reviewer` |
+| "quality", "logic bugs", "anti-pattern" | `quality-reviewer` |
+| "style", "naming", "formatting" | `style-reviewer` |
+| "API", "backward compat", "contract" | `api-reviewer` |
+| "simplify", "deduplicate", "cleanup" | `code-simplifier` |
 
 ## Dashboard
 
@@ -250,7 +270,7 @@ OMC is inspired by [oh-my-codex (OMX)](https://github.com/Yeachan-Heo/oh-my-code
 | Orchestration | `AGENTS.md` (monolithic) | `.cursor/rules/*.mdc` (modular) |
 | Team mode | tmux sessions | Cursor Task tool (subagents) |
 | Skills format | `.codex/skills/` | `.cursor/skills/` (native) |
-| Role prompts | 33 TOML-generated prompts | 10 markdown prompts with XML sections |
+| Role prompts | 33 TOML-generated prompts | 20 markdown prompts with XML sections |
 | State | `.omx/` | `.omc/` |
 | Install | `npm install -g oh-my-codex` | `npm install -g oh-my-cursor` |
 

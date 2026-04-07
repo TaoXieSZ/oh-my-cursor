@@ -92,11 +92,14 @@ describe("omc setup --scope project", () => {
     const promptsDir = join(tmp, ".omc", "prompts");
     assert.ok(existsSync(promptsDir), "Prompts directory should exist");
     const prompts = readdirSync(promptsDir).filter((f) => f.endsWith(".md"));
-    assert.ok(prompts.length >= 10, `Expected >= 10 prompts, got ${prompts.length}`);
+    assert.ok(prompts.length >= 20, `Expected >= 20 prompts, got ${prompts.length}`);
     const expectedRoles = [
       "executor.md", "architect.md", "debugger.md", "verifier.md",
       "explorer.md", "planner.md", "code-reviewer.md", "test-engineer.md",
       "writer.md", "security-reviewer.md",
+      "build-fixer.md", "critic.md", "designer.md", "git-master.md", "researcher.md",
+      "performance-reviewer.md", "quality-reviewer.md", "style-reviewer.md",
+      "api-reviewer.md", "code-simplifier.md",
     ];
     for (const role of expectedRoles) {
       assert.ok(prompts.includes(role), `Missing prompt: ${role}`);

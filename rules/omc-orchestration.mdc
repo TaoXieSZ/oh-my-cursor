@@ -1,3 +1,8 @@
+---
+description: "OMC top-level orchestration — skill routing, role catalog, delegation"
+alwaysApply: true
+---
+
 # OMC Orchestration Contract
 
 You are running with oh-my-cursor (OMC), a workflow orchestration layer for Cursor IDE.
@@ -89,10 +94,20 @@ OMC ships role prompts that define agent "personalities" — identity, constrain
 
 | Role | Posture | Complexity | Purpose |
 |------|---------|------------|---------|
+| `build-fixer` | deep-worker | standard | Build/compile error resolution: minimal diffs, no architecture changes |
 | `code-reviewer` | read-only | standard | Diff review: correctness, safety, style |
+| `critic` | read-only | high | Plan review: verify plans are clear, complete, and actionable |
+| `designer` | deep-worker | standard | UI/UX: visually striking, production-grade interfaces |
+| `git-master` | deep-worker | standard | Git: atomic commits, style-matched messages, rebasing |
+| `researcher` | read-only | low | External docs: find reliable answers with source citations |
 | `test-engineer` | deep-worker | standard | Test writing: coverage analysis, test-first approach |
 | `writer` | deep-worker | low | Documentation and prose |
 | `security-reviewer` | read-only | high | Security audit: OWASP, auth, secrets |
+| `performance-reviewer` | read-only | standard | Performance: hotspots, complexity, memory/latency tradeoffs |
+| `quality-reviewer` | read-only | standard | Quality: logic defects, anti-patterns, SOLID violations |
+| `style-reviewer` | read-only | low | Style: formatting, naming, idioms, lint conventions |
+| `api-reviewer` | read-only | standard | API: contracts, backward compatibility, error semantics |
+| `code-simplifier` | deep-worker | standard | Simplify: reduce complexity, remove duplication, preserve behavior |
 
 ### Role routing
 
@@ -108,10 +123,20 @@ Route by keyword when dispatching workers or choosing a role:
 | "verify", "check", "validate" | `verifier` |
 | "explore", "find", "search", "where" | `explorer` |
 | "plan", "design", "sequence" | `planner` |
+| "build error", "compile error", "type error", "fix build" | `build-fixer` |
 | "review", "code review", "diff" | `code-reviewer` |
+| "review plan", "critique", "is this plan good" | `critic` |
+| "UI", "UX", "design component", "visual", "frontend" | `designer` |
+| "git", "commit", "rebase", "split commits" | `git-master` |
+| "research", "docs lookup", "find documentation" | `researcher` |
 | "test", "write tests", "coverage" | `test-engineer` |
 | "document", "readme", "docs", "write" | `writer` |
 | "security", "audit", "vulnerability" | `security-reviewer` |
+| "performance", "slow", "latency", "profiling" | `performance-reviewer` |
+| "quality", "logic bugs", "anti-pattern", "SOLID" | `quality-reviewer` |
+| "style", "naming", "formatting", "lint" | `style-reviewer` |
+| "API", "backward compatibility", "contract", "versioning" | `api-reviewer` |
+| "simplify", "reduce complexity", "deduplicate", "cleanup" | `code-simplifier` |
 
 ### Model routing by complexity
 

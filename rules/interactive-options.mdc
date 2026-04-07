@@ -1,0 +1,47 @@
+---
+description: "Force AskQuestion tool for all discrete-choice interactions"
+alwaysApply: true
+---
+
+# Interactive Options
+
+**ALWAYS use the AskQuestion tool** when you need user input, clarification, or choices. Never present options as plain text (A/B/C or numbered lists) when the AskQuestion tool is available.
+
+## When to use AskQuestion
+
+- Clarifying ambiguous requests
+- Offering implementation choices (approaches, tradeoffs)
+- Confirming before destructive or irreversible actions
+- Gathering missing parameters
+- Presenting alternative approaches
+- **Deep interview rounds** — every question with discrete options must use AskQuestion
+
+## Format
+
+```
+AskQuestion({
+  title: "Optional title",
+  questions: [{
+    id: "unique-id",
+    prompt: "Your question text",
+    options: [
+      { id: "opt1", label: "First option — brief explanation" },
+      { id: "opt2", label: "Second option — brief explanation" }
+    ],
+    allow_multiple: false  // true for multi-select
+  }]
+})
+```
+
+## Rules
+
+- Minimum 2 options per question.
+- Keep option labels concise but informative (include a brief qualifier after a dash when helpful).
+- Use `allow_multiple: true` only when multi-select genuinely makes sense.
+- If the question is truly open-ended (no finite set of options), use plain text. AskQuestion is for **discrete choices** only.
+
+## Anti-patterns
+
+- "Do you want option A or option B?" as plain text
+- "Please choose: 1) ... 2) ... 3) ..." as plain text
+- Numbered/lettered lists that the user has to type a response to

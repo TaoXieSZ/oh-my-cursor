@@ -1,3 +1,8 @@
+---
+description: "OMC 4-stage workflow — clarify, plan, execute, verify"
+alwaysApply: true
+---
+
 # OMC Canonical Workflow
 
 The default OMC workflow moves through four stages. Not every task needs all four — pick the entry point that matches the current situation.

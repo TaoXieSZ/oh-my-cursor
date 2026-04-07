@@ -1,3 +1,8 @@
+---
+description: "OMC state management — .omc/ directory layout and lifecycle"
+alwaysApply: true
+---
+
 # OMC State Management
 
 All OMC runtime state lives under `.omc/` in the project root.
