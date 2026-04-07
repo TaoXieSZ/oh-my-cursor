@@ -83,6 +83,24 @@ State transitions are automatically logged as events in `.omc/logs/{runId}.jsonl
 
 **Archival:** When a run is archived, its event log is embedded in `ArchivedSession.events` and the `.jsonl` file is removed.
 
+## Insights & Metrics (P2)
+
+The stats bar shows computed metrics:
+- **Active** — currently running workflows
+- **Total Runs** — active + completed + archived
+- **Success Rate** — CSS donut showing complete/(complete+cancelled) ratio
+- **Avg Duration** — mean duration of completed runs
+- **Events** — total event count across all runs
+- **Current Focus** — active task description
+
+Active cards include a **phase duration bar** — a stacked horizontal bar showing time spent per phase, computed from event timestamps.
+
+Timeline events support **kind filtering** — click a filter pill (phase/status/iteration/etc.) to show only matching events.
+
+## Theme Toggle
+
+Click the sun/moon icon in the header to switch between dark and light themes. Preference is persisted in `localStorage('omc-theme')`.
+
 ## Exit
 
 Canvas mode: the canvas stays open until closed by the user.

@@ -4,7 +4,7 @@ import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
-import { collectState, type DashboardState, type PlanInfo, type ModeInfo } from "../dashboard.js";
+import { collectState, computeStats, type DashboardState, type PlanInfo, type ModeInfo, type StatsData } from "../dashboard.js";
 
 function makeTmpProject(): string {
   const dir = join(tmpdir(), `omc-dash-test-${randomUUID()}`);
@@ -235,5 +235,79 @@ describe("collectState", () => {
     const state = collectState();
     assert.ok(state.activeModes[0].recentEvents);
     assert.equal(state.activeModes[0].recentEvents!.length, 0);
+  });
+
+  it("collectState includes stats", () => {
+    const stateDir = join(tmp, ".omc", "state");
+    mkdirSync(stateDir, { recursive: true });
+    writeFileSync(join(stateDir, "forge-s1111111-state.json"), JSON.stringify({
+      mode: "forge", runId: "s1111111", status: "complete",
+      started_at: "2026-04-04T10:00:00Z", completed_at: "2026-04-04T10:30:00Z",
+      task: "Task 1",
+    }));
+
+    const state = collectState();
+    assert.ok(state.stats);
+    assert.equal(state.stats.totalRuns, 1);
+    assert.equal(state.stats.successRate, 100);
+    assert.ok(state.stats.avgDurationMs > 0);
+  });
+});
+
+describe("computeStats", () => {
+  it("returns defaults for no data", () => {
+    const stats = computeStats([], [], []);
+    assert.equal(stats.successRate, 100);
+    assert.equal(stats.avgDurationMs, 0);
+    assert.equal(stats.totalEvents, 0);
+    assert.equal(stats.totalRuns, 0);
+  });
+
+  it("calculates success rate from completed and cancelled", () => {
+    const completed: ModeInfo[] = [
+      { mode: "forge", status: "complete", started_at: "2026-04-04T10:00:00Z", completed_at: "2026-04-04T10:30:00Z" },
+      { mode: "forge", status: "cancelled", started_at: "2026-04-04T11:00:00Z", completed_at: "2026-04-04T11:15:00Z" },
+      { mode: "forge", status: "complete", started_at: "2026-04-04T12:00:00Z", completed_at: "2026-04-04T12:30:00Z" },
+    ];
+    const stats = computeStats([], completed, []);
+    assert.equal(stats.successRate, 67);
+  });
+
+  it("calculates avg duration from completed runs", () => {
+    const completed: ModeInfo[] = [
+      { mode: "forge", status: "complete", started_at: "2026-04-04T10:00:00Z", completed_at: "2026-04-04T10:30:00Z" },
+      { mode: "forge", status: "complete", started_at: "2026-04-04T11:00:00Z", completed_at: "2026-04-04T12:00:00Z" },
+    ];
+    const stats = computeStats([], completed, []);
+    assert.equal(stats.avgDurationMs, 45 * 60 * 1000);
+  });
+
+  it("counts events from active + completed + archived", () => {
+    const active: ModeInfo[] = [
+      { mode: "forge", status: "active", started_at: "2026-04-04T10:00:00Z", recentEvents: [
+        { ts: "2026-04-04T10:00:00Z", kind: "status", summary: "Started" },
+        { ts: "2026-04-04T10:01:00Z", kind: "phase", summary: "Phase change" },
+      ] },
+    ];
+    const archived = [
+      { session: { id: "a1", started_at: "2026-04-01T10:00:00Z", archived_at: "2026-04-01T12:00:00Z" },
+        task: "old", modes: [{ status: "complete" }], events: [
+          { ts: "2026-04-01T10:00:00Z", kind: "status", summary: "Started" },
+        ] },
+    ];
+    const stats = computeStats(active, [], archived as any);
+    assert.equal(stats.totalEvents, 3);
+    assert.equal(stats.totalRuns, 2);
+  });
+
+  it("includes archives in success rate", () => {
+    const archived = [
+      { session: { id: "a1", started_at: "2026-04-01T10:00:00Z", archived_at: "2026-04-01T12:00:00Z" },
+        task: "ok", modes: [{ status: "complete" }] },
+      { session: { id: "a2", started_at: "2026-04-02T10:00:00Z", archived_at: "2026-04-02T12:00:00Z" },
+        task: "bad", modes: [{ status: "cancelled" }] },
+    ];
+    const stats = computeStats([], [], archived as any);
+    assert.equal(stats.successRate, 50);
   });
 });

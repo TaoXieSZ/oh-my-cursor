@@ -41,12 +41,20 @@ export interface ModeInfo {
   recentEvents?: RunEvent[];
 }
 
+export interface StatsData {
+  successRate: number;
+  avgDurationMs: number;
+  totalEvents: number;
+  totalRuns: number;
+}
+
 export interface DashboardState {
   session: { id: string; started_at: string } | null;
   activeTask: string | null;
   activeModes: ModeInfo[];
   completedModes: ModeInfo[];
   archivedSessions: ArchivedSession[];
+  stats: StatsData;
   plans: PlanInfo[];
   memory: Record<string, unknown>;
   notepad: string;
@@ -123,7 +131,54 @@ export function collectState(): DashboardState {
     (taskSource as any)?.task ??
     null;
 
-  return { session, activeTask, activeModes, completedModes, archivedSessions, plans, memory, notepad, timestamp: new Date().toISOString() };
+  const stats = computeStats(activeModes, completedModes, archivedSessions);
+
+  return { session, activeTask, activeModes, completedModes, archivedSessions, stats, plans, memory, notepad, timestamp: new Date().toISOString() };
+}
+
+export function computeStats(
+  active: ModeInfo[],
+  completed: ModeInfo[],
+  archived: ArchivedSession[],
+): StatsData {
+  let completeCount = 0;
+  let cancelledCount = 0;
+  let totalDurationMs = 0;
+  let durationCount = 0;
+  let totalEvents = 0;
+
+  for (const m of completed) {
+    if (m.status === "complete") completeCount++;
+    else if (m.status === "cancelled") cancelledCount++;
+    if (m.started_at && m.completed_at) {
+      const d = new Date(m.completed_at).getTime() - new Date(m.started_at).getTime();
+      if (d > 0) { totalDurationMs += d; durationCount++; }
+    }
+    totalEvents += m.recentEvents?.length ?? 0;
+  }
+
+  for (const a of archived) {
+    const mode = a.modes?.[0] as Record<string, unknown> | undefined;
+    const status = mode?.status as string ?? "";
+    if (status === "complete") completeCount++;
+    else if (status === "cancelled") cancelledCount++;
+    if (a.session?.started_at && a.session?.archived_at) {
+      const d = new Date(a.session.archived_at).getTime() - new Date(a.session.started_at).getTime();
+      if (d > 0) { totalDurationMs += d; durationCount++; }
+    }
+    totalEvents += (a as any).events?.length ?? 0;
+  }
+
+  for (const m of active) {
+    totalEvents += m.recentEvents?.length ?? 0;
+  }
+
+  const decided = completeCount + cancelledCount;
+  const successRate = decided > 0 ? Math.round((completeCount / decided) * 100) : 100;
+  const avgDurationMs = durationCount > 0 ? Math.round(totalDurationMs / durationCount) : 0;
+  const totalRuns = active.length + completed.length + archived.length;
+
+  return { successRate, avgDurationMs, totalEvents, totalRuns };
 }
 
 function broadcast(): void {

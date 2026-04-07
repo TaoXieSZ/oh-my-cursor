@@ -1,6 +1,6 @@
 export function getHTML(): string {
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -53,7 +53,7 @@ main{max-width:1400px;margin:0 auto;padding:24px 32px 64px}
 .stat-value.archived{color:var(--purple)}
 
 /* Active session cards grid */
-.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:16px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
 
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
   padding:20px;transition:border-color .2s,box-shadow .2s}
@@ -155,6 +155,63 @@ main{max-width:1400px;margin:0 auto;padding:24px 32px 64px}
 .toast.show{transform:translateX(-50%) translateY(0)}
 .toast .toast-sub{font-size:0.7rem;color:var(--text2);margin-top:2px}
 
+/* Light theme */
+[data-theme="light"]{
+  --bg:#f5f5f7;--surface:#ffffff;--surface2:#f0f0f2;--surface3:#e8e8ec;--border:#d4d4d8;--border2:#a1a1aa;
+  --text:#18181b;--text2:#52525b;--text3:#a1a1aa;
+  --orange:#ea580c;--orange-dim:#ea580c1a;--blue:#2563eb;--blue-dim:#2563eb1a;
+  --green:#16a34a;--green-dim:#16a34a1a;--purple:#7c3aed;--purple-dim:#7c3aed1a;
+  --red:#dc2626;--red-dim:#dc26261a;--yellow:#ca8a04;--yellow-dim:#ca8a041a;
+}
+[data-theme="light"] body{background-image:radial-gradient(circle at 50% 0%,#e8e0f0 0%,transparent 50%)}
+[data-theme="light"] header{background:#f5f5f7ee}
+[data-theme="light"] .plan-header:hover{background:#e8e8ec}
+[data-theme="light"] .toast{box-shadow:0 8px 32px rgba(0,0,0,.12)}
+
+/* Theme toggle */
+.theme-toggle{background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;
+  cursor:pointer;color:var(--text2);display:flex;align-items:center;gap:4px;font-size:0.7rem;
+  transition:all .15s;font-family:var(--font-mono)}
+.theme-toggle:hover{border-color:var(--blue);color:var(--blue)}
+.theme-toggle svg{width:14px;height:14px}
+
+/* Stats donut */
+.stat-donut{position:relative;width:40px;height:40px;border-radius:50%;display:inline-block;vertical-align:middle;margin-right:8px}
+.stat-donut-inner{position:absolute;inset:8px;border-radius:50%;background:var(--surface);display:flex;align-items:center;
+  justify-content:center;font-family:var(--font-mono);font-size:0.6rem;font-weight:700;color:var(--text)}
+.stat-with-donut{display:flex;align-items:center}
+
+/* Phase duration bar */
+.phase-bar{display:flex;height:6px;border-radius:3px;overflow:hidden;margin:8px 0 4px;background:var(--border)}
+.phase-bar-seg{height:100%;min-width:2px;transition:width .4s}
+.phase-bar-legend{display:flex;flex-wrap:wrap;gap:6px;font-size:0.6rem;color:var(--text3);margin-bottom:6px}
+.phase-bar-legend span{display:flex;align-items:center;gap:3px}
+.phase-bar-legend .dot{width:6px;height:6px;border-radius:50%;display:inline-block}
+
+/* Event filter pills */
+.event-filters{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
+.filter-pill{font-family:var(--font-mono);font-size:0.58rem;padding:2px 7px;border-radius:99px;border:1px solid var(--border);
+  background:transparent;color:var(--text3);cursor:pointer;transition:all .15s}
+.filter-pill:hover{border-color:var(--text2);color:var(--text2)}
+.filter-pill.active{border-color:var(--blue);color:var(--blue);background:var(--blue-dim)}
+
+/* Responsive */
+@media(max-width:768px){
+  main{padding:16px}
+  header{padding:12px 16px}
+  .stats{gap:8px}
+  .stat{min-width:100px;padding:8px 12px}
+  .stat-value{font-size:1rem}
+  .cards{grid-template-columns:1fr}
+  .columns{grid-template-columns:1fr}
+}
+@media(max-width:480px){
+  .stats{flex-direction:column}
+  .stat{min-width:auto}
+  .card{padding:14px}
+  .section-header{margin-top:20px}
+}
+
 /* Plan cards */
 .plan-card{background:var(--surface2);border-radius:var(--radius-sm);margin-bottom:10px;overflow:hidden;
   border:1px solid transparent;transition:border-color .2s}
@@ -205,6 +262,10 @@ footer a:hover{text-decoration:underline}
   </div>
   <div class="header-right">
     <div class="session-id" id="session-id"></div>
+    <button class="theme-toggle" id="theme-toggle" title="Toggle theme">
+      <svg id="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      <svg id="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
     <div class="live"><span class="dot"></span>Live</div>
   </div>
 </header>
@@ -314,15 +375,67 @@ footer a:hover{text-decoration:underline}
     return '<button class="chat-link" onclick="window._openChat(\\'' + esc(chatId) + '\\', event)" title="Copy Chat ID to find in Cursor">' + CHAT_ICON + '<span>' + esc(chatId.slice(0,8)) + '</span></button>';
   }
 
+  var PHASE_COLORS = ['var(--blue)', 'var(--orange)', 'var(--green)', 'var(--purple)', 'var(--yellow)', 'var(--red)'];
+
+  function renderPhaseBar(events) {
+    if (!events || events.length === 0) return '';
+    var phases = [];
+    var currentPhase = null;
+    var currentStart = null;
+    events.forEach(function(ev) {
+      if (ev.kind === 'phase' && ev.summary) {
+        if (currentPhase && currentStart) {
+          phases.push({ name: currentPhase, durationMs: new Date(ev.ts).getTime() - new Date(currentStart).getTime() });
+        }
+        var match = ev.summary.match(/\\u{2192}\\s*(.+)/);
+        currentPhase = match ? match[1] : ev.summary;
+        currentStart = ev.ts;
+      }
+    });
+    if (currentPhase && currentStart) {
+      phases.push({ name: currentPhase, durationMs: Date.now() - new Date(currentStart).getTime() });
+    }
+    if (phases.length === 0) return '';
+    var total = phases.reduce(function(s, p) { return s + p.durationMs; }, 0);
+    if (total <= 0) return '';
+
+    var html = '<div class="phase-bar">';
+    phases.forEach(function(p, i) {
+      var w = Math.max(2, (p.durationMs / total) * 100);
+      html += '<div class="phase-bar-seg" style="width:' + w + '%;background:' + PHASE_COLORS[i % PHASE_COLORS.length] + '" title="' + esc(p.name) + ': ' + formatDuration(p.durationMs) + '"></div>';
+    });
+    html += '</div>';
+    html += '<div class="phase-bar-legend">';
+    phases.forEach(function(p, i) {
+      html += '<span><span class="dot" style="background:' + PHASE_COLORS[i % PHASE_COLORS.length] + '"></span>' + esc(p.name) + ' ' + formatDuration(p.durationMs) + '</span>';
+    });
+    html += '</div>';
+    return html;
+  }
+
   function renderTimeline(events, id) {
     if (!events || events.length === 0) return '';
+    var kinds = {};
+    events.forEach(function(ev) { kinds[ev.kind] = true; });
+    var kindList = Object.keys(kinds);
+
     var html = '<div class="timeline">';
     html += '<div class="timeline-toggle" onclick="this.classList.toggle(\\'open\\');document.getElementById(\\'' + id + '-tl\\').classList.toggle(\\'open\\')">';
     html += '<span class="arrow">\\u{25B6}</span> Timeline (' + events.length + ')';
     html += '</div>';
     html += '<div class="tl-list" id="' + id + '-tl">';
+
+    if (kindList.length > 1) {
+      html += '<div class="event-filters" id="' + id + '-filters">';
+      html += '<button class="filter-pill active" onclick="window._filterEvents(\\'' + id + '\\', \\'all\\', this)">all</button>';
+      kindList.forEach(function(k) {
+        html += '<button class="filter-pill" onclick="window._filterEvents(\\'' + id + '\\', \\'' + esc(k) + '\\', this)">' + esc(k) + '</button>';
+      });
+      html += '</div>';
+    }
+
     events.slice().reverse().forEach(function(ev) {
-      html += '<div class="tl-event ' + esc(ev.kind) + '">';
+      html += '<div class="tl-event ' + esc(ev.kind) + '" data-kind="' + esc(ev.kind) + '">';
       html += '<span class="tl-time">' + timeAgo(ev.ts) + '</span>';
       html += '<span class="tl-kind">' + esc(ev.kind) + '</span>';
       html += '<span class="tl-summary">' + esc(ev.summary) + '</span>';
@@ -331,6 +444,25 @@ footer a:hover{text-decoration:underline}
     html += '</div></div>';
     return html;
   }
+
+  window._filterEvents = function(tlId, kind, btn) {
+    var container = document.getElementById(tlId + '-tl');
+    if (!container) return;
+    var filters = document.getElementById(tlId + '-filters');
+    if (filters) {
+      var pills = filters.querySelectorAll('.filter-pill');
+      for (var i = 0; i < pills.length; i++) pills[i].classList.remove('active');
+      btn.classList.add('active');
+    }
+    var items = container.querySelectorAll('.tl-event');
+    for (var j = 0; j < items.length; j++) {
+      if (kind === 'all' || items[j].dataset.kind === kind) {
+        items[j].style.display = '';
+      } else {
+        items[j].style.display = 'none';
+      }
+    }
+  };
 
   var eventCache = {};
   function fetchAndRenderTimeline(runId, containerId) {
@@ -355,15 +487,31 @@ footer a:hover{text-decoration:underline}
     return 'default';
   }
 
+  function formatDuration(ms) {
+    if (!ms || ms <= 0) return '\\u{2014}';
+    var s = Math.floor(ms / 1000);
+    if (s < 60) return s + 's';
+    if (s < 3600) return Math.floor(s/60) + 'm';
+    return Math.floor(s/3600) + 'h ' + Math.floor((s%3600)/60) + 'm';
+  }
+
   function renderStats(state) {
     var el = document.getElementById('stats-bar');
+    var st = state.stats || { successRate:100, avgDurationMs:0, totalEvents:0, totalRuns:0 };
     var html = '<div class="stats">';
     html += '<div class="stat"><div class="stat-label">Active</div><div class="stat-value active">' + state.activeModes.length + '</div></div>';
-    html += '<div class="stat"><div class="stat-label">Completed</div><div class="stat-value completed">' + state.completedModes.length + '</div></div>';
-    html += '<div class="stat"><div class="stat-label">Archived</div><div class="stat-value archived">' + state.archivedSessions.length + '</div></div>';
+    html += '<div class="stat"><div class="stat-label">Total Runs</div><div class="stat-value">' + st.totalRuns + '</div></div>';
+
+    var pct = st.successRate;
+    html += '<div class="stat"><div class="stat-label">Success Rate</div><div class="stat-with-donut">';
+    html += '<div class="stat-donut" style="background:conic-gradient(var(--green) 0% ' + pct + '%, var(--red) ' + pct + '% 100%)"><div class="stat-donut-inner">' + pct + '%</div></div>';
+    html += '</div></div>';
+
+    html += '<div class="stat"><div class="stat-label">Avg Duration</div><div class="stat-value" style="font-size:1rem">' + formatDuration(st.avgDurationMs) + '</div></div>';
+    html += '<div class="stat"><div class="stat-label">Events</div><div class="stat-value" style="color:var(--blue)">' + st.totalEvents + '</div></div>';
 
     var activeTask = state.activeTask || 'No active task';
-    html += '<div class="stat" style="flex:3"><div class="stat-label">Current Focus</div><div class="stat-value" style="font-size:0.95rem;color:' + (state.activeTask ? 'var(--orange)' : 'var(--text3)') + '">' + esc(activeTask) + '</div></div>';
+    html += '<div class="stat" style="flex:2"><div class="stat-label">Current Focus</div><div class="stat-value" style="font-size:0.9rem;color:' + (state.activeTask ? 'var(--orange)' : 'var(--text3)') + '">' + esc(activeTask) + '</div></div>';
     html += '</div>';
     el.innerHTML = html;
   }
@@ -403,6 +551,7 @@ footer a:hover{text-decoration:underline}
       if (chatId) html += chatLinkHtml(chatId);
       html += '<div class="card-progress"><div class="card-progress-fill" style="width:' + pct + '%"></div></div>';
       if (m.recentEvents && m.recentEvents.length > 0) {
+        html += renderPhaseBar(m.recentEvents);
         html += renderTimeline(m.recentEvents, 'card-' + (m.runId || i));
       }
       html += '</div>';
@@ -563,6 +712,23 @@ footer a:hover{text-decoration:underline}
     renderMemory(state);
     renderNotepad(state);
     document.getElementById('updated-at').textContent = 'Updated ' + new Date(state.timestamp).toLocaleTimeString();
+  }
+
+  // Theme toggle
+  (function initTheme() {
+    var saved = localStorage.getItem('omc-theme') || 'dark';
+    document.documentElement.dataset.theme = saved;
+    updateThemeIcon(saved);
+    document.getElementById('theme-toggle').addEventListener('click', function() {
+      var cur = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+      document.documentElement.dataset.theme = cur;
+      localStorage.setItem('omc-theme', cur);
+      updateThemeIcon(cur);
+    });
+  })();
+  function updateThemeIcon(theme) {
+    document.getElementById('theme-icon-sun').style.display = theme === 'dark' ? 'none' : 'block';
+    document.getElementById('theme-icon-moon').style.display = theme === 'dark' ? 'block' : 'none';
   }
 
   fetch('/api/state').then(function(r){return r.json();}).then(render);
