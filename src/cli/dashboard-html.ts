@@ -234,7 +234,39 @@ main{max-width:1400px;margin:0 auto;padding:24px 32px 64px}
 .plan-content{font-family:var(--font-mono);font-size:0.75rem;color:var(--text2);white-space:pre-wrap;line-height:1.6;
   background:var(--bg);border-radius:6px;padding:12px;border:1px solid var(--border)}
 
-/* Memory table */
+/* Memory panel */
+.mem-search{width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);
+  color:var(--text);font-family:var(--font-mono);font-size:0.75rem;margin-bottom:10px;outline:none}
+.mem-search:focus{border-color:var(--purple)}
+.mem-search::placeholder{color:var(--text3)}
+.mem-group{margin-bottom:8px}
+.mem-group-header{display:flex;align-items:center;gap:6px;padding:4px 0;cursor:pointer;user-select:none}
+.mem-group-header:hover{color:var(--text)}
+.mem-group-arrow{font-size:0.6rem;color:var(--text3);transition:transform .2s}
+.mem-group.open .mem-group-arrow{transform:rotate(90deg)}
+.mem-group-name{font-family:var(--font-mono);font-size:0.7rem;font-weight:600;color:var(--purple);text-transform:uppercase;letter-spacing:0.04em}
+.mem-group-count{font-family:var(--font-mono);font-size:0.6rem;color:var(--text3);background:var(--surface2);padding:1px 6px;border-radius:99px}
+.mem-group-body{display:none;padding-left:12px}
+.mem-group.open .mem-group-body{display:block}
+.mem-key{padding:4px 0;border-bottom:1px solid var(--border)}
+.mem-key:last-child{border-bottom:none}
+.mem-key-header{display:flex;align-items:center;gap:6px;font-size:0.75rem;cursor:pointer}
+.mem-key-name{font-family:var(--font-mono);color:var(--text);font-weight:500}
+.mem-key-preview{font-family:var(--font-mono);font-size:0.68rem;color:var(--text3);overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;max-width:200px;flex:1}
+.mem-key-badges{display:flex;gap:3px;flex-shrink:0}
+.mem-run-badge{font-family:var(--font-mono);font-size:0.55rem;padding:1px 5px;border-radius:3px;
+  background:var(--purple-dim);color:var(--purple);white-space:nowrap}
+.mem-run-badge.set{background:var(--green-dim);color:var(--green)}
+.mem-run-badge.delete{background:var(--red-dim);color:var(--red)}
+.mem-key-value{display:none;margin:4px 0 4px 8px;padding:8px;background:var(--bg);border:1px solid var(--border);
+  border-radius:6px;font-family:var(--font-mono);font-size:0.72rem;color:var(--text2);white-space:pre-wrap;
+  line-height:1.5;max-height:200px;overflow-y:auto}
+.mem-key.open .mem-key-value{display:block}
+.mem-key-pill{font-family:var(--font-mono);font-size:0.58rem;padding:1px 6px;border-radius:99px;
+  background:var(--purple-dim);color:var(--purple);display:inline-flex;align-items:center;gap:2px}
+
+/* Legacy table fallback */
 .mem-table{width:100%;font-size:0.78rem}
 .mem-table td{padding:5px 0;border-bottom:1px solid var(--border)}
 .mem-table td:first-child{font-family:var(--font-mono);color:var(--purple);padding-right:14px;white-space:nowrap}
@@ -549,6 +581,13 @@ footer a:hover{text-decoration:underline}
       html += '</div>';
       var chatId = m.chatId || (m.metadata && m.metadata.chatId);
       if (chatId) html += chatLinkHtml(chatId);
+      if (m.memoryKeysModified && m.memoryKeysModified.length > 0) {
+        html += '<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px">';
+        m.memoryKeysModified.forEach(function(mk) {
+          html += '<span class="mem-key-pill" title="Memory key modified by this run">' + esc(mk) + '</span>';
+        });
+        html += '</div>';
+      }
       html += '<div class="card-progress"><div class="card-progress-fill" style="width:' + pct + '%"></div></div>';
       if (m.recentEvents && m.recentEvents.length > 0) {
         html += renderPhaseBar(m.recentEvents);
@@ -602,6 +641,19 @@ footer a:hover{text-decoration:underline}
       html += '</div>';
       html += '<div class="history-detail" id="' + id + '">';
       html += '<div id="' + id + '-events"></div>';
+      if (item.runId && state.memoryIndex) {
+        var memKeys = Object.keys(state.memoryIndex).filter(function(k) {
+          return state.memoryIndex[k].some(function(e) { return e.runId === item.runId; });
+        });
+        if (memKeys.length > 0) {
+          html += '<div style="margin:6px 0;display:flex;flex-wrap:wrap;gap:3px;align-items:center">';
+          html += '<span style="font-size:0.65rem;color:var(--text3);margin-right:4px">Memory:</span>';
+          memKeys.forEach(function(mk) {
+            html += '<span class="mem-key-pill">' + esc(mk) + '</span>';
+          });
+          html += '</div>';
+        }
+      }
       html += '<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--text3);font-size:0.7rem">Raw state</summary>';
       html += '<pre style="margin-top:4px">' + esc(JSON.stringify(item.data, null, 2)) + '</pre></details>';
       html += '</div>';
@@ -676,16 +728,97 @@ footer a:hover{text-decoration:underline}
     }
   };
 
+  function groupMemoryKeys(keys) {
+    var groups = {};
+    keys.forEach(function(k) {
+      var dot = k.indexOf('.');
+      var slash = k.indexOf('/');
+      var sep = -1;
+      if (dot > 0 && (slash < 0 || dot < slash)) sep = dot;
+      else if (slash > 0) sep = slash;
+      var group = sep > 0 ? k.slice(0, sep) : '_ungrouped';
+      if (!groups[group]) groups[group] = [];
+      groups[group].push(k);
+    });
+    return groups;
+  }
+
+  function memValuePreview(val) {
+    var s = typeof val === 'string' ? val : JSON.stringify(val);
+    return s.length > 60 ? s.slice(0, 60) + '...' : s;
+  }
+
+  function memRunBadges(key, index) {
+    if (!index || !index[key]) return '';
+    var entries = index[key].slice(-5);
+    var html = '';
+    entries.forEach(function(e) {
+      var label = e.runId ? (e.mode ? e.mode + ':' : '') + (e.runId || '').slice(0,6) : 'manual';
+      html += '<span class="mem-run-badge ' + esc(e.action) + '" title="' + esc(e.action + ' at ' + e.ts) + '">' + esc(label) + '</span>';
+    });
+    return html;
+  }
+
+  window._toggleMemGroup = function(id) {
+    var el = document.getElementById(id);
+    if (el) el.classList.toggle('open');
+  };
+
+  window._toggleMemKey = function(id) {
+    var el = document.getElementById(id);
+    if (el) el.classList.toggle('open');
+  };
+
+  window._filterMemory = function(query) {
+    var items = document.querySelectorAll('.mem-key');
+    var groups = document.querySelectorAll('.mem-group');
+    query = query.toLowerCase();
+    for (var i = 0; i < items.length; i++) {
+      var name = items[i].dataset.key || '';
+      items[i].style.display = name.toLowerCase().indexOf(query) >= 0 ? '' : 'none';
+    }
+    for (var j = 0; j < groups.length; j++) {
+      var visible = groups[j].querySelectorAll('.mem-key:not([style*="display: none"])');
+      groups[j].style.display = visible.length > 0 ? '' : 'none';
+      if (query && visible.length > 0) groups[j].classList.add('open');
+    }
+  };
+
   function renderMemory(state) {
     var el = document.getElementById('memory-body');
     var keys = Object.keys(state.memory);
     if (keys.length === 0) { el.innerHTML = '<div class="empty">Empty.</div>'; return; }
-    var html = '<table class="mem-table">';
-    keys.forEach(function(k) {
-      var v = typeof state.memory[k] === 'string' ? state.memory[k] : JSON.stringify(state.memory[k]);
-      html += '<tr><td>' + esc(k) + '</td><td>' + esc(v) + '</td></tr>';
+
+    var html = '<input class="mem-search" placeholder="Search keys... (' + keys.length + ' total)" oninput="window._filterMemory(this.value)">';
+    var groups = groupMemoryKeys(keys);
+    var groupNames = Object.keys(groups).sort();
+
+    groupNames.forEach(function(gName, gi) {
+      var gKeys = groups[gName].sort();
+      var gId = 'mg-' + gi;
+      html += '<div class="mem-group open" id="' + gId + '">';
+      html += '<div class="mem-group-header" onclick="window._toggleMemGroup(\\'' + gId + '\\')">';
+      html += '<span class="mem-group-arrow">\\u{25B6}</span>';
+      html += '<span class="mem-group-name">' + esc(gName === '_ungrouped' ? 'General' : gName) + '</span>';
+      html += '<span class="mem-group-count">' + gKeys.length + '</span>';
+      html += '</div>';
+      html += '<div class="mem-group-body">';
+      gKeys.forEach(function(k, ki) {
+        var kId = 'mk-' + gi + '-' + ki;
+        var val = state.memory[k];
+        var formatted = typeof val === 'string' ? val : JSON.stringify(val, null, 2);
+        html += '<div class="mem-key" id="' + kId + '" data-key="' + esc(k) + '">';
+        html += '<div class="mem-key-header" onclick="window._toggleMemKey(\\'' + kId + '\\')">';
+        html += '<span class="mem-key-name">' + esc(k) + '</span>';
+        html += '<span class="mem-key-preview">' + esc(memValuePreview(val)) + '</span>';
+        var badges = memRunBadges(k, state.memoryIndex);
+        if (badges) html += '<span class="mem-key-badges">' + badges + '</span>';
+        html += '</div>';
+        html += '<div class="mem-key-value">' + esc(formatted) + '</div>';
+        html += '</div>';
+      });
+      html += '</div></div>';
     });
-    html += '</table>';
     el.innerHTML = html;
   }
 

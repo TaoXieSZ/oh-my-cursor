@@ -15,6 +15,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { ensureDir } from "../utils/fs.js";
 import { getProjectMemoryPath } from "../state/paths.js";
+import { appendMemoryIndex } from "../state/memory-index.js";
 
 const server = new Server(
   { name: "omc-memory", version: "0.1.0" },
@@ -60,6 +61,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         properties: {
           key: { type: "string", description: "Memory key to write" },
           value: { description: "Value to store (any JSON-serializable value)" },
+          runId: { type: "string", description: "Optional workflow run ID for tracking which run set this key" },
+          mode: { type: "string", description: "Optional workflow mode name (forge, blueprint, etc.)" },
         },
         required: ["key", "value"],
       },
@@ -71,6 +74,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         type: "object" as const,
         properties: {
           key: { type: "string", description: "Memory key to delete" },
+          runId: { type: "string", description: "Optional workflow run ID for tracking" },
+          mode: { type: "string", description: "Optional workflow mode name" },
         },
         required: ["key"],
       },
@@ -102,18 +107,24 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     }
 
     case "memory_set": {
-      const { key, value } = args as { key: string; value: unknown };
+      const { key, value, runId, mode } = args as { key: string; value: unknown; runId?: string; mode?: string };
       const memory = loadMemory();
       memory[key] = value;
       saveMemory(memory);
+      try {
+        appendMemoryIndex(key, { runId: runId ?? null, mode: mode ?? null, action: "set", ts: new Date().toISOString() });
+      } catch { /* best-effort */ }
       return { content: [{ type: "text", text: `Stored: ${key}` }] };
     }
 
     case "memory_delete": {
-      const key = (args as { key: string }).key;
+      const { key, runId, mode } = args as { key: string; runId?: string; mode?: string };
       const memory = loadMemory();
       delete memory[key];
       saveMemory(memory);
+      try {
+        appendMemoryIndex(key, { runId: runId ?? null, mode: mode ?? null, action: "delete", ts: new Date().toISOString() });
+      } catch { /* best-effort */ }
       return { content: [{ type: "text", text: `Deleted: ${key}` }] };
     }
 

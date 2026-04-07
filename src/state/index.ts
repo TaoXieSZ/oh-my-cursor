@@ -1,4 +1,4 @@
-export { getProjectRoot, getBaseStateDir, getModeStatePath, listModeStateFiles, getSessionPath, getTeamDir, getWorkerProgressPath, getPlanPath, getLogPath, getEventLogPath, getNotepadPath, getProjectMemoryPath } from "./paths.js";
+export { getProjectRoot, getBaseStateDir, getModeStatePath, listModeStateFiles, getSessionPath, getTeamDir, getWorkerProgressPath, getPlanPath, getLogPath, getEventLogPath, getNotepadPath, getProjectMemoryPath, getMemoryIndexPath } from "./paths.js";
 export { readModeState, writeModeState, startMode, updateMode, completeMode, cancelMode, listActiveModes } from "./mode-state.js";
 export type { ModeState } from "./mode-state.js";
 export { getOrCreateSession, readSession } from "./session.js";
@@ -8,3 +8,5 @@ export type { ArchivedSession } from "./archive.js";
 export { parseStateFilename } from "./mode-state.js";
 export { appendEvent, readEvents, tailEvents } from "./event-log.js";
 export type { RunEvent } from "./event-log.js";
+export { readMemoryIndex, appendMemoryIndex, getKeysForRun, getRunsForKey } from "./memory-index.js";
+export type { MemoryIndexEntry, MemoryIndexMap } from "./memory-index.js";

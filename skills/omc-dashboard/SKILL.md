@@ -97,6 +97,28 @@ Active cards include a **phase duration bar** — a stacked horizontal bar showi
 
 Timeline events support **kind filtering** — click a filter pill (phase/status/iteration/etc.) to show only matching events.
 
+## Memory Visualization
+
+The memory panel replaces the plain key-value table with a structured, searchable display:
+
+- **Grouped by prefix** — keys are grouped by their first segment (split on `.` or `/`). Ungrouped keys appear under "General".
+- **Search filter** — type in the search box to filter keys in real-time.
+- **Expandable values** — click a key to see the full JSON value in a formatted block.
+- **Run badges** — each key shows colored badges indicating which workflow runs touched it (from `memory-index.json`).
+
+### Bidirectional run-key links
+
+- **On active cards**: purple pills below the metadata show which memory keys the current run has modified.
+- **In history details**: expanding a history item shows memory keys modified by that run.
+
+### Data tracking
+
+MCP `memory_set` and `memory_delete` accept optional `runId` and `mode` parameters. When provided, a record is appended to `.omc/memory-index.json` mapping `key → [{runId, mode, action, ts}]`. Index is capped at 20 entries per key.
+
+| Data | Path | Format |
+|------|------|--------|
+| Memory index | `.omc/memory-index.json` | `{ key: [{runId, mode, action, ts, key}] }` |
+
 ## Theme Toggle
 
 Click the sun/moon icon in the header to switch between dark and light themes. Preference is persisted in `localStorage('omc-theme')`.

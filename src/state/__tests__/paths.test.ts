@@ -18,6 +18,7 @@ import {
   getEventLogPath,
   getNotepadPath,
   getProjectMemoryPath,
+  getMemoryIndexPath,
 } from "../paths.js";
 
 describe("getProjectRoot", () => {
@@ -110,6 +111,10 @@ describe("state path helpers", () => {
 
   it("getProjectMemoryPath", () => {
     assert.equal(getProjectMemoryPath(), "/test/project/.omc/project-memory.json");
+  });
+
+  it("getMemoryIndexPath", () => {
+    assert.equal(getMemoryIndexPath(), "/test/project/.omc/memory-index.json");
   });
 });
 

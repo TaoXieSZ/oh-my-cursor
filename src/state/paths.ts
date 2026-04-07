@@ -67,3 +67,7 @@ export function getNotepadPath(): string {
 export function getProjectMemoryPath(): string {
   return join(getBaseStateDir(), "project-memory.json");
 }
+
+export function getMemoryIndexPath(): string {
+  return join(getBaseStateDir(), "memory-index.json");
+}

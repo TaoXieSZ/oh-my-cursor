@@ -297,4 +297,36 @@ describe("omc-memory MCP server", () => {
     const result = await client.callTool({ name: "memory_list", arguments: {} });
     assert.ok(result.content[0].text.includes("(empty)"));
   });
+
+  it("memory_set with runId populates index", async () => {
+    await client.callTool({ name: "memory_set", arguments: { key: "tracked", value: "val1", runId: "run-abc", mode: "forge" } });
+
+    const indexPath = join(tmp, ".omc", "memory-index.json");
+    assert.ok(existsSync(indexPath), "memory-index.json should exist");
+    const index = JSON.parse(readFileSync(indexPath, "utf-8"));
+    assert.ok(index["tracked"], "key 'tracked' should be in index");
+    assert.equal(index["tracked"][0].runId, "run-abc");
+    assert.equal(index["tracked"][0].action, "set");
+    assert.equal(index["tracked"][0].mode, "forge");
+  });
+
+  it("memory_set without runId records null runId", async () => {
+    await client.callTool({ name: "memory_set", arguments: { key: "anon", value: 42 } });
+
+    const indexPath = join(tmp, ".omc", "memory-index.json");
+    assert.ok(existsSync(indexPath));
+    const index = JSON.parse(readFileSync(indexPath, "utf-8"));
+    assert.equal(index["anon"][0].runId, null);
+  });
+
+  it("memory_delete with runId records deletion in index", async () => {
+    await client.callTool({ name: "memory_set", arguments: { key: "temp", value: "x" } });
+    await client.callTool({ name: "memory_delete", arguments: { key: "temp", runId: "run-del" } });
+
+    const indexPath = join(tmp, ".omc", "memory-index.json");
+    const index = JSON.parse(readFileSync(indexPath, "utf-8"));
+    assert.equal(index["temp"].length, 2);
+    assert.equal(index["temp"][1].action, "delete");
+    assert.equal(index["temp"][1].runId, "run-del");
+  });
 });

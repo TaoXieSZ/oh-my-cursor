@@ -11,7 +11,7 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "lint": "tsc --noEmit",
-    "test": "npm run build && node --test dist/utils/__tests__/fs.test.js dist/utils/__tests__/paths.test.js dist/state/__tests__/paths.test.js dist/state/__tests__/mode-state.test.js dist/state/__tests__/session.test.js dist/state/__tests__/archive.test.js dist/state/__tests__/event-log.test.js dist/cli/__tests__/cli.test.js dist/cli/__tests__/dashboard.test.js dist/mcp/__tests__/mcp.test.js dist/notify/__tests__/forge-notify.test.js",
+    "test": "npm run build && node --test dist/utils/__tests__/fs.test.js dist/utils/__tests__/paths.test.js dist/state/__tests__/paths.test.js dist/state/__tests__/mode-state.test.js dist/state/__tests__/session.test.js dist/state/__tests__/archive.test.js dist/state/__tests__/event-log.test.js dist/state/__tests__/memory-index.test.js dist/cli/__tests__/cli.test.js dist/cli/__tests__/dashboard.test.js dist/mcp/__tests__/mcp.test.js dist/notify/__tests__/forge-notify.test.js",
     "test:quick": "node --test dist/utils/__tests__/fs.test.js dist/utils/__tests__/paths.test.js dist/state/__tests__/paths.test.js dist/state/__tests__/mode-state.test.js dist/state/__tests__/session.test.js dist/state/__tests__/archive.test.js dist/cli/__tests__/cli.test.js dist/cli/__tests__/dashboard.test.js dist/mcp/__tests__/mcp.test.js dist/notify/__tests__/forge-notify.test.js",
     "setup": "node dist/cli/omc.js setup",
     "doctor": "node dist/cli/omc.js doctor",

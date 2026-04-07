@@ -311,3 +311,65 @@ describe("computeStats", () => {
     assert.equal(stats.successRate, 50);
   });
 });
+
+describe("memoryIndex in collectState", () => {
+  let tmp: string;
+  const origEnv = process.env["OMC_PROJECT_ROOT"];
+
+  beforeEach(() => {
+    tmp = makeTmpProject();
+    process.env["OMC_PROJECT_ROOT"] = tmp;
+  });
+
+  afterEach(() => {
+    rmSync(tmp, { recursive: true, force: true });
+    if (origEnv !== undefined) process.env["OMC_PROJECT_ROOT"] = origEnv;
+    else delete process.env["OMC_PROJECT_ROOT"];
+  });
+
+  it("collectState includes empty memoryIndex when no index file", () => {
+    const state = collectState();
+    assert.deepEqual(state.memoryIndex, {});
+  });
+
+  it("collectState reads memoryIndex from file", () => {
+    mkdirSync(join(tmp, ".omc"), { recursive: true });
+    const indexData = {
+      "project.name": [{ runId: "r1", mode: "forge", action: "set", ts: "2026-04-07T10:00:00Z", key: "project.name" }],
+    };
+    writeFileSync(join(tmp, ".omc", "memory-index.json"), JSON.stringify(indexData));
+    const state = collectState();
+    assert.ok(state.memoryIndex["project.name"]);
+    assert.equal(state.memoryIndex["project.name"]!.length, 1);
+  });
+
+  it("derives memoryKeysModified for active modes", () => {
+    const stateDir = join(tmp, ".omc", "state");
+    mkdirSync(stateDir, { recursive: true });
+    writeFileSync(join(stateDir, "forge-run123-state.json"), JSON.stringify({
+      mode: "forge", runId: "run123", status: "active",
+      started_at: "2026-04-07T10:00:00Z", task: "Test",
+    }));
+    const indexData = {
+      "config.theme": [{ runId: "run123", mode: "forge", action: "set", ts: "2026-04-07T10:00:00Z", key: "config.theme" }],
+      "unrelated": [{ runId: "other", mode: "forge", action: "set", ts: "2026-04-07T10:00:00Z", key: "unrelated" }],
+    };
+    writeFileSync(join(tmp, ".omc", "memory-index.json"), JSON.stringify(indexData));
+
+    const state = collectState();
+    assert.equal(state.activeModes.length, 1);
+    assert.deepEqual(state.activeModes[0].memoryKeysModified, ["config.theme"]);
+  });
+
+  it("memoryKeysModified is undefined when no index match", () => {
+    const stateDir = join(tmp, ".omc", "state");
+    mkdirSync(stateDir, { recursive: true });
+    writeFileSync(join(stateDir, "forge-run999-state.json"), JSON.stringify({
+      mode: "forge", runId: "run999", status: "active",
+      started_at: "2026-04-07T10:00:00Z",
+    }));
+
+    const state = collectState();
+    assert.equal(state.activeModes[0].memoryKeysModified, undefined);
+  });
+});

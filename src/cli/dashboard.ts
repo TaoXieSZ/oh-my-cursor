@@ -8,9 +8,12 @@ import {
   getSessionPath,
   getNotepadPath,
   getProjectMemoryPath,
+  getMemoryIndexPath,
   listModeStateFiles,
 } from "../state/paths.js";
 import { parseStateFilename } from "../state/mode-state.js";
+import { readMemoryIndex, getKeysForRun } from "../state/memory-index.js";
+import type { MemoryIndexMap } from "../state/memory-index.js";
 import * as log from "../utils/log.js";
 import { getHTML } from "./dashboard-html.js";
 import { isSessionStale, archiveCurrentSession, listArchives } from "../state/archive.js";
@@ -39,6 +42,7 @@ export interface ModeInfo {
   task?: string;
   metadata?: Record<string, unknown>;
   recentEvents?: RunEvent[];
+  memoryKeysModified?: string[];
 }
 
 export interface StatsData {
@@ -57,6 +61,7 @@ export interface DashboardState {
   stats: StatsData;
   plans: PlanInfo[];
   memory: Record<string, unknown>;
+  memoryIndex: MemoryIndexMap;
   notepad: string;
   timestamp: string;
 }
@@ -119,6 +124,22 @@ export function collectState(): DashboardState {
     try { memory = JSON.parse(readFileSync(memPath, "utf-8")); } catch { /* skip */ }
   }
 
+  let memoryIndex: MemoryIndexMap = {};
+  try { memoryIndex = readMemoryIndex(); } catch { /* skip */ }
+
+  for (const m of activeModes) {
+    if (m.runId) {
+      const keys = getKeysForRun(m.runId);
+      if (keys.length > 0) m.memoryKeysModified = keys;
+    }
+  }
+  for (const m of completedModes) {
+    if (m.runId) {
+      const keys = getKeysForRun(m.runId);
+      if (keys.length > 0) m.memoryKeysModified = keys;
+    }
+  }
+
   let notepad = "";
   const notepadPath = getNotepadPath();
   if (existsSync(notepadPath)) {
@@ -133,7 +154,7 @@ export function collectState(): DashboardState {
 
   const stats = computeStats(activeModes, completedModes, archivedSessions);
 
-  return { session, activeTask, activeModes, completedModes, archivedSessions, stats, plans, memory, notepad, timestamp: new Date().toISOString() };
+  return { session, activeTask, activeModes, completedModes, archivedSessions, stats, plans, memory, memoryIndex, notepad, timestamp: new Date().toISOString() };
 }
 
 export function computeStats(
