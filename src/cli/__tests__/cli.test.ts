@@ -172,6 +172,23 @@ describe("omc status", () => {
   });
 });
 
+describe("omc skills", () => {
+  it("lists installed skills from package dir", () => {
+    const { stdout, exitCode } = run(["skills"]);
+    assert.equal(exitCode, 0);
+    assert.ok(stdout.includes("OMC Skills"));
+    const expected = [
+      "analyze", "autopilot", "blueprint", "cancel", "code-review",
+      "dashboard", "deep-interview", "ecomode", "forge", "plan",
+      "tdd", "team", "web-clone",
+    ];
+    for (const name of expected) {
+      assert.ok(stdout.includes(`/${name}`), `Missing skill: /${name}`);
+    }
+    assert.ok(stdout.includes("skills available"));
+  });
+});
+
 describe("omc setup --scope invalid", () => {
   it("exits with error for invalid scope", () => {
     const { exitCode } = run(["setup", "--scope", "invalid"]);

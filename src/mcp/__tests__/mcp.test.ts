@@ -61,13 +61,14 @@ describe("omc-state MCP server", () => {
   });
 
   it("state_write + state_read roundtrip", async () => {
-    await client.callTool({
+    const writeResult = await client.callTool({
       name: "state_write",
       arguments: {
         mode: "forge",
         state: { mode: "forge", status: "active", task: "test" },
       },
     });
+    assert.ok(writeResult.content[0].text.includes("runId:"));
 
     const result = await client.callTool({
       name: "state_read",
@@ -77,6 +78,54 @@ describe("omc-state MCP server", () => {
     const state = JSON.parse(result.content[0].text);
     assert.equal(state.mode, "forge");
     assert.equal(state.status, "active");
+    assert.ok(state.runId);
+  });
+
+  it("state_write auto-generates runId for new runs", async () => {
+    await client.callTool({
+      name: "state_write",
+      arguments: { mode: "forge", state: { status: "active", task: "run1" } },
+    });
+    const result = await client.callTool({
+      name: "state_read",
+      arguments: { mode: "forge" },
+    });
+    const state = JSON.parse(result.content[0].text);
+    assert.ok(state.runId);
+    assert.equal(state.runId.length, 8);
+  });
+
+  it("state_write updates existing active run when no runId given", async () => {
+    await client.callTool({
+      name: "state_write",
+      arguments: { mode: "forge", state: { status: "active", task: "run1", phase: "init" } },
+    });
+    const first = JSON.parse((await client.callTool({
+      name: "state_read", arguments: { mode: "forge" },
+    })).content[0].text);
+
+    await client.callTool({
+      name: "state_write",
+      arguments: { mode: "forge", state: { status: "active", task: "run1", phase: "verify" } },
+    });
+    const second = JSON.parse((await client.callTool({
+      name: "state_read", arguments: { mode: "forge" },
+    })).content[0].text);
+
+    assert.equal(first.runId, second.runId);
+    assert.equal(second.phase, "verify");
+  });
+
+  it("state_write with explicit runId uses that runId", async () => {
+    await client.callTool({
+      name: "state_write",
+      arguments: { mode: "forge", state: { status: "active", runId: "deadbeef", task: "specific" } },
+    });
+    const result = await client.callTool({
+      name: "state_read", arguments: { mode: "forge", runId: "deadbeef" },
+    });
+    const state = JSON.parse(result.content[0].text);
+    assert.equal(state.runId, "deadbeef");
   });
 
   it("state_read returns message for missing mode", async () => {
@@ -87,15 +136,19 @@ describe("omc-state MCP server", () => {
     assert.ok(result.content[0].text.includes("No state found"));
   });
 
-  it("state_list shows written states", async () => {
+  it("state_list shows written states with summary", async () => {
     await client.callTool({
       name: "state_write",
-      arguments: { mode: "forge", state: { status: "active" } },
+      arguments: { mode: "forge", state: { status: "active", task: "test" } },
     });
 
     const result = await client.callTool({ name: "state_list", arguments: {} });
-    const files = JSON.parse(result.content[0].text);
-    assert.ok(files.includes("forge-state.json"));
+    const summaries = JSON.parse(result.content[0].text);
+    assert.ok(Array.isArray(summaries));
+    assert.equal(summaries.length, 1);
+    assert.equal(summaries[0].mode, "forge");
+    assert.equal(summaries[0].status, "active");
+    assert.ok(summaries[0].runId);
   });
 
   it("plan_write + plan_read + plan_list", async () => {

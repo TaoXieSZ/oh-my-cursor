@@ -18,9 +18,11 @@ Commands:
   setup      Install rules, skills, and MCP servers into Cursor
   doctor     Verify installation health
   status     Show active mode, session, and state
+  skills     List all installed OMC skills
   dashboard  Launch live web dashboard (http://localhost:3721)
   archive    Archive current session to .omc/archive/ and reset state
   archives   List all archived sessions
+  notify     Slack notifications (see subcommands below)
   help       Show this help message
   version    Print version
 
@@ -35,10 +37,18 @@ Examples:
   omc setup --scope project  # Install to current project
   omc doctor                 # Check installation health
   omc status                 # Show current state
+  omc skills                 # List available skills
   omc dashboard              # Launch live web dashboard
   omc dashboard --port 4000  # Custom port
   omc archive                # Archive current session
   omc archives               # List archived sessions
+
+Notify (Slack Incoming Webhooks):
+  omc notify slack [message]   # Test webhook (default message if omitted)
+  omc notify forge             # Push current forge-state.json snapshot to Slack
+
+  Configure URL via OMC_SLACK_WEBHOOK_URL, OMC_FORGE_SLACK_WEBHOOK_URL,
+  or notifications.slack_webhook_url in .omc/omc-config.json
 `.trim();
 
 export async function main(args: string[]): Promise<void> {
@@ -56,6 +66,11 @@ export async function main(args: string[]): Promise<void> {
     case "status":
       await status(options);
       break;
+    case "skills": {
+      const { skills: listSkills } = await import("./skills.js");
+      await listSkills();
+      break;
+    }
     case "dashboard":
       await dashboard({ port: options.port, open: options.open });
       break;
@@ -75,6 +90,57 @@ export async function main(args: string[]): Promise<void> {
         log.info(`${a.session.id.slice(0, 8)}  ${a.session.archived_at.slice(0, 16)}  ${task}  [${modes}]`);
       }
       break;
+    }
+    case "notify": {
+      const sub = args[1];
+      if (sub === "slack") {
+        const { getForgeSlackWebhookUrl } = await import("../notify/config.js");
+        const { postSlackIncomingWebhook } = await import("../notify/slack-webhook.js");
+        const url = getForgeSlackWebhookUrl();
+        if (!url) {
+          log.fail(
+            "No Slack webhook URL. Set OMC_SLACK_WEBHOOK_URL or OMC_FORGE_SLACK_WEBHOOK_URL, or add notifications.slack_webhook_url to .omc/omc-config.json"
+          );
+          process.exit(1);
+        }
+        const msg = args.slice(2).join(" ").trim() || "OMC Slack webhook test";
+        const res = await postSlackIncomingWebhook(url, { text: msg });
+        if (!res.ok) {
+          log.fail(`Slack webhook HTTP ${res.status}`);
+          process.exit(1);
+        }
+        log.ok("Sent to Slack.");
+        break;
+      }
+      if (sub === "forge") {
+        const { getForgeSlackWebhookUrl } = await import("../notify/config.js");
+        const { postSlackIncomingWebhook } = await import("../notify/slack-webhook.js");
+        const { formatForgeSnapshotMessage } = await import("../notify/forge-notify.js");
+        const { readModeState } = await import("../state/mode-state.js");
+        const { getProjectRoot } = await import("../state/paths.js");
+        const url = getForgeSlackWebhookUrl();
+        if (!url) {
+          log.fail(
+            "No Slack webhook URL. Set OMC_SLACK_WEBHOOK_URL or OMC_FORGE_SLACK_WEBHOOK_URL, or add notifications.slack_webhook_url to .omc/omc-config.json"
+          );
+          process.exit(1);
+        }
+        const state = readModeState("forge");
+        if (!state) {
+          log.fail("No forge state at .omc/state/forge-state.json");
+          process.exit(1);
+        }
+        const text = formatForgeSnapshotMessage(state, getProjectRoot());
+        const res = await postSlackIncomingWebhook(url, { text });
+        if (!res.ok) {
+          log.fail(`Slack webhook HTTP ${res.status}`);
+          process.exit(1);
+        }
+        log.ok("Sent forge snapshot to Slack.");
+        break;
+      }
+      log.fail('Use: omc notify slack [message]  or  omc notify forge');
+      process.exit(1);
     }
     case "version":
     case "--version":

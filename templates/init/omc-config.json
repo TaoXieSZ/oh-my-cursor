@@ -15,5 +15,8 @@
   "state": {
     "persist_plans": true,
     "persist_memory": true
+  },
+  "notifications": {
+    "slack_webhook_url": ""
   }
 }

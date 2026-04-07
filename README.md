@@ -40,18 +40,20 @@ omc doctor
 
 ## Recommended workflow
 
-1. **`$deep-interview`** — clarify scope when the request or boundaries are vague
-2. **`$blueprint`** — approve the implementation plan and review tradeoffs
-3. **`$forge`** or **`$team`** — execute with a persistent loop or parallel coordination
+1. **`/deep-interview`** — clarify scope when the request or boundaries are vague
+2. **`/blueprint`** — approve the implementation plan and review tradeoffs
+3. **`/forge`** or **`/team`** — execute with a persistent loop or parallel coordination
 
 ```text
-$deep-interview "clarify the authentication change"
-$blueprint "approve the safest implementation path"
-$forge "carry the approved plan to completion"
-$team 3:executor "execute the approved plan in parallel"
+/deep-interview "clarify the authentication change"
+/blueprint "approve the safest implementation path"
+/forge "carry the approved plan to completion"
+/team 3:executor "execute the approved plan in parallel"
 ```
 
-Use `$team` when the plan has independent parallel lanes. Use `$forge` when one owner should push to completion.
+Use `/team` when the plan has independent parallel lanes. Use `/forge` when one owner should push to completion.
+
+> **Tip**: type `/skills` in Cursor chat to see all available skills. Both `/name` and `$name` work — they are equivalent.
 
 ## What OMC installs
 
@@ -86,14 +88,16 @@ Think of OMC as **better task routing + better workflow + durable state**, not a
 
 ## Skills reference
 
+Type `/skills` in Cursor chat or run `omc skills` in the terminal to see all installed skills.
+
 ### Core workflow
 
 | Skill | Trigger | Purpose |
 |-------|---------|---------|
-| `$deep-interview` | "clarify", "don't assume" | Socratic interview to clarify scope |
-| `$blueprint` | "plan this", "blueprint" | Consensus planning with tradeoff review |
-| `$forge` | "keep going", "don't stop" | Persistent completion loop |
-| `$team` | "team", "parallel" | Multi-agent parallel coordination |
+| `/deep-interview` | "clarify", "don't assume" | Socratic interview to clarify scope |
+| `/blueprint` | "plan this", "blueprint" | Consensus planning with tradeoff review |
+| `/forge` | "keep going", "don't stop" | Persistent completion loop |
+| `/team` | "team", "parallel" | Multi-agent parallel coordination |
 
 ### Advanced
 
@@ -193,13 +197,26 @@ You can also invoke `$dashboard` inside Cursor to render the dashboard as an inl
 ## CLI reference
 
 ```bash
-omc setup [--scope user|project] [--force]   # Install rules, skills, MCP
+omc setup [--scope user|project] [--force]    # Install rules, skills, MCP
 omc doctor [--scope user|project] [--verbose] # Verify installation
 omc status                                    # Show active mode and state
+omc skills                                    # List all installed skills
 omc dashboard [--port <number>]               # Launch live web dashboard
+omc archive                                   # Archive session → .omc/archive/
+omc archives                                  # List archived sessions
+omc notify slack [message]                  # Test Slack webhook (forge-related URL)
+omc notify forge                              # Push forge-state snapshot to Slack
 omc help                                      # Show help
 omc version                                   # Print version
 ```
+
+Run `omc help` for the full command list and notify options.
+
+### Slack notifications (optional)
+
+OMC can post to a [Slack Incoming Webhook](https://api.slack.com/messaging/webhooks) when **forge** workflow state is saved through the OMC state API (including MCP `state_write` for mode `forge`). Configure `OMC_SLACK_WEBHOOK_URL`, `OMC_FORGE_SLACK_WEBHOOK_URL`, or `notifications.slack_webhook_url` in `.omc/omc-config.json`.
+
+**Other modes** (`deep-interview`, `blueprint`, `team`, etc.) **do not** trigger that automatic webhook. To send a manual message or a snapshot of current forge state, use `omc notify slack` or `omc notify forge`. See `skills/omc-forge/SKILL.md` for details.
 
 ## State management
 

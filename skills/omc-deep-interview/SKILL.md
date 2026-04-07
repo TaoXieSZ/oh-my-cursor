@@ -61,6 +61,10 @@ Default: `--standard`
 
 6. **Hand off**: Do NOT start implementation. Suggest the next workflow stage.
 
+## Slack / notifications
+
+`$deep-interview` persists state to `deep-interview-state.json`. **Automatic Slack webhooks are not wired for this mode** — only **forge** state writes (via the OMC state API / MCP) trigger optional Incoming Webhook posts. Use `omc notify slack` to test your webhook, or extend OMC in a future change if you need interview milestones in Slack.
+
 ## State
 
 Write interview progress to `.omc/state/deep-interview-state.json`:

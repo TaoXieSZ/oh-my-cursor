@@ -1,3 +1,9 @@
+---
+name: omc-dashboard
+description: Render an interactive OMC workflow dashboard inside Cursor via Canvas, or launch the standalone web dashboard.
+argument-hint: "[web]"
+---
+
 # omc-dashboard
 
 > Render an interactive OMC workflow dashboard inside Cursor via Canvas, or launch the standalone web dashboard.
@@ -51,10 +57,14 @@ Run `omc dashboard` in a terminal. This starts a local HTTP server (default port
 | Data | Path | Format |
 |------|------|--------|
 | Session | `.omc/state/session.json` | `{ id, started_at }` |
-| Mode states | `.omc/state/{mode}-state.json` | `{ mode, active, phase, iteration, ... }` |
+| Mode states | `.omc/state/{mode}-{runId}-state.json` | `{ mode, runId, status, phase, iteration, task, ... }` |
+| Legacy mode states | `.omc/state/{mode}-state.json` | Backward compat (no runId) |
+| Archives | `.omc/archive/{runId}.json` | `{ runId, session, task, modes }` |
 | Plans | `.omc/plans/*.md` | Markdown files |
 | Memory | `.omc/project-memory.json` | `{ key: value, ... }` |
 | Notepad | `.omc/notepad.md` | Markdown |
+
+Each workflow invocation (forge, blueprint, etc.) creates a unique `runId`. Multiple runs can coexist — the dashboard shows all active runs as separate cards and lists archived runs in the history section.
 
 ## Exit
 

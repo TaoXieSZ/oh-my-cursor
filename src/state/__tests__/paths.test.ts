@@ -1,10 +1,15 @@
 import { describe, it, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
+import { randomUUID } from "node:crypto";
 import {
   getProjectRoot,
   getBaseStateDir,
   getStatePath,
   getModeStatePath,
+  listModeStateFiles,
   getSessionPath,
   getTeamDir,
   getWorkerProgressPath,
@@ -59,8 +64,12 @@ describe("state path helpers", () => {
     assert.equal(getStatePath("foo.json"), "/test/project/.omc/state/foo.json");
   });
 
-  it("getModeStatePath", () => {
+  it("getModeStatePath without runId", () => {
     assert.equal(getModeStatePath("forge"), "/test/project/.omc/state/forge-state.json");
+  });
+
+  it("getModeStatePath with runId", () => {
+    assert.equal(getModeStatePath("forge", "abc12345"), "/test/project/.omc/state/forge-abc12345-state.json");
   });
 
   it("getSessionPath", () => {
@@ -96,5 +105,51 @@ describe("state path helpers", () => {
 
   it("getProjectMemoryPath", () => {
     assert.equal(getProjectMemoryPath(), "/test/project/.omc/project-memory.json");
+  });
+});
+
+describe("listModeStateFiles", () => {
+  let tmp: string;
+  const origEnv = process.env["OMC_PROJECT_ROOT"];
+
+  beforeEach(() => {
+    tmp = join(tmpdir(), `omc-paths-test-${randomUUID()}`);
+    mkdirSync(join(tmp, ".omc", "state"), { recursive: true });
+    process.env["OMC_PROJECT_ROOT"] = tmp;
+  });
+
+  afterEach(() => {
+    rmSync(tmp, { recursive: true, force: true });
+    if (origEnv === undefined) delete process.env["OMC_PROJECT_ROOT"];
+    else process.env["OMC_PROJECT_ROOT"] = origEnv;
+  });
+
+  it("returns empty for no state files", () => {
+    assert.deepEqual(listModeStateFiles(), []);
+  });
+
+  it("returns all state files excluding session.json", () => {
+    const stateDir = join(tmp, ".omc", "state");
+    writeFileSync(join(stateDir, "forge-state.json"), "{}");
+    writeFileSync(join(stateDir, "forge-a1b2c3d4-state.json"), "{}");
+    writeFileSync(join(stateDir, "session.json"), "{}");
+    const files = listModeStateFiles();
+    assert.equal(files.length, 2);
+    assert.ok(!files.includes("session.json"));
+  });
+
+  it("filters by mode", () => {
+    const stateDir = join(tmp, ".omc", "state");
+    writeFileSync(join(stateDir, "forge-state.json"), "{}");
+    writeFileSync(join(stateDir, "forge-a1b2c3d4-state.json"), "{}");
+    writeFileSync(join(stateDir, "blueprint-state.json"), "{}");
+    const files = listModeStateFiles("forge");
+    assert.equal(files.length, 2);
+    assert.ok(files.every(f => f.startsWith("forge")));
+  });
+
+  it("returns empty for nonexistent state dir", () => {
+    rmSync(join(tmp, ".omc", "state"), { recursive: true, force: true });
+    assert.deepEqual(listModeStateFiles(), []);
   });
 });

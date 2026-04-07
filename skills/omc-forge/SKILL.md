@@ -45,12 +45,31 @@ while not done:
        → no: continue loop
 ```
 
+### Slack notifications (optional)
+
+When a Slack Incoming Webhook URL is configured, OMC posts updates when forge state is saved through the OMC state API (including MCP `state_write`).
+
+**Configure (pick one):**
+
+- Environment: `OMC_SLACK_WEBHOOK_URL` or forge-only `OMC_FORGE_SLACK_WEBHOOK_URL`
+- Or in `.omc/omc-config.json`: `notifications.slack_webhook_url`
+
+**Behavior:** notifies on start, status changes (complete / cancelled / blocked), phase changes, task or blocker changes. Pure iteration bumps are skipped unless `OMC_SLACK_FORGE_VERBOSE=1`.
+
+**If you edit `forge-state.json` directly** (not via MCP), webhooks do not run automatically — use `omc notify forge` to push a snapshot to Slack.
+
+**Test webhook:** `omc notify slack "hello from OMC"`
+
 ### Progress tracking
 
-Write to `.omc/state/forge-state.json`:
+State is written to `.omc/state/forge-{runId}-state.json` (each forge invocation gets a unique `runId`). Use MCP `state_write` with mode `"forge"` — the system auto-assigns a `runId` on the first write and reuses it for subsequent updates.
+
 ```json
 {
+  "mode": "forge",
+  "runId": "a1b2c3d4",
   "started_at": "ISO timestamp",
+  "status": "active | complete | blocked | cancelled",
   "task": "task description",
   "plan_file": "prd-{slug}.md",
   "iteration": 5,
@@ -58,7 +77,6 @@ Write to `.omc/state/forge-state.json`:
   "items_completed": 5,
   "current_item": "Implement auth middleware",
   "blockers": [],
-  "status": "active | complete | blocked | cancelled",
   "completed_at": null
 }
 ```

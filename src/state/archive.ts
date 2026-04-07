@@ -1,9 +1,11 @@
 import { existsSync, readFileSync, writeFileSync, readdirSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
-import { getBaseStateDir, getSessionPath } from "./paths.js";
+import { getBaseStateDir, getSessionPath, listModeStateFiles } from "./paths.js";
+import { parseStateFilename } from "./mode-state.js";
 import { ensureDir } from "../utils/fs.js";
 
 export interface ArchivedSession {
+  runId?: string;
   session: { id: string; started_at: string; archived_at: string };
   task: string | null;
   modes: Record<string, unknown>[];
@@ -12,78 +14,89 @@ export interface ArchivedSession {
 const STALE_THRESHOLD_MS = 60 * 60 * 1000; // 1 hour
 
 /**
- * Archive the current session: bundle session + all mode states into
- * .omc/archive/<session-id>.json, then clear .omc/state/.
- * Returns the archive path, or null if nothing to archive.
+ * Archive only completed/cancelled runs. Each non-active run becomes its own
+ * archive file keyed by runId (or a timestamp-based id for legacy files).
+ * Active runs are preserved in state/.
+ * Returns list of archive paths created.
  */
-export function archiveCurrentSession(): string | null {
+export function archiveCompletedRuns(): string[] {
   const stateDir = join(getBaseStateDir(), "state");
   const archiveDir = join(getBaseStateDir(), "archive");
+  if (!existsSync(stateDir)) return [];
 
-  if (!existsSync(stateDir)) return null;
+  const files = listModeStateFiles();
+  const archived: string[] = [];
 
-  const sessionPath = getSessionPath();
-  let session: Record<string, unknown> | null = null;
-  if (existsSync(sessionPath)) {
-    try { session = JSON.parse(readFileSync(sessionPath, "utf-8")); } catch { /* skip */ }
-  }
-
-  const modeFiles = readdirSync(stateDir).filter(f => f.endsWith("-state.json"));
-  if (modeFiles.length === 0 && !session) return null;
-
-  const modes: Record<string, unknown>[] = [];
-  let task: string | null = null;
-  for (const f of modeFiles) {
+  for (const f of files) {
     try {
       const data = JSON.parse(readFileSync(join(stateDir, f), "utf-8"));
-      if (!data.mode) data.mode = f.replace(/-state\.json$/, "");
-      modes.push(data);
-      if (!task) task = data.task ?? data.metadata?.task ?? null;
-    } catch { /* skip corrupt files */ }
+      const isActive = data.active === true || data.status === "active";
+      if (isActive) continue;
+
+      const parsed = parseStateFilename(f);
+      if (!data.mode && parsed) data.mode = parsed.mode;
+
+      const runId = data.runId ?? parsed?.runId ?? new Date().toISOString().replace(/[:.]/g, "-");
+      const archive: ArchivedSession = {
+        runId,
+        session: {
+          id: runId,
+          started_at: data.started_at ?? new Date().toISOString(),
+          archived_at: new Date().toISOString(),
+        },
+        task: data.task ?? data.metadata?.task ?? null,
+        modes: [data],
+      };
+
+      ensureDir(archiveDir);
+      const archivePath = join(archiveDir, `${runId}.json`);
+      writeFileSync(archivePath, JSON.stringify(archive, null, 2) + "\n");
+      unlinkSync(join(stateDir, f));
+      archived.push(archivePath);
+    } catch { /* skip corrupt */ }
   }
 
-  const sessionId = (session?.id as string) ?? new Date().toISOString().replace(/[:.]/g, "-");
-  const archive: ArchivedSession = {
-    session: {
-      id: sessionId,
-      started_at: (session?.started_at as string) ?? modes[0]?.started_at as string ?? new Date().toISOString(),
-      archived_at: new Date().toISOString(),
-    },
-    task,
-    modes,
-  };
+  return archived;
+}
 
-  ensureDir(archiveDir);
-  const archivePath = join(archiveDir, `${sessionId}.json`);
-  writeFileSync(archivePath, JSON.stringify(archive, null, 2) + "\n");
+/**
+ * Archive the current session: bundle completed runs into individual archive
+ * files, preserving any active runs. Clears session.json if no active runs remain.
+ * Returns the first archive path, or null if nothing archived.
+ */
+export function archiveCurrentSession(): string | null {
+  const archived = archiveCompletedRuns();
 
-  // Clean up state/
-  for (const f of modeFiles) {
-    try { unlinkSync(join(stateDir, f)); } catch { /* skip */ }
-  }
-  if (existsSync(sessionPath)) {
-    try { unlinkSync(sessionPath); } catch { /* skip */ }
+  if (archived.length > 0) {
+    const remaining = listModeStateFiles();
+    if (remaining.length === 0) {
+      const sessionPath = getSessionPath();
+      if (existsSync(sessionPath)) {
+        try { unlinkSync(sessionPath); } catch { /* skip */ }
+      }
+    }
   }
 
-  return archivePath;
+  return archived[0] ?? null;
 }
 
 /**
  * Check if the current session is stale:
- * - No active modes, OR
- * - All modes' most recent timestamp is older than threshold
+ * - No active modes AND most recent timestamp is older than threshold
+ * Never considers a session stale while any mode is still active,
+ * since another Cursor window may still be running that mode.
  */
 export function isSessionStale(): boolean {
   const stateDir = join(getBaseStateDir(), "state");
   if (!existsSync(stateDir)) return false;
 
-  const modeFiles = readdirSync(stateDir).filter(f => f.endsWith("-state.json"));
-  if (modeFiles.length === 0) return false;
+  const files = listModeStateFiles();
+  if (files.length === 0) return false;
 
   let hasActive = false;
   let latestTimestamp = 0;
 
-  for (const f of modeFiles) {
+  for (const f of files) {
     try {
       const data = JSON.parse(readFileSync(join(stateDir, f), "utf-8"));
       if (data.active === true || data.status === "active") hasActive = true;
@@ -92,7 +105,7 @@ export function isSessionStale(): boolean {
     } catch { /* skip */ }
   }
 
-  if (!hasActive) return true;
+  if (hasActive) return false;
 
   return (Date.now() - latestTimestamp) > STALE_THRESHOLD_MS;
 }

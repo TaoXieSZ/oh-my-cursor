@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { existsSync, readdirSync } from "node:fs";
 
 export function getProjectRoot(): string {
   return process.env["OMC_PROJECT_ROOT"] ?? process.cwd();
@@ -12,8 +13,26 @@ export function getStatePath(filename: string): string {
   return join(getBaseStateDir(), "state", filename);
 }
 
-export function getModeStatePath(mode: string): string {
+export function getModeStatePath(mode: string, runId?: string): string {
+  if (runId) return getStatePath(`${mode}-${runId}-state.json`);
   return getStatePath(`${mode}-state.json`);
+}
+
+/**
+ * List state files matching a mode (or all modes).
+ * Returns filenames only (not full paths), e.g. ["forge-a1b2c3d4-state.json"].
+ */
+export function listModeStateFiles(mode?: string): string[] {
+  const stateDir = join(getBaseStateDir(), "state");
+  if (!existsSync(stateDir)) return [];
+
+  const files = readdirSync(stateDir).filter(f => f.endsWith("-state.json") && f !== "session.json");
+  if (!mode) return files;
+
+  return files.filter(f => {
+    const prefix = f.replace(/-state\.json$/, "");
+    return prefix === mode || prefix.startsWith(mode + "-");
+  });
 }
 
 export function getSessionPath(): string {

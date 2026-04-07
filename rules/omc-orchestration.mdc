@@ -13,7 +13,38 @@ This rule is the top-level operating contract. Skill-level instructions are narr
 - Proceed automatically on clear, low-risk, reversible next steps; ask only for irreversible or materially branching actions.
 - Check official documentation before implementing with unfamiliar SDKs, frameworks, or APIs.
 
-## Keyword Detection
+## Skill Invocation
+
+### Invocation prefixes
+
+Skills can be invoked with **either** `$` or `/` prefix — they are equivalent:
+
+- `$forge "carry the plan to completion"` = `/forge "carry the plan to completion"`
+- `$deep-interview "clarify scope"` = `/deep-interview "clarify scope"`
+
+### `/skills` — list all available skills
+
+When the user types `/skills` (or `$skills`), respond with this table:
+
+| Command | Trigger keywords | Purpose |
+|---------|-----------------|---------|
+| `/deep-interview` | "clarify", "don't assume" | Socratic interview to clarify scope |
+| `/blueprint` | "plan this", "blueprint" | Consensus planning with tradeoff review |
+| `/forge` | "keep going", "don't stop" | Persistent completion loop |
+| `/team` | "team", "parallel" | Multi-agent parallel coordination |
+| `/analyze` | "analyze", "investigate" | Deep investigation and root cause analysis |
+| `/tdd` | "tdd", "test first" | Test-driven development cycle |
+| `/code-review` | "review code" | Structured code review |
+| `/autopilot` | "build me", "full auto" | Full lifecycle: idea → build → QA |
+| `/web-clone` | "clone site" | Clone a website from URL |
+| `/dashboard` | "dashboard", "show status" | Live workflow dashboard |
+| `/plan` | "plan this" (lightweight) | Lightweight planning |
+| `/ecomode` | "eco", "budget" | Token-efficient mode |
+| `/cancel` | "cancel", "stop" | Cancel active modes |
+
+Also remind the user: type `/skills` any time to see this list again. Both `$name` and `/name` work.
+
+### Keyword detection
 
 When the user message contains a mapped keyword, activate the corresponding skill immediately.
 Do not ask for confirmation.
@@ -35,7 +66,7 @@ Do not ask for confirmation.
 
 Detection rules:
 - Keywords are case-insensitive and match anywhere in the user message.
-- Explicit `$name` invocations take priority over implicit keyword matching.
+- Explicit `$name` or `/name` invocations take priority over implicit keyword matching.
 - If multiple non-explicit keywords match, use the most specific match.
 - The rest of the user message becomes the task description.
 

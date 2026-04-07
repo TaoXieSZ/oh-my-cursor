@@ -10,22 +10,21 @@ export function getHTML(): string {
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#0a0a0f;--surface:#12121a;--surface2:#1a1a26;--border:#2a2a3a;
+  --bg:#0a0a0f;--surface:#12121a;--surface2:#1a1a26;--surface3:#22222e;--border:#2a2a3a;--border2:#3a3a4a;
   --text:#e2e4e9;--text2:#8b8fa3;--text3:#5a5e72;
   --orange:#f97316;--orange-dim:#f9731633;--blue:#58a6ff;--blue-dim:#58a6ff33;
   --green:#3fb950;--green-dim:#3fb95033;--purple:#bc8cff;--purple-dim:#bc8cff33;
-  --red:#f85149;--red-dim:#f8514933;
+  --red:#f85149;--red-dim:#f8514933;--yellow:#d29922;--yellow-dim:#d2992233;
   --font-ui:'Inter',system-ui,-apple-system,sans-serif;
   --font-mono:'JetBrains Mono','Fira Code','SF Mono',monospace;
-  --radius:12px;
+  --radius:12px;--radius-sm:8px;
 }
 html{font-size:15px}
 body{font-family:var(--font-ui);color:var(--text);background:var(--bg);min-height:100vh;line-height:1.5;
   background-image:radial-gradient(circle at 50% 0%,#1a1028 0%,transparent 50%)}
 
-/* Header */
 header{display:flex;align-items:center;gap:16px;padding:16px 32px;border-bottom:1px solid var(--border);
-  position:sticky;top:0;z-index:10;background:var(--bg)ee}
+  position:sticky;top:0;z-index:10;background:var(--bg)ee;backdrop-filter:blur(8px)}
 .logo{font-size:1.1rem;font-weight:700;letter-spacing:-0.02em;display:flex;align-items:center;gap:8px}
 .logo svg{width:24px;height:24px}
 .header-right{margin-left:auto;display:flex;align-items:center;gap:16px}
@@ -34,63 +33,92 @@ header{display:flex;align-items:center;gap:16px;padding:16px 32px;border-bottom:
 .live .dot{width:7px;height:7px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 var(--green)}50%{opacity:.7;box-shadow:0 0 0 5px transparent}}
 
-main{max-width:1200px;margin:0 auto;padding:24px 32px 64px}
+main{max-width:1400px;margin:0 auto;padding:24px 32px 64px}
 
-/* Hero — what am I working on */
-.hero{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px 28px;margin-bottom:20px}
-.hero.has-task{border-color:var(--orange);box-shadow:0 0 40px var(--orange-dim)}
-.hero-task{font-size:1.3rem;font-weight:700;letter-spacing:-0.02em;margin-bottom:8px;display:flex;align-items:center;gap:10px}
-.hero-meta{display:flex;flex-wrap:wrap;gap:16px;font-size:0.78rem;color:var(--text2)}
-.hero-meta .tag{display:flex;align-items:center;gap:5px}
-.hero-meta .tag-val{font-family:var(--font-mono);color:var(--text)}
-.hero-idle{color:var(--text3);font-size:1rem;text-align:center;padding:8px 0}
-.hero-idle code{font-family:var(--font-mono);background:var(--surface2);padding:2px 8px;border-radius:4px;font-size:0.85rem;color:var(--orange)}
+/* Section headers */
+.section-header{display:flex;align-items:center;gap:10px;margin-bottom:16px;margin-top:28px}
+.section-header:first-child{margin-top:0}
+.section-title{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--text3);font-weight:600}
+.section-count{font-family:var(--font-mono);font-size:0.65rem;background:var(--surface2);color:var(--text2);
+  padding:2px 8px;border-radius:99px}
 
-/* Compact pipeline */
-.pipeline{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:24px;padding:12px 0}
-.pip-node{display:flex;flex-direction:column;align-items:center;gap:4px;position:relative;z-index:1}
-.pip-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  font-size:0.7rem;border:2px solid var(--border);background:var(--bg);transition:all .3s}
-.pip-label{font-size:0.62rem;color:var(--text3);font-weight:500}
-.pip-line{width:60px;height:2px;background:var(--border);margin:0 -2px;margin-bottom:18px}
-.pip-node.done .pip-dot{border-color:var(--green);background:var(--green-dim);color:var(--green)}
-.pip-node.done .pip-label{color:var(--green)}
-.pip-node.active .pip-dot{border-color:var(--orange);background:var(--orange-dim);color:var(--orange);
-  box-shadow:0 0 16px var(--orange-dim);animation:glow 2.5s ease-in-out infinite}
-.pip-node.active .pip-label{color:var(--orange);font-weight:600}
-@keyframes glow{0%,100%{box-shadow:0 0 16px var(--orange-dim)}50%{box-shadow:0 0 28px var(--orange-dim)}}
+/* Stats bar */
+.stats{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:12px 18px;display:flex;flex-direction:column;gap:2px;min-width:140px;flex:1}
+.stat-label{font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-weight:500}
+.stat-value{font-family:var(--font-mono);font-size:1.3rem;font-weight:700;letter-spacing:-0.02em}
+.stat-value.active{color:var(--orange)}
+.stat-value.completed{color:var(--green)}
+.stat-value.archived{color:var(--purple)}
+
+/* Active session cards grid */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:16px}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:20px;transition:border-color .2s,box-shadow .2s}
+.card:hover{border-color:var(--border2)}
+.card.active-card{border-color:var(--orange);box-shadow:0 0 30px var(--orange-dim)}
+
+.card-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.mode-badge{font-family:var(--font-mono);font-size:0.72rem;font-weight:600;padding:3px 10px;
+  border-radius:99px;text-transform:uppercase;letter-spacing:0.04em}
+.mode-badge.forge{background:var(--orange-dim);color:var(--orange)}
+.mode-badge.blueprint{background:var(--blue-dim);color:var(--blue)}
+.mode-badge.deep-interview{background:var(--purple-dim);color:var(--purple)}
+.mode-badge.team{background:var(--green-dim);color:var(--green)}
+.mode-badge.autopilot{background:var(--yellow-dim);color:var(--yellow)}
+.mode-badge.default{background:var(--surface2);color:var(--text2)}
+
+.status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.status-dot.active{background:var(--orange);box-shadow:0 0 8px var(--orange-dim);animation:glow 2.5s ease-in-out infinite}
+.status-dot.complete{background:var(--green)}
+.status-dot.cancelled{background:var(--red)}
+.status-dot.blocked{background:var(--yellow)}
+@keyframes glow{0%,100%{box-shadow:0 0 8px var(--orange-dim)}50%{box-shadow:0 0 18px var(--orange-dim)}}
+
+.run-id{font-family:var(--font-mono);font-size:0.65rem;color:var(--text3);margin-left:auto}
+
+.card-task{font-size:1rem;font-weight:600;letter-spacing:-0.01em;margin-bottom:10px;line-height:1.4;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+.card-meta{display:flex;flex-wrap:wrap;gap:10px;font-size:0.72rem;color:var(--text2);margin-bottom:12px}
+.meta-item{display:flex;align-items:center;gap:4px}
+.meta-label{color:var(--text3)}
+.meta-val{font-family:var(--font-mono);color:var(--text)}
+
+.card-progress{height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+.card-progress-fill{height:100%;background:linear-gradient(90deg,var(--orange),#fb923c);border-radius:2px;transition:width .6s}
 
 /* Two column layout */
-.columns{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-@media(max-width:860px){.columns{grid-template-columns:1fr}}
+.columns{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px}
+@media(max-width:900px){.columns{grid-template-columns:1fr}}
 
-/* Card base */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px}
-.card:hover{border-color:#3a3a4a}
-.card-title{font-size:0.68rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--text3);margin-bottom:14px;font-weight:600}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+.panel-title{font-size:0.68rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--text3);margin-bottom:14px;font-weight:600}
 
-/* Timeline */
-.timeline{position:relative;padding-left:24px}
-.timeline::before{content:'';position:absolute;left:7px;top:4px;bottom:4px;width:2px;background:var(--border)}
-.tl-entry{position:relative;margin-bottom:20px}
-.tl-entry:last-child{margin-bottom:0}
-.tl-dot{position:absolute;left:-24px;top:3px;width:14px;height:14px;border-radius:50%;border:2px solid var(--border);background:var(--bg)}
-.tl-entry.active .tl-dot{border-color:var(--orange);background:var(--orange-dim);box-shadow:0 0 10px var(--orange-dim)}
-.tl-entry.done .tl-dot{border-color:var(--green);background:var(--green-dim)}
-.tl-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-.tl-mode{font-family:var(--font-mono);font-weight:600;font-size:0.88rem}
-.tl-badge{font-size:0.55rem;padding:1px 7px;border-radius:99px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em}
-.tl-badge-active{background:var(--orange-dim);color:var(--orange)}
-.tl-badge-done{background:var(--green-dim);color:var(--green)}
-.tl-details{font-size:0.78rem;color:var(--text2);display:flex;flex-wrap:wrap;gap:12px;margin-bottom:4px}
-.tl-details span{display:flex;align-items:center;gap:4px}
-.tl-details .lbl{color:var(--text3)}
-.tl-task{font-size:0.78rem;color:var(--text3);font-style:italic;margin-top:4px}
-.tl-progress{height:3px;background:var(--border);border-radius:2px;margin-top:8px;overflow:hidden}
-.tl-progress-fill{height:100%;background:linear-gradient(90deg,var(--orange),#fb923c);border-radius:2px;transition:width .6s}
+/* History list */
+.history-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:var(--radius-sm);
+  cursor:pointer;transition:background .15s;border-bottom:1px solid var(--border)}
+.history-item:last-child{border-bottom:none}
+.history-item:hover{background:var(--surface2)}
+.history-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.history-dot.complete{background:var(--green)}
+.history-dot.cancelled{background:var(--red)}
+.history-dot.default{background:var(--text3)}
+.history-info{flex:1;min-width:0}
+.history-task{font-size:0.82rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.history-meta{font-size:0.68rem;color:var(--text3);font-family:var(--font-mono)}
+.history-time{font-size:0.68rem;color:var(--text3);font-family:var(--font-mono);white-space:nowrap}
 
-/* Plan cards — expandable */
-.plan-card{background:var(--surface2);border-radius:8px;margin-bottom:10px;overflow:hidden;border:1px solid transparent;transition:border-color .2s}
+.history-detail{display:none;padding:10px 14px;font-size:0.75rem;color:var(--text2);
+  background:var(--surface2);border-radius:var(--radius-sm);margin-bottom:8px;font-family:var(--font-mono);
+  white-space:pre-wrap;line-height:1.6}
+.history-detail.open{display:block}
+
+/* Plan cards */
+.plan-card{background:var(--surface2);border-radius:var(--radius-sm);margin-bottom:10px;overflow:hidden;
+  border:1px solid transparent;transition:border-color .2s}
 .plan-card:hover{border-color:var(--border)}
 .plan-header{display:flex;align-items:center;gap:8px;padding:10px 14px;cursor:pointer;user-select:none}
 .plan-header:hover{background:#1e1e2d}
@@ -101,7 +129,6 @@ main{max-width:1200px;margin:0 auto;padding:24px 32px 64px}
 .plan-card.open .plan-preview{max-height:400px;padding:0 14px 14px;overflow-y:auto}
 .plan-content{font-family:var(--font-mono);font-size:0.75rem;color:var(--text2);white-space:pre-wrap;line-height:1.6;
   background:var(--bg);border-radius:6px;padding:12px;border:1px solid var(--border)}
-.plan-loading{font-size:0.75rem;color:var(--text3);padding:8px 0}
 
 /* Memory table */
 .mem-table{width:100%;font-size:0.78rem}
@@ -109,7 +136,6 @@ main{max-width:1200px;margin:0 auto;padding:24px 32px 64px}
 .mem-table td:first-child{font-family:var(--font-mono);color:var(--purple);padding-right:14px;white-space:nowrap}
 .mem-table td:last-child{font-family:var(--font-mono);color:var(--text2);word-break:break-all}
 
-/* Notepad */
 .notepad-content{font-family:var(--font-mono);font-size:0.78rem;color:var(--text2);line-height:1.7;max-height:260px;overflow-y:auto}
 
 .empty{color:var(--text3);font-size:0.82rem;font-style:italic;padding:8px 0}
@@ -137,28 +163,31 @@ footer a:hover{text-decoration:underline}
 </header>
 
 <main>
-  <section class="hero" id="hero"></section>
-
-  <div class="pipeline" id="pipeline"></div>
+  <div id="stats-bar"></div>
+  <div class="section-header">
+    <div class="section-title">Active Sessions</div>
+    <div class="section-count" id="active-count">0</div>
+  </div>
+  <div class="cards" id="active-cards"></div>
 
   <div class="columns">
-    <div class="col-left">
-      <div class="card">
-        <div class="card-title">Activity Timeline</div>
-        <div id="timeline-body"></div>
+    <div>
+      <div class="panel">
+        <div class="panel-title">History</div>
+        <div id="history-body"></div>
       </div>
-    </div>
-    <div class="col-right">
-      <div class="card">
-        <div class="card-title">Plans</div>
+      <div class="panel" style="margin-top:20px">
+        <div class="panel-title">Plans</div>
         <div id="plans-body"></div>
       </div>
-      <div class="card">
-        <div class="card-title">Project Memory</div>
+    </div>
+    <div>
+      <div class="panel">
+        <div class="panel-title">Project Memory</div>
         <div id="memory-body"></div>
       </div>
-      <div class="card">
-        <div class="card-title">Notepad</div>
+      <div class="panel" style="margin-top:20px">
+        <div class="panel-title">Notepad</div>
         <div id="notepad-body"></div>
       </div>
     </div>
@@ -175,19 +204,17 @@ footer a:hover{text-decoration:underline}
   'use strict';
 
   var PHASES = {
-    forge:  { load:10, implement:30, verify:60, fix:80 },
-    blueprint: { setup:10, diverge:30, converge:50, review:70, handoff:90 },
-    'deep-interview': { setup:10, question:40, synthesize:75 },
+    forge:  { init:5, load:10, implement:30, verify:60, fix:80 },
+    blueprint: { analyze:10, deliberate:30, approve:60, approved:80, handoff:90 },
+    'deep-interview': { init:5, setup:10, question:40, synthesize:75, complete:100 },
     team:   { plan:10, dispatch:30, monitor:50, integrate:80 },
     autopilot: { expand:10, plan:25, execute:50, qa:70, validate:85, cleanup:95 }
   };
 
-  var STAGES = [
-    { id:'interview', label:'Interview', icon:'\\u{1F50D}', modes:['deep-interview'] },
-    { id:'blueprint', label:'Blueprint', icon:'\\u{1F4D0}', modes:['blueprint'] },
-    { id:'execute',   label:'Execute',   icon:'\\u{1F525}', modes:['forge','team','autopilot'] },
-    { id:'done',      label:'Done',      icon:'\\u{2705}',  modes:[] }
-  ];
+  var MODE_COLORS = {
+    forge: 'forge', blueprint: 'blueprint', 'deep-interview': 'deep-interview',
+    team: 'team', autopilot: 'autopilot'
+  };
 
   function timeAgo(iso) {
     if (!iso) return '\\u{2014}';
@@ -201,103 +228,131 @@ footer a:hover{text-decoration:underline}
     return Math.floor(s/86400) + 'd ago';
   }
 
+  function duration(start, end) {
+    if (!start) return '\\u{2014}';
+    var ms = (end ? new Date(end).getTime() : Date.now()) - new Date(start).getTime();
+    var s = Math.floor(ms / 1000);
+    if (s < 60) return s + 's';
+    if (s < 3600) return Math.floor(s/60) + 'm ' + (s%60) + 's';
+    return Math.floor(s/3600) + 'h ' + Math.floor((s%3600)/60) + 'm';
+  }
+
   function esc(str) {
     return String(str == null ? '' : str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
-  // --- Hero ---
-  function renderHero(state) {
-    var el = document.getElementById('hero');
-    if (!state.activeTask && state.activeModes.length === 0) {
-      el.classList.remove('has-task');
-      el.innerHTML = '<div class="hero-idle">No active task. Start with <code>$forge</code>, <code>$blueprint</code>, or <code>$autopilot</code></div>';
-      return;
-    }
-    el.classList.add('has-task');
-    var task = state.activeTask || 'Working...';
-    var am = state.activeModes[0];
-    var html = '<div class="hero-task">\\u{1F525} ' + esc(task) + '</div>';
-    html += '<div class="hero-meta">';
-    if (state.session) html += '<span class="tag">Session <span class="tag-val">' + state.session.id.slice(0,8) + '</span></span>';
-    if (am) {
-      html += '<span class="tag">Mode <span class="tag-val">' + esc(am.mode) + '</span></span>';
-      html += '<span class="tag">Phase <span class="tag-val">' + esc(am.phase) + '</span></span>';
-      html += '<span class="tag">Iter <span class="tag-val">' + am.iteration + '</span></span>';
-      html += '<span class="tag">Started <span class="tag-val">' + timeAgo(am.started_at) + '</span></span>';
-    }
+  function badgeClass(mode) { return MODE_COLORS[mode] || 'default'; }
+
+  function statusDotClass(status) {
+    if (status === 'active') return 'active';
+    if (status === 'complete' || status === 'approved') return 'complete';
+    if (status === 'cancelled') return 'cancelled';
+    if (status === 'blocked') return 'blocked';
+    return 'default';
+  }
+
+  function renderStats(state) {
+    var el = document.getElementById('stats-bar');
+    var html = '<div class="stats">';
+    html += '<div class="stat"><div class="stat-label">Active</div><div class="stat-value active">' + state.activeModes.length + '</div></div>';
+    html += '<div class="stat"><div class="stat-label">Completed</div><div class="stat-value completed">' + state.completedModes.length + '</div></div>';
+    html += '<div class="stat"><div class="stat-label">Archived</div><div class="stat-value archived">' + state.archivedSessions.length + '</div></div>';
+
+    var activeTask = state.activeTask || 'No active task';
+    html += '<div class="stat" style="flex:3"><div class="stat-label">Current Focus</div><div class="stat-value" style="font-size:0.95rem;color:' + (state.activeTask ? 'var(--orange)' : 'var(--text3)') + '">' + esc(activeTask) + '</div></div>';
     html += '</div>';
     el.innerHTML = html;
   }
 
-  // --- Pipeline (compact) ---
-  function renderPipeline(state) {
-    var activeSet = {};
-    var doneSet = {};
-    state.activeModes.forEach(function(m) { activeSet[m.mode] = true; });
-    state.completedModes.forEach(function(m) { doneSet[m.mode] = true; });
+  function renderActiveCards(state) {
+    var el = document.getElementById('active-cards');
+    document.getElementById('active-count').textContent = state.activeModes.length;
+
+    if (state.activeModes.length === 0) {
+      el.innerHTML = '<div class="card"><div class="empty">No active sessions. Start with <code style="font-family:var(--font-mono);background:var(--surface2);padding:2px 8px;border-radius:4px;color:var(--orange)">$forge</code>, <code style="font-family:var(--font-mono);background:var(--surface2);padding:2px 8px;border-radius:4px;color:var(--blue)">$blueprint</code>, or <code style="font-family:var(--font-mono);background:var(--surface2);padding:2px 8px;border-radius:4px;color:var(--purple)">$deep-interview</code></div></div>';
+      return;
+    }
+
     var html = '';
-    STAGES.forEach(function(stage, i) {
-      if (i > 0) html += '<div class="pip-line"></div>';
-      var isActive = stage.modes.some(function(m) { return activeSet[m]; });
-      var isDone = stage.modes.some(function(m) { return doneSet[m]; });
-      if (stage.id === 'done') isDone = state.completedModes.length > 0 && state.activeModes.length === 0;
-      var cls = isActive ? 'pip-node active' : isDone ? 'pip-node done' : 'pip-node';
-      html += '<div class="' + cls + '"><div class="pip-dot">' + stage.icon + '</div><div class="pip-label">' + stage.label + '</div></div>';
-    });
-    document.getElementById('pipeline').innerHTML = html;
-  }
+    state.activeModes.forEach(function(m) {
+      var mode = m.mode || 'task';
+      var task = m.task || (m.metadata && m.metadata.task) || 'Working...';
+      var phase = m.phase || 'active';
+      var pct = 50;
+      var phaseMap = PHASES[mode];
+      if (phaseMap && phaseMap[phase] !== undefined) pct = phaseMap[phase];
 
-  // --- Timeline ---
-  function renderTimeline(state) {
-    var el = document.getElementById('timeline-body');
-    var all = [];
-    state.activeModes.forEach(function(m) { all.push({m:m, active:true}); });
-    state.completedModes.forEach(function(m) { all.push({m:m, active:false}); });
-    if (all.length === 0) {
-      el.innerHTML = '<div class="empty">No workflow steps yet.</div>';
-      return;
-    }
-    all.sort(function(a,b) { return new Date(a.m.started_at||0).getTime() - new Date(b.m.started_at||0).getTime(); });
-    var html = '<div class="timeline">';
-    all.forEach(function(entry) {
-      var m = entry.m;
-      var name = m.mode || (m).role || 'task';
-      var phase = m.phase || (m).status || 'done';
-      var cls = entry.active ? 'tl-entry active' : 'tl-entry done';
-      html += '<div class="' + cls + '">';
-      html += '<div class="tl-dot"></div>';
-      html += '<div class="tl-head"><span class="tl-mode">' + esc(name) + '</span>';
-      if (entry.active) html += '<span class="tl-badge tl-badge-active">active</span>';
-      else html += '<span class="tl-badge tl-badge-done">done</span>';
+      html += '<div class="card active-card">';
+      html += '<div class="card-head">';
+      html += '<div class="status-dot active"></div>';
+      html += '<span class="mode-badge ' + badgeClass(mode) + '">' + esc(mode) + '</span>';
+      if (m.runId) html += '<span class="run-id">' + esc(m.runId) + '</span>';
       html += '</div>';
-      html += '<div class="tl-details">';
-      html += '<span><span class="lbl">phase</span> ' + esc(phase) + '</span>';
-      if (m.iteration) html += '<span><span class="lbl">iter</span> ' + m.iteration + '</span>';
-      html += '<span><span class="lbl">started</span> ' + timeAgo(m.started_at) + '</span>';
-      if (m.completed_at) html += '<span><span class="lbl">completed</span> ' + timeAgo(m.completed_at) + '</span>';
-      else if (m.updated_at) html += '<span><span class="lbl">updated</span> ' + timeAgo(m.updated_at) + '</span>';
+      html += '<div class="card-task">' + esc(task) + '</div>';
+      html += '<div class="card-meta">';
+      html += '<span class="meta-item"><span class="meta-label">phase</span> <span class="meta-val">' + esc(phase) + '</span></span>';
+      if (m.iteration != null) html += '<span class="meta-item"><span class="meta-label">iter</span> <span class="meta-val">' + m.iteration + '</span></span>';
+      html += '<span class="meta-item"><span class="meta-label">elapsed</span> <span class="meta-val">' + duration(m.started_at) + '</span></span>';
+      html += '<span class="meta-item"><span class="meta-label">started</span> <span class="meta-val">' + timeAgo(m.started_at) + '</span></span>';
       html += '</div>';
-      var task = (m.metadata && m.metadata.task) || (m).task || null;
-      if (task) html += '<div class="tl-task">' + esc(task) + '</div>';
-      if (entry.active) {
-        var pct = 50;
-        var phaseMap = PHASES[m.mode];
-        if (phaseMap && phaseMap[m.phase] !== undefined) pct = phaseMap[m.phase];
-        html += '<div class="tl-progress"><div class="tl-progress-fill" style="width:' + pct + '%"></div></div>';
-      }
+      html += '<div class="card-progress"><div class="card-progress-fill" style="width:' + pct + '%"></div></div>';
       html += '</div>';
     });
-    html += '</div>';
     el.innerHTML = html;
   }
 
-  // --- Plans (expandable with content) ---
-  var planCache = {};
+  function renderHistory(state) {
+    var el = document.getElementById('history-body');
+    var items = [];
 
+    state.completedModes.forEach(function(m) {
+      items.push({ type:'mode', mode:m.mode, task:m.task||(m.metadata&&m.metadata.task)||'', status:m.status||'complete',
+        runId:m.runId, started:m.started_at, ended:m.completed_at||m.updated_at, data:m });
+    });
+    state.archivedSessions.forEach(function(a) {
+      var m = a.modes && a.modes[0];
+      var status = m ? (m.status || 'complete') : 'complete';
+      items.push({ type:'archive', mode:m?m.mode:'unknown', task:a.task||'', status:status,
+        runId:a.runId||a.session.id, started:a.session.started_at, ended:a.session.archived_at, data:a });
+    });
+
+    items.sort(function(a,b) {
+      return new Date(b.ended||b.started||0).getTime() - new Date(a.ended||a.started||0).getTime();
+    });
+
+    if (items.length === 0) {
+      el.innerHTML = '<div class="empty">No history yet.</div>';
+      return;
+    }
+
+    var html = '';
+    items.forEach(function(item, i) {
+      var id = 'hist-' + i;
+      html += '<div class="history-item" onclick="window._toggleHistory(\\'' + id + '\\')">';
+      html += '<div class="history-dot ' + statusDotClass(item.status) + '"></div>';
+      html += '<div class="history-info">';
+      html += '<div class="history-task">' + esc(item.task || item.mode) + '</div>';
+      html += '<div class="history-meta">' + esc(item.mode);
+      if (item.runId) html += ' \\u{00B7} ' + esc(String(item.runId).slice(0,8));
+      html += ' \\u{00B7} ' + duration(item.started, item.ended);
+      html += '</div></div>';
+      html += '<div class="history-time">' + timeAgo(item.ended || item.started) + '</div>';
+      html += '</div>';
+      html += '<div class="history-detail" id="' + id + '">' + esc(JSON.stringify(item.data, null, 2)) + '</div>';
+    });
+    el.innerHTML = html;
+  }
+
+  window._toggleHistory = function(id) {
+    var el = document.getElementById(id);
+    if (el) el.classList.toggle('open');
+  };
+
+  var planCache = {};
   function renderPlans(state) {
     var el = document.getElementById('plans-body');
     if (state.plans.length === 0) {
-      el.innerHTML = '<div class="empty">No plans yet. Run <code>$blueprint</code> to create one.</div>';
+      el.innerHTML = '<div class="empty">No plans yet.</div>';
       return;
     }
     var html = '';
@@ -310,7 +365,7 @@ footer a:hover{text-decoration:underline}
       html += '</div>';
       html += '<div class="plan-preview"><div class="plan-content" id="' + id + '-content">';
       if (p.preview) html += esc(p.preview) + (p.preview.length >= 590 ? '\\n...' : '');
-      else html += '<span class="plan-loading">Loading...</span>';
+      else html += '<span style="color:var(--text3)">Loading...</span>';
       html += '</div></div>';
       html += '</div>';
     });
@@ -332,7 +387,6 @@ footer a:hover{text-decoration:underline}
     }
   };
 
-  // --- Memory ---
   function renderMemory(state) {
     var el = document.getElementById('memory-body');
     var keys = Object.keys(state.memory);
@@ -346,7 +400,6 @@ footer a:hover{text-decoration:underline}
     el.innerHTML = html;
   }
 
-  // --- Notepad ---
   function miniMd(text) {
     return esc(text)
       .replace(/^### (.+)$/gm, '<h4 style="color:var(--text);margin:10px 0 2px;font-size:0.82rem">$1</h4>')
@@ -361,12 +414,11 @@ footer a:hover{text-decoration:underline}
     el.innerHTML = '<div class="notepad-content">' + miniMd(state.notepad) + '</div>';
   }
 
-  // --- Render all ---
   function render(state) {
     document.getElementById('session-id').textContent = state.session ? state.session.id.slice(0,8) : '';
-    renderHero(state);
-    renderPipeline(state);
-    renderTimeline(state);
+    renderStats(state);
+    renderActiveCards(state);
+    renderHistory(state);
     renderPlans(state);
     renderMemory(state);
     renderNotepad(state);

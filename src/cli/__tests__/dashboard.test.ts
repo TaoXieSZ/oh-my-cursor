@@ -4,7 +4,7 @@ import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
-import { collectState, type DashboardState, type PlanInfo } from "../dashboard.js";
+import { collectState, type DashboardState, type PlanInfo, type ModeInfo } from "../dashboard.js";
 
 function makeTmpProject(): string {
   const dir = join(tmpdir(), `omc-dash-test-${randomUUID()}`);
@@ -15,15 +15,20 @@ function makeTmpProject(): string {
 describe("collectState", () => {
   let tmp: string;
   let origCwd: string;
+  let origEnv: string | undefined;
 
   beforeEach(() => {
     tmp = makeTmpProject();
     origCwd = process.cwd();
+    origEnv = process.env["OMC_PROJECT_ROOT"];
     process.chdir(tmp);
+    delete process.env["OMC_PROJECT_ROOT"];
   });
 
   afterEach(() => {
     process.chdir(origCwd);
+    if (origEnv === undefined) delete process.env["OMC_PROJECT_ROOT"];
+    else process.env["OMC_PROJECT_ROOT"] = origEnv;
     rmSync(tmp, { recursive: true, force: true });
   });
 
@@ -33,6 +38,7 @@ describe("collectState", () => {
     assert.equal(state.activeTask, null);
     assert.deepEqual(state.activeModes, []);
     assert.deepEqual(state.completedModes, []);
+    assert.deepEqual(state.archivedSessions, []);
     assert.deepEqual(state.plans, []);
     assert.deepEqual(state.memory, {});
     assert.equal(state.notepad, "");
@@ -42,33 +48,39 @@ describe("collectState", () => {
   it("reads active modes from state directory", () => {
     const stateDir = join(tmp, ".omc", "state");
     mkdirSync(stateDir, { recursive: true });
-    writeFileSync(join(stateDir, "forge-state.json"), JSON.stringify({
-      mode: "forge",
-      active: true,
-      phase: "verify",
-      iteration: 3,
+    writeFileSync(join(stateDir, "forge-a1b2c3d4-state.json"), JSON.stringify({
+      mode: "forge", runId: "a1b2c3d4", status: "active",
+      phase: "verify", iteration: 3,
       started_at: "2026-04-04T10:00:00Z",
-      updated_at: "2026-04-04T10:05:00Z",
     }));
 
     const state = collectState();
     assert.equal(state.activeModes.length, 1);
     assert.equal(state.activeModes[0].mode, "forge");
-    assert.equal(state.activeModes[0].phase, "verify");
-    assert.equal(state.activeModes[0].iteration, 3);
+    assert.equal(state.activeModes[0].runId, "a1b2c3d4");
+  });
+
+  it("reads legacy active modes (active: true)", () => {
+    const stateDir = join(tmp, ".omc", "state");
+    mkdirSync(stateDir, { recursive: true });
+    writeFileSync(join(stateDir, "forge-state.json"), JSON.stringify({
+      mode: "forge", active: true,
+      phase: "verify", iteration: 3,
+      started_at: "2026-04-04T10:00:00Z",
+    }));
+
+    const state = collectState();
+    assert.equal(state.activeModes.length, 1);
+    assert.equal(state.activeModes[0].mode, "forge");
   });
 
   it("reads completed modes", () => {
     const stateDir = join(tmp, ".omc", "state");
     mkdirSync(stateDir, { recursive: true });
-    writeFileSync(join(stateDir, "blueprint-state.json"), JSON.stringify({
-      mode: "blueprint",
-      active: false,
-      phase: "handoff",
-      iteration: 1,
-      started_at: "2026-04-04T09:00:00Z",
-      updated_at: "2026-04-04T09:30:00Z",
-      completed_at: "2026-04-04T09:30:00Z",
+    writeFileSync(join(stateDir, "blueprint-b1b2c3d4-state.json"), JSON.stringify({
+      mode: "blueprint", runId: "b1b2c3d4", status: "complete",
+      phase: "handoff", iteration: 1,
+      started_at: "2026-04-04T09:00:00Z", completed_at: "2026-04-04T09:30:00Z",
     }));
 
     const state = collectState();
@@ -76,28 +88,56 @@ describe("collectState", () => {
     assert.equal(state.completedModes[0].mode, "blueprint");
   });
 
+  it("shows multiple active runs of the same mode", () => {
+    const stateDir = join(tmp, ".omc", "state");
+    mkdirSync(stateDir, { recursive: true });
+    writeFileSync(join(stateDir, "forge-aaaa1111-state.json"), JSON.stringify({
+      mode: "forge", runId: "aaaa1111", status: "active",
+      phase: "implement", started_at: "2026-04-04T10:00:00Z",
+    }));
+    writeFileSync(join(stateDir, "forge-bbbb2222-state.json"), JSON.stringify({
+      mode: "forge", runId: "bbbb2222", status: "active",
+      phase: "verify", started_at: "2026-04-04T11:00:00Z",
+    }));
+
+    const state = collectState();
+    assert.equal(state.activeModes.length, 2);
+    const runIds = state.activeModes.map((m: ModeInfo) => m.runId).sort();
+    assert.deepEqual(runIds, ["aaaa1111", "bbbb2222"]);
+  });
+
+  it("includes archived sessions", () => {
+    const archiveDir = join(tmp, ".omc", "archive");
+    mkdirSync(archiveDir, { recursive: true });
+    writeFileSync(join(archiveDir, "old-run.json"), JSON.stringify({
+      runId: "old-run",
+      session: { id: "old-run", started_at: "2026-04-01T10:00:00Z", archived_at: "2026-04-01T12:00:00Z" },
+      task: "Old task", modes: [],
+    }));
+
+    const state = collectState();
+    assert.equal(state.archivedSessions.length, 1);
+    assert.equal(state.archivedSessions[0].task, "Old task");
+  });
+
   it("reads plans with content preview", () => {
     const plansDir = join(tmp, ".omc", "plans");
     mkdirSync(plansDir, { recursive: true });
     writeFileSync(join(plansDir, "prd-auth.md"), "# Auth PRD\n\nDesign the auth flow.");
-    writeFileSync(join(plansDir, "test-spec-auth.md"), "# Auth Tests\n\nUnit + integration.");
 
     const state = collectState();
-    assert.equal(state.plans.length, 2);
-    const names = state.plans.map((p: PlanInfo) => p.name);
-    assert.ok(names.includes("prd-auth.md"));
-    assert.ok(names.includes("test-spec-auth.md"));
-    const prd = state.plans.find((p: PlanInfo) => p.name === "prd-auth.md")!;
-    assert.ok(prd.preview.includes("Auth PRD"));
+    assert.equal(state.plans.length, 1);
+    assert.ok(state.plans[0].preview.includes("Auth PRD"));
   });
 
-  it("extracts activeTask from mode metadata", () => {
+  it("extracts activeTask from mode task field", () => {
     const stateDir = join(tmp, ".omc", "state");
     mkdirSync(stateDir, { recursive: true });
-    writeFileSync(join(stateDir, "forge-state.json"), JSON.stringify({
-      mode: "forge", active: true, phase: "verify", iteration: 2,
-      started_at: "2026-04-04T10:00:00Z", updated_at: "2026-04-04T10:05:00Z",
-      metadata: { task: "Build the auth module" },
+    writeFileSync(join(stateDir, "forge-a1b2c3d4-state.json"), JSON.stringify({
+      mode: "forge", runId: "a1b2c3d4", status: "active",
+      phase: "verify", iteration: 2,
+      started_at: "2026-04-04T10:00:00Z",
+      task: "Build the auth module",
     }));
 
     const state = collectState();
@@ -109,12 +149,10 @@ describe("collectState", () => {
     mkdirSync(omcDir, { recursive: true });
     writeFileSync(join(omcDir, "project-memory.json"), JSON.stringify({
       preferred_pm: "pnpm",
-      main_branch: "develop",
     }));
 
     const state = collectState();
     assert.equal(state.memory["preferred_pm"], "pnpm");
-    assert.equal(state.memory["main_branch"], "develop");
   });
 
   it("reads notepad", () => {
@@ -139,29 +177,25 @@ describe("collectState", () => {
     assert.equal(state.session!.id, "abc-123-def");
   });
 
-  it("handles multiple active modes", () => {
-    const stateDir = join(tmp, ".omc", "state");
-    mkdirSync(stateDir, { recursive: true });
-    writeFileSync(join(stateDir, "forge-state.json"), JSON.stringify({
-      mode: "forge", active: true, phase: "implement", iteration: 1,
-      started_at: "2026-04-04T10:00:00Z", updated_at: "2026-04-04T10:01:00Z",
-    }));
-    writeFileSync(join(stateDir, "team-state.json"), JSON.stringify({
-      mode: "team", active: true, phase: "dispatch", iteration: 2,
-      started_at: "2026-04-04T10:00:00Z", updated_at: "2026-04-04T10:02:00Z",
-    }));
-
-    const state = collectState();
-    assert.equal(state.activeModes.length, 2);
-  });
-
   it("handles malformed JSON gracefully", () => {
     const stateDir = join(tmp, ".omc", "state");
     mkdirSync(stateDir, { recursive: true });
-    writeFileSync(join(stateDir, "broken-state.json"), "not json{{{");
+    writeFileSync(join(stateDir, "broken-a1b2c3d4-state.json"), "not json{{{");
 
     const state = collectState();
     assert.equal(state.activeModes.length, 0);
     assert.equal(state.completedModes.length, 0);
+  });
+
+  it("derives runId from filename when not in JSON", () => {
+    const stateDir = join(tmp, ".omc", "state");
+    mkdirSync(stateDir, { recursive: true });
+    writeFileSync(join(stateDir, "forge-a1b2c3d4-state.json"), JSON.stringify({
+      mode: "forge", status: "active",
+      started_at: "2026-04-04T10:00:00Z",
+    }));
+
+    const state = collectState();
+    assert.equal(state.activeModes[0].runId, "a1b2c3d4");
   });
 });

@@ -5,6 +5,7 @@
  * Provides tools to read/write .omc/ state, plans, and logs.
  */
 
+import { randomUUID } from "node:crypto";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
@@ -16,13 +17,15 @@ import { dirname, join } from "node:path";
 import { ensureDir } from "../utils/fs.js";
 import {
   getBaseStateDir,
-  getModeStatePath,
   getPlanPath,
   getNotepadPath,
+  listModeStateFiles,
 } from "../state/paths.js";
+import { readModeState, writeModeState, parseStateFilename } from "../state/mode-state.js";
+import type { ModeState } from "../state/mode-state.js";
 
 const server = new Server(
-  { name: "omc-state", version: "0.1.0" },
+  { name: "omc-state", version: "0.2.0" },
   { capabilities: { tools: {} } }
 );
 
@@ -30,18 +33,19 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
   tools: [
     {
       name: "state_read",
-      description: "Read a mode state file from .omc/state/",
+      description: "Read a mode state file from .omc/state/. Without runId, returns the latest active run for that mode.",
       inputSchema: {
         type: "object" as const,
         properties: {
           mode: { type: "string", description: "Mode name (e.g. forge, team, deep-interview)" },
+          runId: { type: "string", description: "Optional run ID for a specific workflow run" },
         },
         required: ["mode"],
       },
     },
     {
       name: "state_write",
-      description: "Write a mode state file to .omc/state/",
+      description: "Write a mode state file to .omc/state/. Auto-generates runId for new runs. Without runId, updates the existing active run or creates a new one.",
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -53,7 +57,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: "state_list",
-      description: "List all mode state files in .omc/state/",
+      description: "List all mode state files in .omc/state/ with summary info (mode, runId, status).",
       inputSchema: { type: "object" as const, properties: {} },
     },
     {
@@ -108,29 +112,53 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
   switch (name) {
     case "state_read": {
-      const mode = (args as { mode: string }).mode;
-      const path = getModeStatePath(mode);
-      if (!existsSync(path)) {
+      const { mode, runId } = args as { mode: string; runId?: string };
+      const state = readModeState(mode, runId);
+      if (!state) {
         return { content: [{ type: "text", text: `No state found for mode: ${mode}` }] };
       }
-      return { content: [{ type: "text", text: readFileSync(path, "utf-8") }] };
+      return { content: [{ type: "text", text: JSON.stringify(state, null, 2) }] };
     }
 
     case "state_write": {
       const { mode, state } = args as { mode: string; state: Record<string, unknown> };
-      const path = getModeStatePath(mode);
-      ensureDir(dirname(path));
-      writeFileSync(path, JSON.stringify(state, null, 2) + "\n");
-      return { content: [{ type: "text", text: `State written for mode: ${mode}` }] };
+      let merged = { ...state, mode } as ModeState;
+
+      if (!merged.runId) {
+        const existing = readModeState(mode);
+        if (existing?.status === "active" && existing.runId) {
+          merged.runId = existing.runId;
+        } else {
+          merged.runId = randomUUID().slice(0, 8);
+        }
+      }
+
+      writeModeState(mode, merged);
+      return { content: [{ type: "text", text: `State written for mode: ${mode} (runId: ${merged.runId})` }] };
     }
 
     case "state_list": {
-      const stateDir = join(getBaseStateDir(), "state");
-      if (!existsSync(stateDir)) {
-        return { content: [{ type: "text", text: "No state directory found" }] };
+      const files = listModeStateFiles();
+      if (files.length === 0) {
+        return { content: [{ type: "text", text: "No state files found" }] };
       }
-      const files = readdirSync(stateDir).filter((f) => f.endsWith("-state.json"));
-      return { content: [{ type: "text", text: JSON.stringify(files) }] };
+      const stateDir = join(getBaseStateDir(), "state");
+      const summaries = files.map(f => {
+        const parsed = parseStateFilename(f);
+        try {
+          const data = JSON.parse(readFileSync(join(stateDir, f), "utf-8"));
+          return {
+            file: f,
+            mode: parsed?.mode ?? data.mode ?? "unknown",
+            runId: data.runId ?? parsed?.runId ?? null,
+            status: data.status ?? (data.active ? "active" : "unknown"),
+            task: data.task ?? null,
+          };
+        } catch {
+          return { file: f, mode: parsed?.mode ?? "unknown", runId: parsed?.runId ?? null, status: "corrupt", task: null };
+        }
+      });
+      return { content: [{ type: "text", text: JSON.stringify(summaries, null, 2) }] };
     }
 
     case "plan_read": {

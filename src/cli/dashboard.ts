@@ -8,14 +8,31 @@ import {
   getSessionPath,
   getNotepadPath,
   getProjectMemoryPath,
+  listModeStateFiles,
 } from "../state/paths.js";
+import { parseStateFilename } from "../state/mode-state.js";
 import * as log from "../utils/log.js";
 import { getHTML } from "./dashboard-html.js";
-import { isSessionStale, archiveCurrentSession } from "../state/archive.js";
+import { isSessionStale, archiveCurrentSession, listArchives } from "../state/archive.js";
+import type { ArchivedSession } from "../state/archive.js";
 
 export interface PlanInfo {
   name: string;
   preview: string;
+}
+
+export interface ModeInfo {
+  mode: string;
+  runId?: string;
+  status?: "active" | "complete" | "cancelled" | "blocked" | string;
+  active?: boolean;
+  phase?: string;
+  iteration?: number;
+  started_at: string;
+  updated_at?: string;
+  completed_at?: string;
+  task?: string;
+  metadata?: Record<string, unknown>;
 }
 
 export interface DashboardState {
@@ -23,21 +40,11 @@ export interface DashboardState {
   activeTask: string | null;
   activeModes: ModeInfo[];
   completedModes: ModeInfo[];
+  archivedSessions: ArchivedSession[];
   plans: PlanInfo[];
   memory: Record<string, unknown>;
   notepad: string;
   timestamp: string;
-}
-
-interface ModeInfo {
-  mode: string;
-  active: boolean;
-  phase: string;
-  iteration: number;
-  started_at: string;
-  updated_at: string;
-  completed_at?: string;
-  metadata?: Record<string, unknown>;
 }
 
 const sseClients = new Set<ServerResponse>();
@@ -54,17 +61,25 @@ export function collectState(): DashboardState {
 
   const activeModes: ModeInfo[] = [];
   const completedModes: ModeInfo[] = [];
-  if (existsSync(stateDir)) {
-    for (const file of readdirSync(stateDir)) {
-      if (!file.endsWith("-state.json")) continue;
-      try {
-        const data: ModeInfo = JSON.parse(readFileSync(join(stateDir, file), "utf-8"));
-        if (!data.mode) data.mode = file.replace(/-state\.json$/, "");
-        if (data.active) activeModes.push(data);
-        else completedModes.push(data);
-      } catch { /* skip */ }
-    }
+  const files = listModeStateFiles();
+  for (const file of files) {
+    try {
+      const data: ModeInfo = JSON.parse(readFileSync(join(stateDir, file), "utf-8"));
+      if (!data.mode) {
+        const parsed = parseStateFilename(file);
+        if (parsed) data.mode = parsed.mode;
+      }
+      if (!data.runId) {
+        const parsed = parseStateFilename(file);
+        if (parsed?.runId) data.runId = parsed.runId;
+      }
+      const isActive = data.active === true || data.status === "active";
+      if (isActive) activeModes.push(data);
+      else completedModes.push(data);
+    } catch { /* skip */ }
   }
+
+  const archivedSessions = listArchives();
 
   let plans: PlanInfo[] = [];
   if (existsSync(plansDir)) {
@@ -94,7 +109,7 @@ export function collectState(): DashboardState {
     (taskSource as any)?.task ??
     null;
 
-  return { session, activeTask, activeModes, completedModes, plans, memory, notepad, timestamp: new Date().toISOString() };
+  return { session, activeTask, activeModes, completedModes, archivedSessions, plans, memory, notepad, timestamp: new Date().toISOString() };
 }
 
 function broadcast(): void {

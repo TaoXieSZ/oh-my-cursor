@@ -4,7 +4,7 @@ import { mkdirSync, rmSync, writeFileSync, existsSync, readFileSync, readdirSync
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
-import { archiveCurrentSession, isSessionStale, listArchives } from "../archive.js";
+import { archiveCurrentSession, archiveCompletedRuns, isSessionStale, listArchives } from "../archive.js";
 
 function makeTmp(): string {
   const dir = join(tmpdir(), `omc-archive-test-${randomUUID()}`);
@@ -15,15 +15,20 @@ function makeTmp(): string {
 describe("archive", () => {
   let tmp: string;
   let origCwd: string;
+  let origEnv: string | undefined;
 
   beforeEach(() => {
     tmp = makeTmp();
     origCwd = process.cwd();
+    origEnv = process.env["OMC_PROJECT_ROOT"];
     process.chdir(tmp);
+    delete process.env["OMC_PROJECT_ROOT"];
   });
 
   afterEach(() => {
     process.chdir(origCwd);
+    if (origEnv === undefined) delete process.env["OMC_PROJECT_ROOT"];
+    else process.env["OMC_PROJECT_ROOT"] = origEnv;
     rmSync(tmp, { recursive: true, force: true });
   });
 
@@ -31,51 +36,90 @@ describe("archive", () => {
     assert.equal(archiveCurrentSession(), null);
   });
 
-  it("archives session + modes and clears state/", () => {
+  it("archiveCompletedRuns archives only non-active runs", () => {
+    const stateDir = join(tmp, ".omc", "state");
+    mkdirSync(stateDir, { recursive: true });
+    writeFileSync(join(stateDir, "forge-aaaa1111-state.json"), JSON.stringify({
+      mode: "forge", runId: "aaaa1111", status: "complete",
+      started_at: "2026-04-04T10:00:00Z", completed_at: "2026-04-04T10:30:00Z",
+      task: "Completed task",
+    }));
+    writeFileSync(join(stateDir, "forge-bbbb2222-state.json"), JSON.stringify({
+      mode: "forge", runId: "bbbb2222", status: "active",
+      started_at: "2026-04-04T11:00:00Z", task: "Still running",
+    }));
+
+    const archived = archiveCompletedRuns();
+    assert.equal(archived.length, 1);
+
+    assert.ok(!existsSync(join(stateDir, "forge-aaaa1111-state.json")));
+    assert.ok(existsSync(join(stateDir, "forge-bbbb2222-state.json")));
+
+    const archiveData = JSON.parse(readFileSync(archived[0], "utf-8"));
+    assert.equal(archiveData.runId, "aaaa1111");
+    assert.equal(archiveData.task, "Completed task");
+  });
+
+  it("archiveCompletedRuns archives nothing when all active", () => {
+    const stateDir = join(tmp, ".omc", "state");
+    mkdirSync(stateDir, { recursive: true });
+    writeFileSync(join(stateDir, "forge-aaaa1111-state.json"), JSON.stringify({
+      mode: "forge", runId: "aaaa1111", status: "active",
+      started_at: "2026-04-04T10:00:00Z",
+    }));
+    assert.deepEqual(archiveCompletedRuns(), []);
+  });
+
+  it("archiveCurrentSession preserves active runs and clears session only when empty", () => {
     const stateDir = join(tmp, ".omc", "state");
     mkdirSync(stateDir, { recursive: true });
     writeFileSync(join(stateDir, "session.json"), JSON.stringify({
-      id: "test-session-123", started_at: "2026-04-04T10:00:00Z",
+      id: "test-session", started_at: "2026-04-04T10:00:00Z",
     }));
-    writeFileSync(join(stateDir, "forge-state.json"), JSON.stringify({
-      mode: "forge", active: false, phase: "verify", iteration: 3,
-      started_at: "2026-04-04T10:00:00Z", completed_at: "2026-04-04T10:30:00Z",
-      task: "Build auth module",
+    writeFileSync(join(stateDir, "forge-aaaa1111-state.json"), JSON.stringify({
+      mode: "forge", runId: "aaaa1111", status: "complete",
+      started_at: "2026-04-04T10:00:00Z", task: "Done",
     }));
-    writeFileSync(join(stateDir, "blueprint-state.json"), JSON.stringify({
-      mode: "blueprint", active: false, phase: "handoff", iteration: 1,
-      started_at: "2026-04-04T09:00:00Z", completed_at: "2026-04-04T09:30:00Z",
+    writeFileSync(join(stateDir, "forge-bbbb2222-state.json"), JSON.stringify({
+      mode: "forge", runId: "bbbb2222", status: "active",
+      started_at: "2026-04-04T11:00:00Z",
     }));
 
     const archivePath = archiveCurrentSession();
     assert.ok(archivePath);
-    assert.ok(existsSync(archivePath!));
 
-    const archive = JSON.parse(readFileSync(archivePath!, "utf-8"));
-    assert.equal(archive.session.id, "test-session-123");
-    assert.equal(archive.task, "Build auth module");
-    assert.equal(archive.modes.length, 2);
-    assert.ok(archive.session.archived_at);
-
-    assert.ok(!existsSync(join(stateDir, "session.json")));
-    assert.ok(!existsSync(join(stateDir, "forge-state.json")));
-    assert.ok(!existsSync(join(stateDir, "blueprint-state.json")));
+    assert.ok(existsSync(join(stateDir, "forge-bbbb2222-state.json")));
+    assert.ok(existsSync(join(stateDir, "session.json")));
+    assert.ok(!existsSync(join(stateDir, "forge-aaaa1111-state.json")));
   });
 
-  it("derives mode name from filename for legacy state files", () => {
+  it("archiveCurrentSession clears session.json when all runs archived", () => {
     const stateDir = join(tmp, ".omc", "state");
     mkdirSync(stateDir, { recursive: true });
     writeFileSync(join(stateDir, "session.json"), JSON.stringify({
-      id: "legacy-session", started_at: "2026-04-04T10:00:00Z",
+      id: "test-session", started_at: "2026-04-04T10:00:00Z",
     }));
+    writeFileSync(join(stateDir, "forge-state.json"), JSON.stringify({
+      mode: "forge", status: "complete",
+      started_at: "2026-04-04T10:00:00Z", task: "Done",
+    }));
+
+    archiveCurrentSession();
+    assert.ok(!existsSync(join(stateDir, "session.json")));
+  });
+
+  it("archives legacy state files (no runId in filename)", () => {
+    const stateDir = join(tmp, ".omc", "state");
+    mkdirSync(stateDir, { recursive: true });
     writeFileSync(join(stateDir, "ralph-state.json"), JSON.stringify({
-      task: "Old task", status: "complete",
+      mode: "ralph", task: "Old task", status: "complete",
       started_at: "2026-04-04T10:00:00Z", completed_at: "2026-04-04T10:15:00Z",
     }));
 
-    const path = archiveCurrentSession()!;
-    const archive = JSON.parse(readFileSync(path, "utf-8"));
-    assert.equal(archive.modes[0].mode, "ralph");
+    const archived = archiveCompletedRuns();
+    assert.equal(archived.length, 1);
+    const data = JSON.parse(readFileSync(archived[0], "utf-8"));
+    assert.equal(data.modes[0].mode, "ralph");
   });
 
   it("isSessionStale returns false for empty state", () => {
@@ -92,23 +136,23 @@ describe("archive", () => {
     assert.equal(isSessionStale(), true);
   });
 
-  it("isSessionStale returns true when active but very old", () => {
+  it("isSessionStale returns false when active even if old", () => {
     const stateDir = join(tmp, ".omc", "state");
     mkdirSync(stateDir, { recursive: true });
     const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
-    writeFileSync(join(stateDir, "forge-state.json"), JSON.stringify({
-      mode: "forge", active: true, status: "active",
+    writeFileSync(join(stateDir, "forge-a1b2c3d4-state.json"), JSON.stringify({
+      mode: "forge", runId: "a1b2c3d4", status: "active",
       started_at: twoHoursAgo, updated_at: twoHoursAgo,
     }));
-    assert.equal(isSessionStale(), true);
+    assert.equal(isSessionStale(), false);
   });
 
-  it("isSessionStale returns false when active and recent", () => {
+  it("isSessionStale returns false for status-only active (no active boolean)", () => {
     const stateDir = join(tmp, ".omc", "state");
     mkdirSync(stateDir, { recursive: true });
     writeFileSync(join(stateDir, "forge-state.json"), JSON.stringify({
-      mode: "forge", active: true, status: "active",
-      started_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+      mode: "forge", status: "active",
+      started_at: new Date().toISOString(),
     }));
     assert.equal(isSessionStale(), false);
   });
