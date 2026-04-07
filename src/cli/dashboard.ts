@@ -24,6 +24,7 @@ export interface PlanInfo {
 export interface ModeInfo {
   mode: string;
   runId?: string;
+  chatId?: string;
   status?: "active" | "complete" | "cancelled" | "blocked" | string;
   active?: boolean;
   phase?: string;

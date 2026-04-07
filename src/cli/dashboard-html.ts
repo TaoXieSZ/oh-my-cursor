@@ -116,6 +116,20 @@ main{max-width:1400px;margin:0 auto;padding:24px 32px 64px}
   white-space:pre-wrap;line-height:1.6}
 .history-detail.open{display:block}
 
+.chat-link{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;
+  border:1px solid var(--border);background:var(--surface2);color:var(--blue);font-size:0.65rem;
+  font-family:var(--font-mono);cursor:pointer;transition:all .15s;white-space:nowrap;flex-shrink:0}
+.chat-link:hover{background:var(--blue-dim);border-color:var(--blue)}
+.chat-link svg{width:12px;height:12px}
+.card .chat-link{margin-top:8px}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);
+  background:var(--surface);border:1px solid var(--green);border-radius:var(--radius-sm);
+  padding:10px 20px;color:var(--text);font-size:0.82rem;z-index:100;
+  transition:transform .3s ease;box-shadow:0 8px 32px rgba(0,0,0,.5)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast .toast-sub{font-size:0.7rem;color:var(--text2);margin-top:2px}
+
 /* Plan cards */
 .plan-card{background:var(--surface2);border-radius:var(--radius-sm);margin-bottom:10px;overflow:hidden;
   border:1px solid transparent;transition:border-color .2s}
@@ -195,6 +209,8 @@ footer a:hover{text-decoration:underline}
   <div class="updated-at" id="updated-at"></div>
 </main>
 
+<div class="toast" id="toast"></div>
+
 <footer>
   <a href="https://github.com/TaoXieSZ/oh-my-cursor" target="_blank">oh-my-cursor</a> &middot; workflow orchestration for Cursor IDE
 </footer>
@@ -242,6 +258,28 @@ footer a:hover{text-decoration:underline}
   }
 
   function badgeClass(mode) { return MODE_COLORS[mode] || 'default'; }
+
+  var CHAT_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
+
+  function showToast(msg, sub) {
+    var t = document.getElementById('toast');
+    t.innerHTML = esc(msg) + (sub ? '<div class="toast-sub">' + esc(sub) + '</div>' : '');
+    t.classList.add('show');
+    setTimeout(function() { t.classList.remove('show'); }, 3000);
+  }
+
+  window._openChat = function(chatId, ev) {
+    if (ev) ev.stopPropagation();
+    if (!chatId) return;
+    navigator.clipboard.writeText(chatId).then(function() {
+      showToast('Chat ID copied!', 'Search "' + chatId.slice(0,8) + '..." in Cursor Previous Chats');
+    });
+  };
+
+  function chatLinkHtml(chatId) {
+    if (!chatId) return '';
+    return '<button class="chat-link" onclick="window._openChat(\\'' + esc(chatId) + '\\', event)" title="Copy Chat ID to find in Cursor">' + CHAT_ICON + '<span>' + esc(chatId.slice(0,8)) + '</span></button>';
+  }
 
   function statusDotClass(status) {
     if (status === 'active') return 'active';
@@ -295,6 +333,8 @@ footer a:hover{text-decoration:underline}
       html += '<span class="meta-item"><span class="meta-label">elapsed</span> <span class="meta-val">' + duration(m.started_at) + '</span></span>';
       html += '<span class="meta-item"><span class="meta-label">started</span> <span class="meta-val">' + timeAgo(m.started_at) + '</span></span>';
       html += '</div>';
+      var chatId = m.chatId || (m.metadata && m.metadata.chatId);
+      if (chatId) html += chatLinkHtml(chatId);
       html += '<div class="card-progress"><div class="card-progress-fill" style="width:' + pct + '%"></div></div>';
       html += '</div>';
     });
@@ -306,14 +346,16 @@ footer a:hover{text-decoration:underline}
     var items = [];
 
     state.completedModes.forEach(function(m) {
+      var chatId = m.chatId || (m.metadata && m.metadata.chatId) || null;
       items.push({ type:'mode', mode:m.mode, task:m.task||(m.metadata&&m.metadata.task)||'', status:m.status||'complete',
-        runId:m.runId, started:m.started_at, ended:m.completed_at||m.updated_at, data:m });
+        runId:m.runId, chatId:chatId, started:m.started_at, ended:m.completed_at||m.updated_at, data:m });
     });
     state.archivedSessions.forEach(function(a) {
       var m = a.modes && a.modes[0];
       var status = m ? (m.status || 'complete') : 'complete';
+      var chatId = (m && (m.chatId || (m.metadata && m.metadata.chatId))) || a.chatId || null;
       items.push({ type:'archive', mode:m?m.mode:'unknown', task:a.task||'', status:status,
-        runId:a.runId||a.session.id, started:a.session.started_at, ended:a.session.archived_at, data:a });
+        runId:a.runId||a.session.id, chatId:chatId, started:a.session.started_at, ended:a.session.archived_at, data:a });
     });
 
     items.sort(function(a,b) {
@@ -336,7 +378,8 @@ footer a:hover{text-decoration:underline}
       if (item.runId) html += ' \\u{00B7} ' + esc(String(item.runId).slice(0,8));
       html += ' \\u{00B7} ' + duration(item.started, item.ended);
       html += '</div></div>';
-      html += '<div class="history-time">' + timeAgo(item.ended || item.started) + '</div>';
+      if (item.chatId) html += chatLinkHtml(item.chatId);
+      else html += '<div class="history-time">' + timeAgo(item.ended || item.started) + '</div>';
       html += '</div>';
       html += '<div class="history-detail" id="' + id + '">' + esc(JSON.stringify(item.data, null, 2)) + '</div>';
     });
