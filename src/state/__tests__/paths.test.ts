@@ -15,6 +15,7 @@ import {
   getWorkerProgressPath,
   getPlanPath,
   getLogPath,
+  getEventLogPath,
   getNotepadPath,
   getProjectMemoryPath,
 } from "../paths.js";
@@ -97,6 +98,10 @@ describe("state path helpers", () => {
 
   it("getLogPath", () => {
     assert.equal(getLogPath("session.log"), "/test/project/.omc/logs/session.log");
+  });
+
+  it("getEventLogPath", () => {
+    assert.equal(getEventLogPath("abc12345"), "/test/project/.omc/logs/abc12345.jsonl");
   });
 
   it("getNotepadPath", () => {

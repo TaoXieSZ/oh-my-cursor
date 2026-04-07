@@ -123,6 +123,31 @@ main{max-width:1400px;margin:0 auto;padding:24px 32px 64px}
 .chat-link svg{width:12px;height:12px}
 .card .chat-link{margin-top:8px}
 
+/* Timeline */
+.timeline{margin-top:10px;border-top:1px solid var(--border);padding-top:8px}
+.timeline-toggle{display:flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--text3);
+  cursor:pointer;user-select:none;margin-bottom:6px}
+.timeline-toggle:hover{color:var(--text2)}
+.timeline-toggle .arrow{transition:transform .2s;font-size:0.6rem}
+.timeline-toggle.open .arrow{transform:rotate(90deg)}
+.tl-list{display:none;padding-left:12px;border-left:2px solid var(--border)}
+.tl-list.open{display:block}
+.tl-event{position:relative;padding:4px 0 4px 14px;font-size:0.72rem;line-height:1.5}
+.tl-event::before{content:'';position:absolute;left:-7px;top:10px;width:6px;height:6px;
+  border-radius:50%;border:1.5px solid var(--border);background:var(--surface)}
+.tl-event.phase::before{border-color:var(--blue);background:var(--blue-dim)}
+.tl-event.status::before{border-color:var(--orange);background:var(--orange-dim)}
+.tl-event.iteration::before{border-color:var(--text3);background:var(--surface2)}
+.tl-event.tool_call::before{border-color:var(--purple);background:var(--purple-dim)}
+.tl-event.milestone::before{border-color:var(--green);background:var(--green-dim)}
+.tl-event.note::before{border-color:var(--text3);background:var(--surface2)}
+.tl-event.file_edit::before{border-color:var(--yellow);background:var(--yellow-dim)}
+.tl-event.state_change::before{border-color:var(--orange);background:var(--orange-dim)}
+.tl-time{color:var(--text3);font-family:var(--font-mono);font-size:0.62rem;margin-right:6px}
+.tl-kind{font-family:var(--font-mono);font-size:0.6rem;padding:1px 5px;border-radius:3px;
+  background:var(--surface2);color:var(--text2);margin-right:4px}
+.tl-summary{color:var(--text)}
+
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);
   background:var(--surface);border:1px solid var(--green);border-radius:var(--radius-sm);
   padding:10px 20px;color:var(--text);font-size:0.82rem;z-index:100;
@@ -136,6 +161,14 @@ main{max-width:1400px;margin:0 auto;padding:24px 32px 64px}
 .plan-card:hover{border-color:var(--border)}
 .plan-header{display:flex;align-items:center;gap:8px;padding:10px 14px;cursor:pointer;user-select:none}
 .plan-header:hover{background:#1e1e2d}
+.plan-open{margin-left:auto;background:none;border:1px solid var(--border);color:var(--text2);
+  font-size:0.65rem;padding:2px 8px;border-radius:4px;cursor:pointer;display:flex;align-items:center;gap:4px;
+  transition:all .15s;font-family:var(--font-mono)}
+.plan-open:hover{border-color:var(--blue);color:var(--blue);background:rgba(56,139,253,0.08)}
+.plan-open svg{width:12px;height:12px}
+.plan-meta{display:flex;align-items:center;gap:8px;padding:0 14px 6px;font-size:0.68rem;color:var(--text3)}
+.plan-title{color:var(--text2);font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.plan-time{font-family:var(--font-mono);font-size:0.62rem;white-space:nowrap}
 .plan-arrow{color:var(--text3);font-size:0.7rem;transition:transform .2s}
 .plan-card.open .plan-arrow{transform:rotate(90deg)}
 .plan-name{font-family:var(--font-mono);font-size:0.82rem;color:var(--blue)}
@@ -281,6 +314,39 @@ footer a:hover{text-decoration:underline}
     return '<button class="chat-link" onclick="window._openChat(\\'' + esc(chatId) + '\\', event)" title="Copy Chat ID to find in Cursor">' + CHAT_ICON + '<span>' + esc(chatId.slice(0,8)) + '</span></button>';
   }
 
+  function renderTimeline(events, id) {
+    if (!events || events.length === 0) return '';
+    var html = '<div class="timeline">';
+    html += '<div class="timeline-toggle" onclick="this.classList.toggle(\\'open\\');document.getElementById(\\'' + id + '-tl\\').classList.toggle(\\'open\\')">';
+    html += '<span class="arrow">\\u{25B6}</span> Timeline (' + events.length + ')';
+    html += '</div>';
+    html += '<div class="tl-list" id="' + id + '-tl">';
+    events.slice().reverse().forEach(function(ev) {
+      html += '<div class="tl-event ' + esc(ev.kind) + '">';
+      html += '<span class="tl-time">' + timeAgo(ev.ts) + '</span>';
+      html += '<span class="tl-kind">' + esc(ev.kind) + '</span>';
+      html += '<span class="tl-summary">' + esc(ev.summary) + '</span>';
+      html += '</div>';
+    });
+    html += '</div></div>';
+    return html;
+  }
+
+  var eventCache = {};
+  function fetchAndRenderTimeline(runId, containerId) {
+    if (!runId) return;
+    var el = document.getElementById(containerId);
+    if (!el || el.dataset.loaded) return;
+    el.dataset.loaded = '1';
+    fetch('/api/events?runId=' + encodeURIComponent(runId))
+      .then(function(r) { return r.json(); })
+      .then(function(events) {
+        if (events && events.length > 0) {
+          el.innerHTML = renderTimeline(events, containerId);
+        }
+      });
+  }
+
   function statusDotClass(status) {
     if (status === 'active') return 'active';
     if (status === 'complete' || status === 'approved') return 'complete';
@@ -336,6 +402,9 @@ footer a:hover{text-decoration:underline}
       var chatId = m.chatId || (m.metadata && m.metadata.chatId);
       if (chatId) html += chatLinkHtml(chatId);
       html += '<div class="card-progress"><div class="card-progress-fill" style="width:' + pct + '%"></div></div>';
+      if (m.recentEvents && m.recentEvents.length > 0) {
+        html += renderTimeline(m.recentEvents, 'card-' + (m.runId || i));
+      }
       html += '</div>';
     });
     el.innerHTML = html;
@@ -370,7 +439,8 @@ footer a:hover{text-decoration:underline}
     var html = '';
     items.forEach(function(item, i) {
       var id = 'hist-' + i;
-      html += '<div class="history-item" onclick="window._toggleHistory(\\'' + id + '\\')">';
+      var itemRunId = item.runId || '';
+      html += '<div class="history-item" onclick="window._toggleHistory(\\'' + id + '\\',\\'' + esc(itemRunId) + '\\')">';
       html += '<div class="history-dot ' + statusDotClass(item.status) + '"></div>';
       html += '<div class="history-info">';
       html += '<div class="history-task">' + esc(item.task || item.mode) + '</div>';
@@ -381,14 +451,36 @@ footer a:hover{text-decoration:underline}
       if (item.chatId) html += chatLinkHtml(item.chatId);
       else html += '<div class="history-time">' + timeAgo(item.ended || item.started) + '</div>';
       html += '</div>';
-      html += '<div class="history-detail" id="' + id + '">' + esc(JSON.stringify(item.data, null, 2)) + '</div>';
+      html += '<div class="history-detail" id="' + id + '">';
+      html += '<div id="' + id + '-events"></div>';
+      html += '<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--text3);font-size:0.7rem">Raw state</summary>';
+      html += '<pre style="margin-top:4px">' + esc(JSON.stringify(item.data, null, 2)) + '</pre></details>';
+      html += '</div>';
     });
     el.innerHTML = html;
   }
 
-  window._toggleHistory = function(id) {
+  window._toggleHistory = function(id, runId) {
     var el = document.getElementById(id);
-    if (el) el.classList.toggle('open');
+    if (el) {
+      el.classList.toggle('open');
+      if (el.classList.contains('open') && runId) {
+        fetchAndRenderTimeline(runId, id + '-events');
+      }
+    }
+  };
+
+  var OPEN_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>';
+
+  window._openInCursor = function(filename, ev) {
+    if (ev) ev.stopPropagation();
+    fetch('/api/open?file=' + encodeURIComponent(filename))
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.ok) showToast('Opened in Cursor', data.path);
+        else showToast('Failed to open', data.error || 'Unknown error');
+      })
+      .catch(function() { showToast('Failed to open', 'Server error'); });
   };
 
   var planCache = {};
@@ -405,6 +497,11 @@ footer a:hover{text-decoration:underline}
       html += '<div class="plan-header" onclick="window._togglePlan(\\'' + id + '\\',\\'' + encodeURIComponent(p.name) + '\\')">';
       html += '<span class="plan-arrow">\\u{25B6}</span>';
       html += '<span class="plan-name">' + esc(p.name) + '</span>';
+      html += '<button class="plan-open" onclick="window._openInCursor(\\'' + esc(p.name) + '\\', event)" title="Open in Cursor">' + OPEN_ICON + 'Open</button>';
+      html += '</div>';
+      html += '<div class="plan-meta">';
+      html += '<span class="plan-title">' + esc(p.title || p.name) + '</span>';
+      if (p.modifiedAt) html += '<span class="plan-time">' + timeAgo(p.modifiedAt) + '</span>';
       html += '</div>';
       html += '<div class="plan-preview"><div class="plan-content" id="' + id + '-content">';
       if (p.preview) html += esc(p.preview) + (p.preview.length >= 590 ? '\\n...' : '');

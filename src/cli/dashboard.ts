@@ -1,5 +1,5 @@
 import { createServer, IncomingMessage, ServerResponse } from "node:http";
-import { watch, existsSync, readFileSync, readdirSync } from "node:fs";
+import { watch, existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { exec } from "node:child_process";
 import { join } from "node:path";
 import { ensureDir } from "../utils/fs.js";
@@ -15,10 +15,14 @@ import * as log from "../utils/log.js";
 import { getHTML } from "./dashboard-html.js";
 import { isSessionStale, archiveCurrentSession, listArchives } from "../state/archive.js";
 import type { ArchivedSession } from "../state/archive.js";
+import { tailEvents, readEvents } from "../state/event-log.js";
+import type { RunEvent } from "../state/event-log.js";
 
 export interface PlanInfo {
   name: string;
   preview: string;
+  modifiedAt: string;
+  title: string;
 }
 
 export interface ModeInfo {
@@ -34,6 +38,7 @@ export interface ModeInfo {
   completed_at?: string;
   task?: string;
   metadata?: Record<string, unknown>;
+  recentEvents?: RunEvent[];
 }
 
 export interface DashboardState {
@@ -74,6 +79,9 @@ export function collectState(): DashboardState {
         const parsed = parseStateFilename(file);
         if (parsed?.runId) data.runId = parsed.runId;
       }
+      if (data.runId) {
+        try { data.recentEvents = tailEvents(data.runId, 5); } catch { data.recentEvents = []; }
+      }
       const isActive = data.active === true || data.status === "active";
       if (isActive) activeModes.push(data);
       else completedModes.push(data);
@@ -86,10 +94,15 @@ export function collectState(): DashboardState {
   if (existsSync(plansDir)) {
     for (const f of readdirSync(plansDir).filter(f => f.endsWith(".md"))) {
       try {
-        const content = readFileSync(join(plansDir, f), "utf-8");
-        plans.push({ name: f, preview: content.slice(0, 600) });
-      } catch { plans.push({ name: f, preview: "" }); }
+        const fullPath = join(plansDir, f);
+        const content = readFileSync(fullPath, "utf-8");
+        const mtime = statSync(fullPath).mtime.toISOString();
+        const titleMatch = content.match(/^#\s+(.+)/m);
+        const title = titleMatch ? titleMatch[1].replace(/^PRD:\s*/i, "").trim() : f.replace(/\.md$/, "");
+        plans.push({ name: f, preview: content.slice(0, 600), modifiedAt: mtime, title });
+      } catch { plans.push({ name: f, preview: "", modifiedAt: "", title: f.replace(/\.md$/, "") }); }
     }
+    plans.sort((a, b) => (b.modifiedAt || "").localeCompare(a.modifiedAt || ""));
   }
 
   let memory: Record<string, unknown> = {};
@@ -148,6 +161,49 @@ function handleRequest(req: IncomingMessage, res: ServerResponse): void {
     }
     res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8", "Access-Control-Allow-Origin": "*" });
     res.end(readFileSync(planPath, "utf-8"));
+    return;
+  }
+
+  if (url.startsWith("/api/open?file=")) {
+    const file = decodeURIComponent(url.slice("/api/open?file=".length));
+    if (!file || file.includes("..")) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Invalid file path" }));
+      return;
+    }
+    const fullPath = join(getBaseStateDir(), "plans", file);
+    if (!existsSync(fullPath)) {
+      res.writeHead(404, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "File not found" }));
+      return;
+    }
+    const tryOpen = [
+      `open -a "Cursor" "${fullPath}"`,
+      `cursor "${fullPath}"`,
+      `code "${fullPath}"`,
+    ];
+    const attempt = (i: number): void => {
+      if (i >= tryOpen.length) return;
+      exec(tryOpen[i], (err) => { if (err) attempt(i + 1); });
+    };
+    attempt(0);
+    res.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+    res.end(JSON.stringify({ ok: true, path: fullPath }));
+    return;
+  }
+
+  if (url.startsWith("/api/events?runId=")) {
+    const runId = decodeURIComponent(url.slice("/api/events?runId=".length));
+    if (!runId) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Missing runId" }));
+      return;
+    }
+    res.writeHead(200, {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+    });
+    res.end(JSON.stringify(readEvents(runId)));
     return;
   }
 

@@ -56,6 +56,10 @@ export function getLogPath(filename: string): string {
   return join(getBaseStateDir(), "logs", filename);
 }
 
+export function getEventLogPath(runId: string): string {
+  return getLogPath(`${runId}.jsonl`);
+}
+
 export function getNotepadPath(): string {
   return join(getBaseStateDir(), "notepad.md");
 }

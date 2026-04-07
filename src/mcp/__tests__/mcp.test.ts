@@ -49,11 +49,12 @@ describe("omc-state MCP server", () => {
     rmSync(tmp, { recursive: true, force: true });
   });
 
-  it("lists 8 tools", async () => {
+  it("lists 10 tools", async () => {
     const { tools } = await client.listTools();
-    assert.equal(tools.length, 8);
+    assert.equal(tools.length, 10);
     const names = tools.map((t: any) => t.name).sort();
     assert.deepEqual(names, [
+      "event_append", "event_read",
       "notepad_append", "notepad_read",
       "plan_list", "plan_read", "plan_write",
       "state_list", "state_read", "state_write",
@@ -166,6 +167,51 @@ describe("omc-state MCP server", () => {
     const listResult = await client.callTool({ name: "plan_list", arguments: {} });
     const plans = JSON.parse(listResult.content[0].text);
     assert.ok(plans.includes("prd-test.md"));
+  });
+
+  it("event_append + event_read roundtrip", async () => {
+    await client.callTool({
+      name: "event_append",
+      arguments: { runId: "ev-test", kind: "milestone", summary: "Feature done" },
+    });
+    await client.callTool({
+      name: "event_append",
+      arguments: { runId: "ev-test", kind: "note", summary: "All tests pass" },
+    });
+
+    const result = await client.callTool({
+      name: "event_read",
+      arguments: { runId: "ev-test" },
+    });
+    const events = JSON.parse(result.content[0].text);
+    assert.equal(events.length, 2);
+    assert.equal(events[0].kind, "milestone");
+    assert.equal(events[1].kind, "note");
+  });
+
+  it("event_read with tail returns last N", async () => {
+    for (let i = 0; i < 5; i++) {
+      await client.callTool({
+        name: "event_append",
+        arguments: { runId: "tail-test", kind: "iteration", summary: `Iter ${i}` },
+      });
+    }
+    const result = await client.callTool({
+      name: "event_read",
+      arguments: { runId: "tail-test", tail: 2 },
+    });
+    const events = JSON.parse(result.content[0].text);
+    assert.equal(events.length, 2);
+    assert.equal(events[0].summary, "Iter 3");
+  });
+
+  it("event_read for missing run returns empty array", async () => {
+    const result = await client.callTool({
+      name: "event_read",
+      arguments: { runId: "nonexistent" },
+    });
+    const events = JSON.parse(result.content[0].text);
+    assert.deepEqual(events, []);
   });
 
   it("notepad_read + notepad_append", async () => {

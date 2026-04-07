@@ -4,6 +4,7 @@ import { mkdirSync, rmSync, existsSync, readFileSync, writeFileSync, readdirSync
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
+import { readEvents } from "../event-log.js";
 import {
   readModeState,
   writeModeState,
@@ -271,6 +272,53 @@ describe("mode-state", () => {
       writeFileSync(join(projectRoot, ".omc", "state", "bad-a1b2c3d4-state.json"), "{invalid");
       const active = listActiveModes();
       assert.equal(active.length, 1);
+    });
+  });
+
+  describe("auto-event emission", () => {
+    it("startMode emits a 'Started' event", () => {
+      const state = startMode("forge", "build auth");
+      const events = readEvents(state.runId!);
+      assert.ok(events.length >= 1);
+      assert.ok(events.some(e => e.kind === "status" && e.summary.includes("Started forge")));
+    });
+
+    it("updateMode with phase change emits phase event", () => {
+      const state = startMode("forge", "task");
+      updateMode("forge", { phase: "verify" }, state.runId);
+      const events = readEvents(state.runId!);
+      assert.ok(events.some(e => e.kind === "phase" && e.summary.includes("→ verify")));
+    });
+
+    it("updateMode with iteration change emits iteration event", () => {
+      const state = startMode("forge", "task");
+      updateMode("forge", { iteration: 2 }, state.runId);
+      const events = readEvents(state.runId!);
+      assert.ok(events.some(e => e.kind === "iteration" && e.summary.includes("Iteration 2")));
+    });
+
+    it("completeMode emits status change event", () => {
+      const state = startMode("forge", "task");
+      completeMode("forge", state.runId);
+      const events = readEvents(state.runId!);
+      assert.ok(events.some(e => e.kind === "status" && e.summary.includes("→ complete")));
+    });
+
+    it("cancelMode emits status change event", () => {
+      const state = startMode("forge", "task");
+      cancelMode("forge", state.runId);
+      const events = readEvents(state.runId!);
+      assert.ok(events.some(e => e.kind === "status" && e.summary.includes("→ cancelled")));
+    });
+
+    it("two separate runs have independent event logs", () => {
+      const run1 = startMode("forge", "task1");
+      const run2 = startMode("forge", "task2");
+      updateMode("forge", { phase: "verify" }, run1.runId);
+      const ev1 = readEvents(run1.runId!);
+      const ev2 = readEvents(run2.runId!);
+      assert.ok(ev1.some(e => e.kind === "phase"));
+      assert.ok(!ev2.some(e => e.kind === "phase"));
     });
   });
 });

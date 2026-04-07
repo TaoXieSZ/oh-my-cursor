@@ -120,7 +120,7 @@ describe("collectState", () => {
     assert.equal(state.archivedSessions[0].task, "Old task");
   });
 
-  it("reads plans with content preview", () => {
+  it("reads plans with content preview, title, and modifiedAt", () => {
     const plansDir = join(tmp, ".omc", "plans");
     mkdirSync(plansDir, { recursive: true });
     writeFileSync(join(plansDir, "prd-auth.md"), "# Auth PRD\n\nDesign the auth flow.");
@@ -128,6 +128,8 @@ describe("collectState", () => {
     const state = collectState();
     assert.equal(state.plans.length, 1);
     assert.ok(state.plans[0].preview.includes("Auth PRD"));
+    assert.equal(state.plans[0].title, "Auth PRD");
+    assert.ok(state.plans[0].modifiedAt);
   });
 
   it("extracts activeTask from mode task field", () => {
@@ -197,5 +199,41 @@ describe("collectState", () => {
 
     const state = collectState();
     assert.equal(state.activeModes[0].runId, "a1b2c3d4");
+  });
+
+  it("populates recentEvents for active modes with event log", () => {
+    const stateDir = join(tmp, ".omc", "state");
+    const logsDir = join(tmp, ".omc", "logs");
+    mkdirSync(stateDir, { recursive: true });
+    mkdirSync(logsDir, { recursive: true });
+    writeFileSync(join(stateDir, "forge-ev123456-state.json"), JSON.stringify({
+      mode: "forge", runId: "ev123456", status: "active",
+      started_at: "2026-04-04T10:00:00Z",
+    }));
+    const events = [
+      { ts: "2026-04-04T10:00:00Z", kind: "status", summary: "Started forge" },
+      { ts: "2026-04-04T10:01:00Z", kind: "phase", summary: "Phase: init → verify" },
+      { ts: "2026-04-04T10:02:00Z", kind: "iteration", summary: "Iteration 1" },
+    ];
+    writeFileSync(join(logsDir, "ev123456.jsonl"),
+      events.map(e => JSON.stringify(e)).join("\n") + "\n");
+
+    const state = collectState();
+    assert.equal(state.activeModes.length, 1);
+    assert.ok(state.activeModes[0].recentEvents);
+    assert.equal(state.activeModes[0].recentEvents!.length, 3);
+  });
+
+  it("recentEvents is empty for modes without event log", () => {
+    const stateDir = join(tmp, ".omc", "state");
+    mkdirSync(stateDir, { recursive: true });
+    writeFileSync(join(stateDir, "forge-nolog123-state.json"), JSON.stringify({
+      mode: "forge", runId: "nolog123", status: "active",
+      started_at: "2026-04-04T10:00:00Z",
+    }));
+
+    const state = collectState();
+    assert.ok(state.activeModes[0].recentEvents);
+    assert.equal(state.activeModes[0].recentEvents!.length, 0);
   });
 });

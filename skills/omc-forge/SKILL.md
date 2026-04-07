@@ -64,6 +64,8 @@ When a Slack Incoming Webhook URL is configured, OMC posts updates when forge st
 
 State is written to `.omc/state/forge-{runId}-state.json` (each forge invocation gets a unique `runId`). Use MCP `state_write` with mode `"forge"` — the system auto-assigns a `runId` on the first write and reuses it for subsequent updates.
 
+State transitions (phase changes, status changes, iteration bumps) are automatically logged as events in `.omc/logs/{runId}.jsonl`. Custom events (tool calls, file edits, milestones) can be injected via MCP `event_append`. Events are visible in the dashboard timeline and embedded in archives.
+
 ```json
 {
   "mode": "forge",

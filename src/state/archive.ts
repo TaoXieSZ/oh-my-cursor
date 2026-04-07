@@ -1,7 +1,9 @@
 import { existsSync, readFileSync, writeFileSync, readdirSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
-import { getBaseStateDir, getSessionPath, listModeStateFiles } from "./paths.js";
+import { getBaseStateDir, getSessionPath, listModeStateFiles, getEventLogPath } from "./paths.js";
 import { parseStateFilename } from "./mode-state.js";
+import { readEvents } from "./event-log.js";
+import type { RunEvent } from "./event-log.js";
 import { ensureDir } from "../utils/fs.js";
 
 export interface ArchivedSession {
@@ -9,6 +11,7 @@ export interface ArchivedSession {
   session: { id: string; started_at: string; archived_at: string };
   task: string | null;
   modes: Record<string, unknown>[];
+  events?: RunEvent[];
 }
 
 const STALE_THRESHOLD_MS = 60 * 60 * 1000; // 1 hour
@@ -37,6 +40,9 @@ export function archiveCompletedRuns(): string[] {
       if (!data.mode && parsed) data.mode = parsed.mode;
 
       const runId = data.runId ?? parsed?.runId ?? new Date().toISOString().replace(/[:.]/g, "-");
+      let events: RunEvent[] = [];
+      try { events = readEvents(runId); } catch { /* skip */ }
+
       const archive: ArchivedSession = {
         runId,
         session: {
@@ -46,12 +52,19 @@ export function archiveCompletedRuns(): string[] {
         },
         task: data.task ?? data.metadata?.task ?? null,
         modes: [data],
+        ...(events.length > 0 ? { events } : {}),
       };
 
       ensureDir(archiveDir);
       const archivePath = join(archiveDir, `${runId}.json`);
       writeFileSync(archivePath, JSON.stringify(archive, null, 2) + "\n");
       unlinkSync(join(stateDir, f));
+
+      const eventLogPath = getEventLogPath(runId);
+      if (existsSync(eventLogPath)) {
+        try { unlinkSync(eventLogPath); } catch { /* skip */ }
+      }
+
       archived.push(archivePath);
     } catch { /* skip corrupt */ }
   }

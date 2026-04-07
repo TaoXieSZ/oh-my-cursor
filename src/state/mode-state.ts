@@ -4,6 +4,8 @@ import { dirname, join } from "node:path";
 import { getModeStatePath, getBaseStateDir, listModeStateFiles } from "./paths.js";
 import { ensureDir } from "../utils/fs.js";
 import { notifyForgeStateChange } from "../notify/forge-notify.js";
+import { appendEvent } from "./event-log.js";
+import type { RunEvent } from "./event-log.js";
 
 export interface ModeState {
   mode: string;
@@ -85,12 +87,49 @@ export function readModeState(mode: string, runId?: string): ModeState | null {
 
 export function writeModeState(mode: string, state: ModeState): void {
   const path = stateFilePath(mode, state);
-  const previous = mode === "forge" ? readModeState(mode, state.runId) : null;
+  const previous = readModeState(mode, state.runId);
   ensureDir(dirname(path));
   writeFileSync(path, JSON.stringify(state, null, 2) + "\n");
+
+  if (state.runId) {
+    emitStateEvents(previous, state);
+  }
   if (mode === "forge") {
     void notifyForgeStateChange(previous, state);
   }
+}
+
+function emitStateEvents(previous: ModeState | null, next: ModeState): void {
+  if (!next.runId) return;
+  const runId = next.runId;
+
+  try {
+    if (!previous) {
+      appendEvent(runId, { ts: new Date().toISOString(), kind: "status", summary: `Started ${next.mode}` });
+      return;
+    }
+
+    if (previous.phase !== next.phase && next.phase) {
+      appendEvent(runId, {
+        ts: new Date().toISOString(), kind: "phase",
+        summary: `Phase: ${previous.phase ?? "none"} → ${next.phase}`,
+      });
+    }
+
+    if (previous.status !== next.status) {
+      appendEvent(runId, {
+        ts: new Date().toISOString(), kind: "status",
+        summary: `Status: ${previous.status} → ${next.status}`,
+      });
+    }
+
+    if (previous.iteration !== next.iteration && next.iteration != null) {
+      appendEvent(runId, {
+        ts: new Date().toISOString(), kind: "iteration",
+        summary: `Iteration ${next.iteration}`,
+      });
+    }
+  } catch { /* event logging is best-effort */ }
 }
 
 export function startMode(mode: string, task: string, extra?: Record<string, unknown>): ModeState {

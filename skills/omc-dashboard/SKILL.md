@@ -59,12 +59,29 @@ Run `omc dashboard` in a terminal. This starts a local HTTP server (default port
 | Session | `.omc/state/session.json` | `{ id, started_at }` |
 | Mode states | `.omc/state/{mode}-{runId}-state.json` | `{ mode, runId, status, phase, iteration, task, ... }` |
 | Legacy mode states | `.omc/state/{mode}-state.json` | Backward compat (no runId) |
-| Archives | `.omc/archive/{runId}.json` | `{ runId, session, task, modes }` |
+| Event logs | `.omc/logs/{runId}.jsonl` | Append-only JSONL, one `RunEvent` per line |
+| Archives | `.omc/archive/{runId}.json` | `{ runId, session, task, modes, events? }` |
 | Plans | `.omc/plans/*.md` | Markdown files |
 | Memory | `.omc/project-memory.json` | `{ key: value, ... }` |
 | Notepad | `.omc/notepad.md` | Markdown |
 
 Each workflow invocation (forge, blueprint, etc.) creates a unique `runId`. Multiple runs can coexist — the dashboard shows all active runs as separate cards and lists archived runs in the history section.
+
+## Event timeline (P1)
+
+State transitions are automatically logged as events in `.omc/logs/{runId}.jsonl`. Each line is a JSON object:
+
+```json
+{ "ts": "2026-04-07T10:00:00Z", "kind": "phase", "summary": "Phase: init → verify" }
+```
+
+**Auto-captured kinds:** `status` (start, complete, cancel), `phase` (transitions), `iteration` (bumps).
+
+**Manual injection:** Use MCP `event_append` with `runId`, `kind`, `summary`, and optional `detail` to add custom events (tool calls, file edits, milestones, notes).
+
+**Dashboard:** Active cards show a collapsible mini-timeline (last 5 events). History items fetch the full event log on expand via `/api/events?runId=X`.
+
+**Archival:** When a run is archived, its event log is embedded in `ArchivedSession.events` and the `.jsonl` file is removed.
 
 ## Exit
 

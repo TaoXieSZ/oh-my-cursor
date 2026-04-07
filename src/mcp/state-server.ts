@@ -23,6 +23,8 @@ import {
 } from "../state/paths.js";
 import { readModeState, writeModeState, parseStateFilename } from "../state/mode-state.js";
 import type { ModeState } from "../state/mode-state.js";
+import { appendEvent, readEvents, tailEvents } from "../state/event-log.js";
+import type { RunEvent } from "../state/event-log.js";
 
 const server = new Server(
   { name: "omc-state", version: "0.2.0" },
@@ -102,6 +104,32 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
           text: { type: "string", description: "Text to append" },
         },
         required: ["text"],
+      },
+    },
+    {
+      name: "event_append",
+      description: "Append a custom event to a run's event log (.omc/logs/{runId}.jsonl)",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          runId: { type: "string", description: "Run ID to append the event to" },
+          kind: { type: "string", description: "Event kind: tool_call, file_edit, milestone, note, etc." },
+          summary: { type: "string", description: "Human-readable one-liner" },
+          detail: { type: "object", description: "Optional structured payload" },
+        },
+        required: ["runId", "kind", "summary"],
+      },
+    },
+    {
+      name: "event_read",
+      description: "Read events from a run's event log. Returns all events or last N with tail param.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          runId: { type: "string", description: "Run ID to read events for" },
+          tail: { type: "number", description: "Return only the last N events" },
+        },
+        required: ["runId"],
       },
     },
   ],
@@ -202,6 +230,19 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const existing = existsSync(path) ? readFileSync(path, "utf-8") : "# OMC Notepad\n";
       writeFileSync(path, existing.trimEnd() + "\n\n" + text + "\n");
       return { content: [{ type: "text", text: "Appended to notepad" }] };
+    }
+
+    case "event_append": {
+      const { runId, kind, summary, detail } = args as { runId: string; kind: string; summary: string; detail?: Record<string, unknown> };
+      const event: RunEvent = { ts: new Date().toISOString(), kind: kind as RunEvent["kind"], summary, ...(detail ? { detail } : {}) };
+      appendEvent(runId, event);
+      return { content: [{ type: "text", text: `Event appended to run: ${runId}` }] };
+    }
+
+    case "event_read": {
+      const { runId, tail } = args as { runId: string; tail?: number };
+      const events = tail ? tailEvents(runId, tail) : readEvents(runId);
+      return { content: [{ type: "text", text: JSON.stringify(events, null, 2) }] };
     }
 
     default:

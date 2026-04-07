@@ -157,6 +157,48 @@ describe("archive", () => {
     assert.equal(isSessionStale(), false);
   });
 
+  it("archiveCompletedRuns embeds events from event log", () => {
+    const stateDir = join(tmp, ".omc", "state");
+    const logsDir = join(tmp, ".omc", "logs");
+    mkdirSync(stateDir, { recursive: true });
+    mkdirSync(logsDir, { recursive: true });
+    writeFileSync(join(stateDir, "forge-ev111111-state.json"), JSON.stringify({
+      mode: "forge", runId: "ev111111", status: "complete",
+      started_at: "2026-04-04T10:00:00Z", completed_at: "2026-04-04T10:30:00Z",
+      task: "Done with events",
+    }));
+    const events = [
+      { ts: "2026-04-04T10:00:00Z", kind: "status", summary: "Started forge" },
+      { ts: "2026-04-04T10:15:00Z", kind: "phase", summary: "Phase: init → verify" },
+    ];
+    writeFileSync(join(logsDir, "ev111111.jsonl"),
+      events.map(e => JSON.stringify(e)).join("\n") + "\n");
+
+    const archived = archiveCompletedRuns();
+    assert.equal(archived.length, 1);
+    const archiveData = JSON.parse(readFileSync(archived[0], "utf-8"));
+    assert.ok(archiveData.events);
+    assert.equal(archiveData.events.length, 2);
+    assert.equal(archiveData.events[0].kind, "status");
+
+    assert.ok(!existsSync(join(logsDir, "ev111111.jsonl")));
+  });
+
+  it("archiveCompletedRuns handles missing event log gracefully", () => {
+    const stateDir = join(tmp, ".omc", "state");
+    mkdirSync(stateDir, { recursive: true });
+    writeFileSync(join(stateDir, "forge-nolog999-state.json"), JSON.stringify({
+      mode: "forge", runId: "nolog999", status: "complete",
+      started_at: "2026-04-04T10:00:00Z", completed_at: "2026-04-04T10:30:00Z",
+      task: "No log",
+    }));
+
+    const archived = archiveCompletedRuns();
+    assert.equal(archived.length, 1);
+    const archiveData = JSON.parse(readFileSync(archived[0], "utf-8"));
+    assert.ok(!archiveData.events);
+  });
+
   it("listArchives returns sorted list", () => {
     const archiveDir = join(tmp, ".omc", "archive");
     mkdirSync(archiveDir, { recursive: true });
