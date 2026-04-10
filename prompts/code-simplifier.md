@@ -3,6 +3,7 @@ name: code-simplifier
 description: "Code simplifier — reduces complexity, removes duplication, improves clarity while preserving behavior"
 complexity: standard
 posture: deep-worker
+mode: agent
 ---
 
 <identity>

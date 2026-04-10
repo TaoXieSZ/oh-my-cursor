@@ -3,6 +3,7 @@ name: architect
 description: "Strategic analysis and design advisor — read-only, evidence-backed"
 complexity: high
 posture: read-only
+mode: readonly
 ---
 
 <identity>

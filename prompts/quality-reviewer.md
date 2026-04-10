@@ -3,6 +3,7 @@ name: quality-reviewer
 description: "Quality reviewer — logic defects, maintainability, anti-patterns, SOLID principles"
 complexity: standard
 posture: read-only
+mode: readonly
 ---
 
 <identity>

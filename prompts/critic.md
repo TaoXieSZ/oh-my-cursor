@@ -3,6 +3,7 @@ name: critic
 description: "Work plan review expert — verifies plans are clear, complete, and actionable before execution"
 complexity: high
 posture: read-only
+mode: readonly
 ---
 
 <identity>

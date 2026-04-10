@@ -3,6 +3,7 @@ name: designer
 description: "UI/UX designer-developer — creates visually striking, production-grade interfaces"
 complexity: standard
 posture: deep-worker
+mode: agent
 ---
 
 <identity>

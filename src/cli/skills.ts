@@ -64,13 +64,13 @@ export async function skills(): Promise<void> {
 
   all.sort((a, b) => a.name.localeCompare(b.name));
 
-  const maxName = Math.max(...all.map((s) => s.name.length));
+  const maxCmdLen = Math.max(...all.map((s) => s.name.length + 1));
   for (const s of all) {
-    const cmd = `/${s.name.replace(/^omc-/, "")}`;
-    const padded = cmd.padEnd(maxName + 2);
+    const cmd = `/${s.name}`;
+    const padded = cmd.padEnd(maxCmdLen + 2);
     info(`${padded} ${s.description}`);
   }
 
   console.log();
-  dim(`${all.length} skills available. Use /$name or $name in Cursor chat to invoke.`);
+  dim(`${all.length} skills available. Use /omc-name (primary), /name (legacy), or $name in Cursor chat.`);
 }

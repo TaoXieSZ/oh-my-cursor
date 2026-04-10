@@ -88,3 +88,21 @@ export function omcPromptsDir(scope: "user" | "project"): string {
   }
   return join(cursorHome(), "omc-prompts");
 }
+
+export function cursorHooksConfigPath(scope: "user" | "project"): string {
+  if (scope === "project") {
+    return join(process.cwd(), ".cursor", "hooks.json");
+  }
+  return join(cursorHome(), "hooks.json");
+}
+
+export function omcHooksDir(scope: "user" | "project"): string {
+  if (scope === "project") {
+    return join(process.cwd(), ".cursor", "hooks", "omc");
+  }
+  return join(cursorHome(), "hooks", "omc");
+}
+
+export function packageHooksDir(): string {
+  return join(packageRoot(), "hooks");
+}

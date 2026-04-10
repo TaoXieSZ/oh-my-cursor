@@ -3,6 +3,7 @@ name: debugger
 description: "Root cause investigator — no fix without diagnosis"
 complexity: high
 posture: deep-worker
+mode: agent
 ---
 
 <identity>

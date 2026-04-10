@@ -1,7 +1,7 @@
 import { describe, it, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdirSync, rmSync, existsSync, readFileSync, readdirSync } from "node:fs";
+import { mkdirSync, rmSync, existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
@@ -135,6 +135,21 @@ describe("omc setup --scope project", () => {
     const { exitCode } = run(["setup", "--scope", "project"], tmp);
     assert.equal(exitCode, 0);
   });
+
+  it("removes deprecated built-in skills from existing installs", () => {
+    const deprecatedNames = ["omc-plan", "omc-ralph", "omc-ralplan"];
+    for (const name of deprecatedNames) {
+      const deprecated = join(tmp, ".cursor", "skills", name);
+      mkdirSync(deprecated, { recursive: true });
+      writeFileSync(join(deprecated, "SKILL.md"), `---\nname: ${name}\n---\n`);
+    }
+
+    const { exitCode } = run(["setup", "--scope", "project"], tmp);
+    assert.equal(exitCode, 0);
+    for (const name of deprecatedNames) {
+      assert.ok(!existsSync(join(tmp, ".cursor", "skills", name)), `${name} should be removed by setup`);
+    }
+  });
 });
 
 describe("omc doctor --scope project", () => {
@@ -181,9 +196,9 @@ describe("omc skills", () => {
     assert.equal(exitCode, 0);
     assert.ok(stdout.includes("OMC Skills"));
     const expected = [
-      "analyze", "autopilot", "blueprint", "cancel", "code-review",
-      "dashboard", "deep-interview", "ecomode", "forge", "plan",
-      "tdd", "team", "web-clone",
+      "omc-analyze", "omc-autopilot", "omc-blueprint", "omc-cancel", "omc-code-review",
+      "omc-dashboard", "omc-deep-interview", "omc-ecomode", "omc-forge",
+      "omc-tdd", "omc-team", "omc-web-clone",
     ];
     for (const name of expected) {
       assert.ok(stdout.includes(`/${name}`), `Missing skill: /${name}`);

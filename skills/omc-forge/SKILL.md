@@ -16,7 +16,7 @@ A relentless execution mode. Forge does not stop until the work is verified comp
 
 ## When NOT to use
 
-- The task needs parallel execution across independent lanes (use `$team`).
+- The task has independent parallel lanes (use `$team` to decompose first).
 - Requirements are still unclear (use `$deep-interview` first).
 - No plan exists for a non-trivial task (use `$blueprint` first).
 
@@ -37,13 +37,41 @@ Skip the gate only for tasks small enough to need no formal plan.
 while not done:
     1. Pick the next work item from the plan
     2. Implement it
-    3. Verify (run tests, lint, check behavior)
-    4. If verification fails → diagnose and fix
+    3. Verify (run verification tier appropriate to the item)
+    4. If verification fails → diagnose and fix (apply retry strategy)
     5. Update progress state
     6. Check: all items done + all verifications pass?
-       → yes: mark complete
+       → yes: run final verification, then mark complete
        → no: continue loop
 ```
+
+### Verification tiers
+
+Apply the appropriate level of verification for each item:
+
+| Tier | When to use | What to check |
+|------|-------------|---------------|
+| **Quick** | Small, isolated changes | Lint + typecheck |
+| **Standard** | Most implementation items | Lint + typecheck + unit tests |
+| **Full** | Integration points, final check | Lint + typecheck + all tests + manual behavior check |
+
+Run **full** verification at least once before claiming completion.
+
+### Retry and rollback strategy
+
+When a fix attempt fails:
+
+1. **First failure**: Diagnose, fix, re-verify.
+2. **Second failure on same item**: Try a different approach. Record the failed approach to avoid repeating it.
+3. **Third failure on same item**: Revert changes for this item to the last known good state (`git stash` or `git checkout`). Reassess the approach. If the plan item seems fundamentally flawed, mark it as blocked and move to the next item.
+4. **Blocked items**: After completing all other items, revisit blocked items with fresh context. If still blocked after one more attempt, escalate to the user.
+
+### Checkpoint and resume
+
+Forge state is designed for cross-session continuity:
+- Progress is persisted after every iteration via MCP `state_write`.
+- If a session is interrupted, the next `$forge` invocation reads existing state and resumes from the last completed item.
+- The `items_completed` and `current_item` fields enable seamless resume.
 
 ### Slack notifications (optional)
 
@@ -78,6 +106,11 @@ State transitions (phase changes, status changes, iteration bumps) are automatic
   "items_total": 8,
   "items_completed": 5,
   "current_item": "Implement auth middleware",
+  "blocked_items": [],
+  "failed_approaches": {
+    "item-name": ["approach 1 description", "approach 2 description"]
+  },
+  "verification_tier": "quick | standard | full",
   "blockers": [],
   "completed_at": null
 }
@@ -86,20 +119,35 @@ State transitions (phase changes, status changes, iteration bumps) are automatic
 ### Continuation check
 
 Before claiming done, confirm ALL of these:
-- [ ] Every plan item is implemented.
-- [ ] Tests pass.
+- [ ] Every plan item is implemented (or explicitly marked as blocked with user acknowledgment).
+- [ ] Tests pass (full suite, not just related tests).
 - [ ] Lint/typecheck passes.
 - [ ] No known errors or regressions.
 - [ ] Verification evidence exists for each item.
 
 If ANY check fails, continue the loop. Do NOT claim done prematurely.
 
+### Final summary
+
+On completion, produce a concise summary:
+
+```markdown
+## Forge Complete
+
+**Task**: [description]
+**Items**: [completed]/[total] ([blocked] blocked)
+**Iterations**: [count]
+**Files changed**: [list]
+**Verification**: All tests pass, lint clean
+**Blocked items** (if any): [list with reasons]
+```
+
 ### Stop conditions
 
 Stop only when:
 1. All items verified complete (success).
 2. User explicitly cancels (`$cancel`).
-3. A hard blocker with no recovery path exists (escalate to user).
+3. A hard blocker with no recovery path exists (escalate to user with evidence).
 
 ### Escalation
 
@@ -107,6 +155,7 @@ Escalate to the user only for:
 - Irreversible or destructive actions.
 - Ambiguous requirements not covered by the plan.
 - External dependencies that are blocked.
+- Items that failed 3+ approaches and need human judgment.
 
 ## Anti-patterns
 
@@ -114,3 +163,5 @@ Escalate to the user only for:
 - Do NOT claim done with failing tests.
 - Do NOT silently skip plan items.
 - Do NOT expand scope beyond the approved plan without user approval.
+- Do NOT retry the exact same approach that already failed — try something different.
+- Do NOT continue retrying indefinitely on one item — move on and revisit.

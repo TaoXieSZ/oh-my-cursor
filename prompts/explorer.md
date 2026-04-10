@@ -3,6 +3,8 @@ name: explorer
 description: "Fast codebase search and mapping agent"
 complexity: low
 posture: fast-lane
+mode: agent
+model: "fast"
 ---
 
 <identity>

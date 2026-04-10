@@ -25,6 +25,8 @@ import { readModeState, writeModeState, parseStateFilename } from "../state/mode
 import type { ModeState } from "../state/mode-state.js";
 import { appendEvent, readEvents, tailEvents } from "../state/event-log.js";
 import type { RunEvent } from "../state/event-log.js";
+import { postMessage, readMessages, getAgentStatuses, clearBlackboard } from "../state/blackboard.js";
+import type { BlackboardMessage } from "../state/blackboard.js";
 
 const server = new Server(
   { name: "omc-state", version: "0.2.0" },
@@ -131,6 +133,42 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         },
         required: ["runId"],
       },
+    },
+    {
+      name: "blackboard_post",
+      description: "Post a message to the shared blackboard for multi-agent coordination. Use this when multiple agents work in parallel to share status, claim files, report blockers, or hand off work.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          agent: { type: "string", description: "Agent identifier (e.g. 'lane-1-executor', 'leader')" },
+          kind: { type: "string", enum: ["status", "progress", "blocker", "handoff", "note", "claim", "release"], description: "Message type" },
+          content: { type: "string", description: "Human-readable message" },
+          detail: { type: "object", description: "Optional structured data (e.g. { files: [...], progress: 3/5 })" },
+        },
+        required: ["agent", "kind", "content"],
+      },
+    },
+    {
+      name: "blackboard_read",
+      description: "Read messages from the shared blackboard. Optionally filter by timestamp, agent, or message kind.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          since: { type: "string", description: "ISO timestamp — return only messages after this time" },
+          agent: { type: "string", description: "Filter by agent identifier" },
+          kind: { type: "string", description: "Filter by message kind" },
+        },
+      },
+    },
+    {
+      name: "blackboard_status",
+      description: "Get a summary of all agents that have posted to the blackboard, with their last-seen time and latest status.",
+      inputSchema: { type: "object" as const, properties: {} },
+    },
+    {
+      name: "blackboard_clear",
+      description: "Clear the shared blackboard (use between team sessions).",
+      inputSchema: { type: "object" as const, properties: {} },
     },
   ],
 }));
@@ -243,6 +281,35 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { runId, tail } = args as { runId: string; tail?: number };
       const events = tail ? tailEvents(runId, tail) : readEvents(runId);
       return { content: [{ type: "text", text: JSON.stringify(events, null, 2) }] };
+    }
+
+    case "blackboard_post": {
+      const { agent, kind, content, detail } = args as { agent: string; kind: BlackboardMessage["kind"]; content: string; detail?: Record<string, unknown> };
+      const msg: BlackboardMessage = { ts: new Date().toISOString(), agent, kind, content, ...(detail ? { detail } : {}) };
+      postMessage(msg);
+      return { content: [{ type: "text", text: `Posted to blackboard: [${agent}] ${kind}: ${content}` }] };
+    }
+
+    case "blackboard_read": {
+      const { since, agent, kind } = (args ?? {}) as { since?: string; agent?: string; kind?: string };
+      const messages = readMessages({ since, agent, kind });
+      if (messages.length === 0) {
+        return { content: [{ type: "text", text: "No messages on blackboard" }] };
+      }
+      return { content: [{ type: "text", text: JSON.stringify(messages, null, 2) }] };
+    }
+
+    case "blackboard_status": {
+      const statuses = getAgentStatuses();
+      if (statuses.length === 0) {
+        return { content: [{ type: "text", text: "No agents have posted to the blackboard" }] };
+      }
+      return { content: [{ type: "text", text: JSON.stringify(statuses, null, 2) }] };
+    }
+
+    case "blackboard_clear": {
+      clearBlackboard();
+      return { content: [{ type: "text", text: "Blackboard cleared" }] };
     }
 
     default:

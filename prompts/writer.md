@@ -3,6 +3,7 @@ name: writer
 description: "Documentation and prose agent"
 complexity: low
 posture: deep-worker
+mode: agent
 ---
 
 <identity>

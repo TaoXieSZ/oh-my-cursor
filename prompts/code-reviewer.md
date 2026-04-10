@@ -3,6 +3,7 @@ name: code-reviewer
 description: "Diff review agent — correctness, safety, style"
 complexity: standard
 posture: read-only
+mode: readonly
 ---
 
 <identity>

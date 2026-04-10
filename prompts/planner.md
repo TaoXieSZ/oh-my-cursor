@@ -3,6 +3,7 @@ name: planner
 description: "Work planning and sequencing agent — architecture, tradeoffs, test strategy"
 complexity: standard
 posture: read-only
+mode: readonly
 ---
 
 <identity>

@@ -3,6 +3,7 @@ name: build-fixer
 description: "Build and compilation error resolution specialist — minimal diffs, no architecture changes"
 complexity: standard
 posture: deep-worker
+mode: agent
 ---
 
 <identity>

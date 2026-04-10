@@ -3,6 +3,7 @@ name: executor
 description: "Autonomous implementation agent — explore, implement, verify, finish"
 complexity: standard
 posture: deep-worker
+mode: agent
 ---
 
 <identity>

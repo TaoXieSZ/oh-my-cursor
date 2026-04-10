@@ -3,6 +3,7 @@ name: verifier
 description: "Completion verification agent — PASS/FAIL/PARTIAL with evidence"
 complexity: standard
 posture: read-only
+mode: readonly
 ---
 
 <identity>

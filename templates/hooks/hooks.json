@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "command": "node \"__OMC_HOOKS_DIR__/session-start.mjs\""
+      }
+    ],
+    "stop": [
+      {
+        "command": "node \"__OMC_HOOKS_DIR__/session-end.mjs\""
+      }
+    ]
+  }
+}

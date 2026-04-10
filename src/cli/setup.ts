@@ -1,9 +1,10 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   cursorRulesDir,
   cursorSkillsDir,
   cursorMcpConfigPath,
+  cursorHooksConfigPath,
   omcStateDir,
   omcPlansDir,
   omcLogsDir,
@@ -14,7 +15,9 @@ import {
   packageRulesDir,
   packageSkillsDir,
   packagePromptsDir,
+  packageHooksDir,
   omcPromptsDir,
+  omcHooksDir,
   isCursorInstalled,
 } from "../utils/paths.js";
 import { ensureDir, copyDir, copyFile } from "../utils/fs.js";
@@ -25,6 +28,8 @@ interface SetupOptions {
   force: boolean;
   verbose: boolean;
 }
+
+const DEPRECATED_SKILLS = ["omc-plan", "omc-ralph", "omc-ralplan"];
 
 export async function setup(options: SetupOptions): Promise<void> {
   heading("oh-my-cursor setup");
@@ -39,6 +44,7 @@ export async function setup(options: SetupOptions): Promise<void> {
     { name: "Install skills", fn: () => installSkills(options) },
     { name: "Install prompts", fn: () => installPrompts(options) },
     { name: "Register MCP servers", fn: () => registerMcp(options) },
+    { name: "Install hooks", fn: () => installHooks(options) },
     { name: "Create state directories", fn: () => createStateDirs(options) },
     { name: "Write setup metadata", fn: () => writeSetupMeta(options) },
   ];
@@ -60,7 +66,7 @@ export async function setup(options: SetupOptions): Promise<void> {
     dim("Next steps:");
     dim("  1. Restart Cursor to load new rules and skills");
     dim("  2. Run 'omc doctor' to verify installation");
-    dim("  3. Try '$deep-interview \"describe your task\"' in Cursor chat");
+    dim("  3. Try '/deep-interview \"describe your task\"' in Cursor chat");
   } else {
     warn(`Setup partially complete (${passed}/${steps.length} steps)`);
     dim("Run 'omc doctor' to diagnose issues");
@@ -88,7 +94,22 @@ function installSkills(options: SetupOptions): void {
   }
 
   const count = copyDir(srcDir, destDir);
+  const removed = removeDeprecatedSkills(destDir);
   ok(`Installed ${count} skill files → ${destDir}`);
+  if (removed.length > 0) {
+    ok(`Removed deprecated skills: ${removed.join(", ")}`);
+  }
+}
+
+function removeDeprecatedSkills(skillsDir: string): string[] {
+  const removed: string[] = [];
+  for (const skill of DEPRECATED_SKILLS) {
+    const path = join(skillsDir, skill);
+    if (!existsSync(path)) continue;
+    rmSync(path, { recursive: true, force: true });
+    removed.push(skill);
+  }
+  return removed;
 }
 
 function installPrompts(options: SetupOptions): void {
@@ -141,6 +162,55 @@ function registerMcp(options: SetupOptions): void {
   ensureDir(join(configPath, ".."));
   writeFileSync(configPath, JSON.stringify(config, null, 2) + "\n");
   ok(`Registered MCP servers → ${configPath}`);
+}
+
+function installHooks(options: SetupOptions): void {
+  const srcDir = packageHooksDir();
+  const destDir = omcHooksDir(options.scope);
+
+  if (!existsSync(srcDir)) {
+    warn("Hooks source not found, skipping hooks installation");
+    return;
+  }
+
+  const count = copyDir(srcDir, destDir);
+
+  const hooksConfigPath = cursorHooksConfigPath(options.scope);
+  let config: Record<string, unknown> = { version: 1, hooks: {} };
+  if (existsSync(hooksConfigPath)) {
+    try {
+      config = JSON.parse(readFileSync(hooksConfigPath, "utf-8"));
+    } catch {
+      if (!options.force) {
+        warn(`Could not parse existing ${hooksConfigPath}, skipping hooks config`);
+        return;
+      }
+    }
+  }
+
+  const hooks = (config.hooks ?? {}) as Record<string, unknown[]>;
+
+  // Quote paths to handle project/user directories containing spaces.
+  const sessionStartCmd = `node "${destDir}/session-start.mjs"`;
+  const stopCmd = `node "${destDir}/session-end.mjs"`;
+
+  function addHookIfMissing(event: string, command: string): void {
+    if (!hooks[event]) hooks[event] = [];
+    const entries = hooks[event] as Array<{ command: string }>;
+    if (!entries.some((e) => e.command === command)) {
+      entries.push({ command });
+    }
+  }
+
+  addHookIfMissing("sessionStart", sessionStartCmd);
+  addHookIfMissing("stop", stopCmd);
+
+  config.hooks = hooks;
+  ensureDir(join(hooksConfigPath, ".."));
+  writeFileSync(hooksConfigPath, JSON.stringify(config, null, 2) + "\n");
+
+  ok(`Installed ${count} hook files → ${destDir}`);
+  ok(`Registered hooks → ${hooksConfigPath}`);
 }
 
 function createStateDirs(options: SetupOptions): void {

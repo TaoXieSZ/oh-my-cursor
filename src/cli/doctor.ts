@@ -1,13 +1,17 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { spawnSync } from "node:child_process";
 import {
   cursorRulesDir,
   cursorSkillsDir,
   cursorMcpConfigPath,
+  cursorHooksConfigPath,
   omcStateDir,
   omcPlansDir,
   omcStatePath,
   omcSetupScopePath,
   omcPromptsDir,
+  omcHooksDir,
   isCursorInstalled,
 } from "../utils/paths.js";
 import { ok, warn, fail, info, heading, dim } from "../utils/log.js";
@@ -42,6 +46,7 @@ export async function doctor(options: DoctorOptions): Promise<void> {
     { name: "OMC skills", fn: () => checkSkillsInstalled(scope) },
     { name: "OMC prompts", fn: () => checkPromptsInstalled(scope) },
     { name: "MCP servers", fn: () => checkMcpRegistered(scope) },
+    { name: "Hooks", fn: () => checkHooksInstalled(scope) },
     { name: "State directory", fn: checkStateDir },
     { name: "Setup metadata", fn: checkSetupMeta },
   ];
@@ -182,6 +187,44 @@ function checkMcpRegistered(scope: "user" | "project"): CheckResult {
   } catch {
     return { ok: false, message: `Cannot parse ${configPath}` };
   }
+}
+
+function checkHooksInstalled(scope: "user" | "project"): CheckResult {
+  const hooksDir = omcHooksDir(scope);
+  const configPath = cursorHooksConfigPath(scope);
+
+  if (!existsSync(hooksDir)) {
+    return { ok: false, message: `Hooks directory missing: ${hooksDir}`, detail: "Run 'omc setup' to install hooks" };
+  }
+
+  const hookFiles = readdirSync(hooksDir).filter((f) => f.endsWith(".mjs"));
+  if (hookFiles.length === 0) {
+    return { ok: false, message: "No OMC hook scripts found" };
+  }
+
+  for (const file of hookFiles) {
+    const check = spawnSync(process.execPath, ["--check", join(hooksDir, file)], {
+      stdio: "pipe",
+      encoding: "utf-8",
+    });
+    if (check.status !== 0) {
+      return {
+        ok: false,
+        message: `Hook syntax invalid: ${file}`,
+        detail: check.stderr?.trim() || check.stdout?.trim(),
+      };
+    }
+  }
+
+  if (!existsSync(configPath)) {
+    return { ok: false, message: `Hooks config missing: ${configPath}` };
+  }
+
+  return {
+    ok: true,
+    message: `${hookFiles.length} hooks installed and syntax-checked`,
+    detail: hookFiles.join(", "),
+  };
 }
 
 function checkStateDir(): CheckResult {

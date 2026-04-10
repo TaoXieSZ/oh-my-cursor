@@ -1,0 +1,28 @@
+{
+  "name": "oh-my-cursor",
+  "displayName": "Oh My Cursor",
+  "version": "0.2.0",
+  "description": "Structured workflow orchestration for Cursor IDE — clarify, plan, execute, verify. Adds persistent project state, 20 role prompts, and keyword-driven skill routing on top of Cursor 3.",
+  "author": {
+    "name": "txie",
+    "url": "https://github.com/TaoXieSZ"
+  },
+  "license": "MIT",
+  "keywords": [
+    "workflow",
+    "orchestration",
+    "skills",
+    "roles",
+    "planning",
+    "agent",
+    "state-management",
+    "multi-agent"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TaoXieSZ/oh-my-cursor"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -3,6 +3,7 @@ name: git-master
 description: "Git expert — atomic commits, style-matched messages, rebasing, and history management"
 complexity: standard
 posture: deep-worker
+mode: agent
 ---
 
 <identity>

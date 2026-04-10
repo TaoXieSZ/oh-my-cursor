@@ -3,6 +3,7 @@ name: style-reviewer
 description: "Style reviewer — formatting, naming conventions, idioms, lint and style conventions"
 complexity: low
 posture: read-only
+mode: readonly
 ---
 
 <identity>

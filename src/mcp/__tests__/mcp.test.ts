@@ -49,11 +49,12 @@ describe("omc-state MCP server", () => {
     rmSync(tmp, { recursive: true, force: true });
   });
 
-  it("lists 10 tools", async () => {
+  it("lists 14 tools", async () => {
     const { tools } = await client.listTools();
-    assert.equal(tools.length, 10);
+    assert.equal(tools.length, 14);
     const names = tools.map((t: any) => t.name).sort();
     assert.deepEqual(names, [
+      "blackboard_clear", "blackboard_post", "blackboard_read", "blackboard_status",
       "event_append", "event_read",
       "notepad_append", "notepad_read",
       "plan_list", "plan_read", "plan_write",

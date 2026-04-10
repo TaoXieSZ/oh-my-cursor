@@ -71,3 +71,7 @@ export function getProjectMemoryPath(): string {
 export function getMemoryIndexPath(): string {
   return join(getBaseStateDir(), "memory-index.json");
 }
+
+export function getBlackboardPath(): string {
+  return join(getBaseStateDir(), "blackboard.jsonl");
+}

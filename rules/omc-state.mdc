@@ -51,7 +51,28 @@ The `$forge` and `$team` skills check for these before starting implementation.
 `.omc/project-memory.json` stores cross-session knowledge as key-value pairs.
 Skills and rules may read from it to maintain context across conversations.
 
+## Shared Blackboard
+
+`.omc/blackboard.jsonl` is an append-only log for multi-agent coordination. When multiple agents run in parallel (e.g. via Agents Window or `$team`), they use the blackboard to share status, claim files, report blockers, and hand off work.
+
+MCP tools: `blackboard_post`, `blackboard_read`, `blackboard_status`, `blackboard_clear`.
+
+Message kinds: `status`, `progress`, `blocker`, `handoff`, `note`, `claim`, `release`.
+
+Clear the blackboard between team sessions to avoid stale data.
+
 ## Notepad
 
 `.omc/notepad.md` is an append-only scratch space for the current session.
 Use it for observations, blockers, and decisions that should persist beyond the chat.
+
+## Hooks
+
+OMC registers Cursor lifecycle hooks for automatic state management:
+
+- **`sessionStart`**: Ensures `.omc/` directories exist and initializes/updates `session.json`.
+- **`stop`**: Archives completed/cancelled runs to `.omc/archive/` and marks the session as ended.
+
+Hooks are installed via `omc setup` into `~/.cursor/hooks/omc/` (user scope) or `.cursor/hooks/omc/` (project scope), with entries registered in `hooks.json`.
+
+Keyword routing remains in rules (the agent decides which skill to activate based on user intent — hooks cannot observe message content for this purpose).

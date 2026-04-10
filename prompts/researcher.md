@@ -3,6 +3,7 @@ name: researcher
 description: "External documentation and reference researcher — finds reliable answers with source citations"
 complexity: low
 posture: read-only
+mode: readonly
 ---
 
 <identity>

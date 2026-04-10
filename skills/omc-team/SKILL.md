@@ -1,12 +1,14 @@
 ---
 name: omc-team
-description: Multi-agent parallel coordination using Cursor's Task tool. Dispatches independent work lanes to subagents, coordinates through shared state.
-argument-hint: "<N>:<role> \"<task description>\""
+description: Work decomposition and role assignment for parallel execution. Produces a team brief with task lanes, role assignments, and file ownership — designed for use with Cursor's Agents Window.
+argument-hint: "<task description>"
 ---
 
-# Team — Parallel Multi-Agent Coordination
+# Team — Work Decomposition and Role Assignment
 
-Dispatch work to parallel subagents via Cursor's Task tool. The leader agent coordinates, workers execute bounded slices.
+Decomposes a task into independent parallel lanes with role assignments and file ownership boundaries. Produces a structured team brief that can be executed in Cursor's Agents Window or via the Task tool.
+
+> **Cursor 3 note**: Parallel agent execution is now native via the Agents Window. This skill focuses on the _planning_ layer — what to parallelize, who owns what, and how to integrate — not the dispatch mechanics.
 
 ## When to use
 
@@ -18,143 +20,149 @@ Dispatch work to parallel subagents via Cursor's Task tool. The leader agent coo
 
 - The task is sequential (each step depends on the previous).
 - Only one file or module is involved.
-- The overhead of coordination exceeds the benefit of parallelism.
+- The overhead of decomposition exceeds the benefit of parallelism.
 
-## Invocation format
+## Available roles
 
-```
-$team <count>:<role> "<task description>"
-```
-
-The `<role>` maps to a role prompt file installed by `omc setup`. Available roles:
+Roles map to prompt files installed by `omc setup`:
 
 **Core**: `executor`, `architect`, `debugger`, `verifier`, `explorer`, `planner`
-**Specialist**: `code-reviewer`, `test-engineer`, `writer`, `security-reviewer`
+**Specialist**: `code-reviewer`, `test-engineer`, `writer`, `security-reviewer`, `designer`, `build-fixer`
 
 Default role if omitted: `executor`.
 
-Examples:
-- `$team 3:executor "implement the three API endpoints in parallel"`
-- `$team 2:executor "frontend and backend changes simultaneously"`
-- `$team 2:test-engineer "write tests for auth and billing modules"`
-
-## Role prompt loading
-
-Role prompts are markdown files with identity, constraints, execution loop, and output contract sections. They are loaded at runtime from the install location:
-
+Role prompts are loaded from:
 - **User scope**: `~/.cursor/omc-prompts/{role}.md`
 - **Project scope**: `.omc/prompts/{role}.md`
 
-The leader reads the role prompt file and injects it into the Task tool's `prompt` parameter when spawning each worker. If a role prompt file is not found, fall back to the generic worker instructions below.
-
 ## Execution protocol
 
-### Phase 1: Plan dispatch
+### Phase 1: Decompose
 
 1. Read the approved plan from `.omc/plans/`.
-2. Split work into independent lanes (max 6 workers).
+2. Identify independent work lanes (max 6).
 3. For each lane, define: scope, assigned files, expected output, verification criteria.
-4. Determine the role for each lane (from invocation or keyword routing).
+4. Determine the role for each lane (from task keywords or explicit assignment).
+5. Verify no two lanes share write ownership of the same files.
 
-### Phase 2: Launch workers
+### Phase 2: Produce team brief
 
-For each worker, read the role prompt and compose the Task tool invocation:
+Output a structured team brief:
+
+```markdown
+## Team Brief: [task name]
+
+### Lane 1: [description]
+- **Role**: executor
+- **Files**: src/api/users.ts, src/api/users.test.ts
+- **Expected output**: Working CRUD endpoints with tests
+- **Verification**: Tests pass, endpoint responds correctly
+
+### Lane 2: [description]
+- **Role**: executor
+- **Files**: src/ui/UserForm.tsx, src/ui/UserList.tsx
+- **Expected output**: React components for user management
+- **Verification**: Components render, form validation works
+
+### Integration plan
+1. [How lanes connect after completion]
+2. [Integration tests to run]
+3. [Who verifies the combined result]
+```
+
+### Phase 3: Execute
+
+The team brief can be executed two ways:
+
+**Option A: Agents Window (recommended)**
+The user opens multiple agents in Cursor's Agents Window, gives each agent its lane description and role prompt.
+
+**Option B: Task tool (automated)**
+The leader spawns workers via the Task tool, injecting the role prompt into each:
 
 ```
-For each worker:
-  1. Read role prompt from ~/.cursor/omc-prompts/{role}.md (or .omc/prompts/{role}.md)
-  2. Spawn via Task tool:
-
-  Task(subagent_type="generalPurpose", prompt="""
-    {contents of prompts/{role}.md}
+For each lane:
+  1. Read role prompt from ~/.cursor/omc-prompts/{role}.md
+  2. Task(subagent_type="generalPurpose", prompt="""
+    {role prompt contents}
 
     --- ASSIGNMENT ---
-    You are Worker {N} in a team of {total}.
-
-    Your assignment:
-    - Scope: {lane_scope}
-    - Files: {assigned_files}
-    - Expected output: {expected_output}
+    You are working on Lane {N} of {total}.
+    Scope: {lane_scope}
+    Files: {assigned_files}
+    Expected output: {expected_output}
 
     Rules:
     - Stay inside your assigned file scope.
-    - Do NOT modify files assigned to other workers.
-    - Report blockers by writing to .omc/state/team/{worker_id}/progress.json
-    - When done, write completion status to your progress file.
+    - Do NOT modify files assigned to other lanes.
   """)
 ```
 
-**Model routing**: Use the role's `complexity` metadata to choose the Task model parameter:
+**Subagent type mapping**: Use the role's `mode` metadata to choose the Task tool parameters:
+- `mode: readonly` → `readonly: true` (the subagent runs in read-only/ask mode — for reviewers, architects, verifiers)
+- `mode: agent` → `readonly: false` (the subagent can make changes — for executors, debuggers, designers)
+
+**Model routing**: Use the role's `complexity` and `model` metadata:
+- `model: "fast"` (explicit) → `model: "fast"`
 - `low` complexity → `model: "fast"`
-- `standard` complexity → omit model (inherit parent)
-- `high` complexity → omit model (inherit parent, or use more capable if available)
+- `standard` / `high` complexity → omit model (inherit parent)
 
-### Phase 3: Coordinate
+**Role composition**: When a lane needs multiple perspectives (e.g. security + API review), compose roles by loading both prompts and combining their constraints. Use `composeRoles()` from the role registry.
 
-The leader agent:
-1. Monitors `.omc/state/team/` for worker progress.
-2. Resolves conflicts if workers report shared-file issues.
-3. Handles blockers escalated by workers.
+### Coordination via shared blackboard
+
+When lanes execute in parallel, agents coordinate through the shared blackboard (MCP tools `blackboard_post` / `blackboard_read`):
+
+- **claim**: Agent announces it is working on specific files → prevents conflicts.
+- **progress**: Agent reports completion of sub-items.
+- **blocker**: Agent reports a blocker for the leader to resolve.
+- **handoff**: Agent hands off a dependency to another lane.
+- **release**: Agent announces it has finished with specific files.
+
+Example: `blackboard_post(agent="lane-1", kind="claim", content="Working on src/api/users.ts")`
+
+The leader monitors the blackboard via `blackboard_status` and `blackboard_read` to track progress and resolve conflicts.
 
 ### Phase 4: Integrate and verify
 
-1. Review all worker outputs.
-2. Resolve any integration issues.
-3. Run full test suite.
-4. Verify the complete change against the plan.
+1. Review all lane outputs.
+2. Check blackboard for any unresolved blockers or handoffs.
+3. Resolve any integration issues.
+4. Run full test suite.
+5. Verify the complete change against the plan.
+6. Clear the blackboard for the next session: `blackboard_clear`.
 
-### State management
+## State management
 
-Write to `.omc/state/team/team-state.json`:
+Write to `.omc/state/team-state.json`:
 ```json
 {
   "started_at": "ISO timestamp",
-  "name": "team-{timestamp}",
   "task": "task description",
-  "worker_count": 3,
-  "workers": [
+  "lanes": [
     {
-      "id": "worker-1",
+      "id": "lane-1",
       "role": "executor",
       "scope": "API endpoint /users",
-      "status": "active | complete | blocked",
-      "assigned_files": ["src/api/users.ts"]
+      "assigned_files": ["src/api/users.ts"],
+      "status": "pending | active | complete | blocked"
     }
   ],
-  "phase": "dispatch | executing | integrating | verifying | complete",
+  "phase": "decompose | briefed | executing | integrating | complete",
   "status": "active | complete | failed | cancelled",
   "completed_at": null
 }
 ```
 
-Per-worker progress in `.omc/state/team/{worker_id}/progress.json`:
-```json
-{
-  "worker_id": "worker-1",
-  "status": "active | complete | blocked",
-  "items_completed": 2,
-  "items_total": 3,
-  "blockers": [],
-  "updated_at": "ISO timestamp"
-}
-```
-
 ## Leader responsibilities
 
-1. Pick the dispatch plan and keep the brief current.
-2. Only delegate bounded, verifiable subtasks with clear file ownership.
-3. Integrate results, decide follow-up, and own final verification.
-
-## Worker responsibilities
-
-1. Execute the assigned slice — do not rewrite the plan.
-2. Stay inside the assigned write scope.
-3. Report blockers and recommended handoffs upward (via progress file).
-4. Do NOT modify files outside your assignment.
+1. Produce the decomposition and team brief.
+2. Only assign bounded, verifiable lanes with clear file ownership.
+3. Integrate results and own final verification.
 
 ## Anti-patterns
 
-- Do NOT dispatch dependent tasks in parallel.
-- Do NOT let workers modify the same files.
+- Do NOT assign dependent tasks to different lanes.
+- Do NOT let multiple lanes write to the same files.
 - Do NOT skip the integration/verification phase.
-- Do NOT spawn more than 6 workers.
+- Do NOT decompose into more than 6 lanes.

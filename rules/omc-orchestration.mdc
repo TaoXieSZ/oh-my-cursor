@@ -22,10 +22,10 @@ This rule is the top-level operating contract. Skill-level instructions are narr
 
 ### Invocation prefixes
 
-Skills can be invoked with **either** `$` or `/` prefix — they are equivalent:
+Skills can be invoked with `$name`, `/omc-name`, or legacy `/name` forms:
 
-- `$forge "carry the plan to completion"` = `/forge "carry the plan to completion"`
-- `$deep-interview "clarify scope"` = `/deep-interview "clarify scope"`
+- `$forge "carry the plan to completion"` = `/omc-forge "carry the plan to completion"` (legacy: `/forge`)
+- `$deep-interview "clarify scope"` = `/omc-deep-interview "clarify scope"` (legacy: `/deep-interview`)
 
 ### `/skills` — list all available skills
 
@@ -33,21 +33,20 @@ When the user types `/skills` (or `$skills`), respond with this table:
 
 | Command | Trigger keywords | Purpose |
 |---------|-----------------|---------|
-| `/deep-interview` | "clarify", "don't assume" | Socratic interview to clarify scope |
-| `/blueprint` | "plan this", "blueprint" | Consensus planning with tradeoff review |
-| `/forge` | "keep going", "don't stop" | Persistent completion loop |
-| `/team` | "team", "parallel" | Multi-agent parallel coordination |
-| `/analyze` | "analyze", "investigate" | Deep investigation and root cause analysis |
-| `/tdd` | "tdd", "test first" | Test-driven development cycle |
-| `/code-review` | "review code" | Structured code review |
-| `/autopilot` | "build me", "full auto" | Full lifecycle: idea → build → QA |
-| `/web-clone` | "clone site" | Clone a website from URL |
-| `/dashboard` | "dashboard", "show status" | Live workflow dashboard |
-| `/plan` | "plan this" (lightweight) | Lightweight planning |
-| `/ecomode` | "eco", "budget" | Token-efficient mode |
-| `/cancel` | "cancel", "stop" | Cancel active modes |
+| `/omc-deep-interview` | "clarify", "don't assume" | Socratic interview to clarify scope |
+| `/omc-blueprint` | "plan this", "blueprint" | Structured planning with tradeoff review (`--quick` for lighter tasks) |
+| `/omc-forge` | "keep going", "don't stop" | Persistent completion loop |
+| `/omc-team` | "team", "parallel" | Work decomposition and role assignment for parallel execution |
+| `/omc-analyze` | "analyze", "investigate" | Deep investigation and root cause analysis |
+| `/omc-tdd` | "tdd", "test first" | Test-driven development cycle |
+| `/omc-code-review` | "review code" | Structured code review |
+| `/omc-autopilot` | "build me", "full auto" | Full lifecycle: idea → build → QA |
+| `/omc-web-clone` | "clone site" | Clone a website from URL |
+| `/omc-dashboard` | "dashboard", "show status" | Live workflow dashboard |
+| `/omc-ecomode` | "eco", "budget" | Token-efficient mode |
+| `/omc-cancel` | "cancel", "stop" | Cancel active modes |
 
-Also remind the user: type `/skills` any time to see this list again. Both `$name` and `/name` work.
+Also remind the user: type `/skills` any time to see this list again. `/omc-name` is primary; `$name` and legacy `/name` remain compatible.
 
 ### Keyword detection
 
@@ -57,9 +56,9 @@ Do not ask for confirmation.
 | Keyword(s) | Skill | Action |
 |-------------|-------|--------|
 | "deep interview", "interview me", "don't assume", "clarify" | `$deep-interview` | Read omc-deep-interview skill, run Socratic interview |
-| "blueprint", "consensus plan", "plan this" | `$blueprint` | Read omc-blueprint skill, start consensus planning |
+| "blueprint", "consensus plan", "plan this" | `$blueprint` | Read omc-blueprint skill, start structured planning |
 | "forge", "don't stop", "keep going", "must complete" | `$forge` | Read omc-forge skill, enter persistent completion loop |
-| "team", "parallel", "swarm" | `$team` | Read omc-team skill, start parallel coordination |
+| "team", "parallel", "swarm" | `$team` | Read omc-team skill, decompose work and assign roles |
 | "analyze", "investigate" | `$analyze` | Read omc-analyze skill, run deep analysis |
 | "tdd", "test first" | `$tdd` | Read omc-tdd skill, start test-driven workflow |
 | "review code", "code review" | `$code-review` | Read omc-code-review skill, run review |
@@ -71,7 +70,7 @@ Do not ask for confirmation.
 
 Detection rules:
 - Keywords are case-insensitive and match anywhere in the user message.
-- Explicit `$name` or `/name` invocations take priority over implicit keyword matching.
+- Explicit `$name`, `/omc-name`, or `/name` invocations take priority over implicit keyword matching.
 - If multiple non-explicit keywords match, use the most specific match.
 - The rest of the user message becomes the task description.
 
@@ -138,6 +137,12 @@ Route by keyword when dispatching workers or choosing a role:
 | "API", "backward compatibility", "contract", "versioning" | `api-reviewer` |
 | "simplify", "reduce complexity", "deduplicate", "cleanup" | `code-simplifier` |
 
+### Subagent mode mapping
+
+Each role's `mode` metadata maps to a Cursor subagent type:
+- `mode: readonly` → run in read-only/ask mode (reviewers, architects, verifiers)
+- `mode: agent` → run in full agent mode (executors, debuggers, designers)
+
 ### Model routing by complexity
 
 | Complexity | Model preference |
@@ -146,13 +151,29 @@ Route by keyword when dispatching workers or choosing a role:
 | standard | default — inherited from parent |
 | high | default or more capable — deep reasoning needed |
 
+### Role inheritance and composition
+
+Roles support inheritance via the `extends` frontmatter field. A child role inherits the base role's identity and constraints, then adds specialization. Example:
+
+```yaml
+---
+name: secure-api-developer
+extends: executor
+complexity: high
+posture: deep-worker
+mode: agent
+---
+```
+
+Roles can also be composed at runtime for hybrid tasks. The `$team` skill supports assigning composed roles to lanes when multiple perspectives are needed.
+
 ## Delegation Rules
 
 Choose the lane before acting:
 
 - `$deep-interview` for unclear intent, missing boundaries, or explicit "don't assume" requests.
 - `$blueprint` when requirements are clear enough but plan, tradeoffs, or test strategy still need review.
-- `$team` when the approved plan needs coordinated parallel execution.
+- `$team` when the approved plan has independent lanes that benefit from parallel execution (decomposition + role assignment).
 - `$forge` when the approved plan needs a persistent single-owner completion loop.
 - **Direct execution** when the task is already scoped and can be finished directly.
 

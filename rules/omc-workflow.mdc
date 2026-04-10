@@ -23,6 +23,7 @@ Use when the request is broad, intent or boundaries are unclear, or the user say
 Use when requirements are clear enough but the plan, tradeoffs, or test shape still need review.
 
 - Produce a structured plan with architecture, tradeoffs, and test strategy.
+- Use `--quick` for simpler tasks (3-8 steps) that need structure but not full deliberation.
 - Write plan artifacts to `.omc/plans/`.
 - Output: approved PRD (`prd-*.md`) and test spec (`test-spec-*.md`).
 - Hand off to `$forge` or `$team`.
@@ -39,8 +40,8 @@ Use when the approved plan should stay with one persistent owner who keeps pushi
 
 Use when the approved plan has independent lanes that benefit from parallel execution.
 
-- Dispatch work to parallel subagents via the Task tool.
-- Coordinate through `.omc/state/team/`.
+- Decompose work into independent lanes with role assignments and file ownership.
+- Execute via Cursor's Agents Window (recommended) or Task tool.
 - Leader integrates results and owns final verification.
 
 ## Entry point selection

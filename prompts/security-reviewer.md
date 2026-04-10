@@ -3,6 +3,7 @@ name: security-reviewer
 description: "Security audit agent — OWASP, auth, secrets, supply chain"
 complexity: high
 posture: read-only
+mode: readonly
 ---
 
 <identity>

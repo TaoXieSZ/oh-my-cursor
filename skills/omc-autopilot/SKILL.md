@@ -49,13 +49,12 @@ Create an implementation plan from the spec.
 
 Implement the plan.
 
-1. If the plan has independent work lanes → use `$team` for parallel execution.
+1. If the plan has independent work lanes → use `$team` to decompose, then execute lanes (via Agents Window or Task tool).
 2. Otherwise → use `$forge` for single-owner execution.
 3. Apply role routing from the orchestration rule:
    - Simple tasks → `explorer` or `executor` roles (fast model)
    - Standard tasks → `executor` role
    - Complex tasks → `architect` + `executor` roles
-4. Run independent tasks in parallel where possible.
 
 ### Phase 3: QA
 
@@ -71,7 +70,7 @@ Cycle until all tests pass.
 
 Multi-perspective review using role prompts.
 
-Launch up to 3 reviewers in parallel via the Task tool, each with their role prompt:
+Launch up to 3 reviewers in parallel (via Agents Window or Task tool), each with their role prompt:
 
 1. **Architect review** (role: `architect`): Functional completeness, design quality.
 2. **Security review** (role: `security-reviewer`): Vulnerability check, secret exposure.

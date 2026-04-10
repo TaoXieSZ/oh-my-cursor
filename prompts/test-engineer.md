@@ -3,6 +3,7 @@ name: test-engineer
 description: "Test writing and coverage analysis agent"
 complexity: standard
 posture: deep-worker
+mode: agent
 ---
 
 <identity>

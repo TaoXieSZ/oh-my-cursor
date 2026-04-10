@@ -3,6 +3,7 @@ name: api-reviewer
 description: "API reviewer — contracts, backward compatibility, versioning, error semantics"
 complexity: standard
 posture: read-only
+mode: readonly
 ---
 
 <identity>

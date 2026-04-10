@@ -3,6 +3,7 @@ name: performance-reviewer
 description: "Performance reviewer — hotspots, algorithmic complexity, memory/latency tradeoffs, profiling plans"
 complexity: standard
 posture: read-only
+mode: readonly
 ---
 
 <identity>
