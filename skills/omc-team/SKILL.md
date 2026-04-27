@@ -78,16 +78,22 @@ The team brief can be executed two ways:
 The user opens multiple agents in Cursor's Agents Window, gives each agent its lane description and role prompt.
 
 **Option B: Task tool (automated)**
-The leader spawns workers via the Task tool, injecting the role prompt into each:
+The leader spawns workers via the Task tool, injecting the role prompt plus the shared `_team-protocol.md` partial into each:
 
 ```
 For each lane:
   1. Read role prompt from ~/.cursor/omc-prompts/{role}.md
-  2. Task(subagent_type="generalPurpose", prompt="""
+  2. Read team-protocol partial from ~/.cursor/omc-prompts/_team-protocol.md
+  3. Stamp lane id as TEAM_LANE_ID = "<runId>-lane-{N}" and role as TEAM_ROLE_NAME
+  4. Task(subagent_type="generalPurpose", prompt="""
     {role prompt contents}
+
+    {team-protocol partial contents}
 
     --- ASSIGNMENT ---
     You are working on Lane {N} of {total}.
+    TEAM_LANE_ID = "{runId}-lane-{N}"
+    TEAM_ROLE_NAME = "{role}"
     Scope: {lane_scope}
     Files: {assigned_files}
     Expected output: {expected_output}
@@ -95,6 +101,9 @@ For each lane:
     Rules:
     - Stay inside your assigned file scope.
     - Do NOT modify files assigned to other lanes.
+    - Follow the <team_protocol> — post your start / claim / progress /
+      handoff / release / complete events to the blackboard so the leader
+      can echo them into the chat session.
   """)
 ```
 
@@ -111,17 +120,52 @@ For each lane:
 
 ### Coordination via shared blackboard
 
-When lanes execute in parallel, agents coordinate through the shared blackboard (MCP tools `blackboard_post` / `blackboard_read`):
+When lanes execute in parallel, agents coordinate through the shared blackboard (MCP tools `blackboard_post` / `blackboard_tail` / `blackboard_read`):
 
+- **status**: Agent reports start / complete lifecycle ticks.
 - **claim**: Agent announces it is working on specific files → prevents conflicts.
 - **progress**: Agent reports completion of sub-items.
 - **blocker**: Agent reports a blocker for the leader to resolve.
 - **handoff**: Agent hands off a dependency to another lane.
 - **release**: Agent announces it has finished with specific files.
 
-Example: `blackboard_post(agent="lane-1", kind="claim", content="Working on src/api/users.ts")`
+Example: `blackboard_post(agent="lane-1-executor", lane="run123-lane-1", role="executor", kind="claim", content="src/api/users.ts")`
 
-The leader monitors the blackboard via `blackboard_status` and `blackboard_read` to track progress and resolve conflicts.
+Every lane post MUST set `lane` and `role` — those fields power the leader's chat rendering (below). The `_team-protocol.md` partial injected into every lane prompt enforces this.
+
+### Chat rendering protocol
+
+A team dispatch is only useful if the human in the main chat can actually see the team working. After Phase 3 dispatches lanes, the leader enters a **standup loop** and echoes every new blackboard message into the chat composer so the session feels like the oh-my-codex tmux panes.
+
+1. **Tail the blackboard.** Call `blackboard_tail(cursor)` via the `omc-state` MCP server. Pass `undefined` the first time, then feed `nextCursor` back on each subsequent call so polls are incremental.
+2. **Render two blocks into the chat message.** Whenever the tail returns messages:
+
+   **Lane status table** — one row per lane, latest status only:
+
+   ```text
+   | Lane | Role          | State     | Last update              |
+   | ---- | ------------- | --------- | ------------------------ |
+   | 1    | executor      | active    | claim src/api/users.ts   |
+   | 2    | designer      | progress  | form draft complete      |
+   | 3    | test-engineer | waiting   | —                        |
+   ```
+
+   **Team-chatter log** — chronological, newest at bottom, one line per message using the canonical format `[HH:MM:SS] <lane>·<role>  <kind>  <content>`:
+
+   ```text
+   [14:22:01] run123-lane-1·executor      status    started
+   [14:22:03] run123-lane-1·executor      claim     src/api/users.ts
+   [14:22:18] run123-lane-2·designer      progress  form draft complete
+   [14:22:30] run123-lane-1·executor      release   src/api/users.ts
+   ```
+
+3. **Render cadence.** Refresh both blocks:
+   - Immediately after every Task tool return.
+   - Once explicitly mid-run if any lane has been silent for a long stretch.
+4. **Plain markdown only.** Write both blocks as part of the leader's chat message — no dashboard indirection — so the user sees them without opening the web view.
+5. **Exit condition.** The standup loop ends when every lane has posted `release` or a `status` of `complete`, or when a `blocker` forces leader intervention.
+
+The human watching chat should never wonder "what are the agents doing?" — the table answers _where_ each lane is, and the log answers _what just happened_.
 
 ### Phase 4: Integrate and verify
 
@@ -130,7 +174,10 @@ The leader monitors the blackboard via `blackboard_status` and `blackboard_read`
 3. Resolve any integration issues.
 4. Run full test suite.
 5. Verify the complete change against the plan.
-6. Clear the blackboard for the next session: `blackboard_clear`.
+6. **Save the transcript.** Call `team_transcript_write({ runId })` (from the `omc-state` MCP server) to capture the full chatter log at `.omc/state/team/<runId>-transcript.md`. Cite that path in the leader's final summary so the user can re-read the run later or share it.
+7. Clear the blackboard for the next session: `blackboard_clear`.
+
+> Tip: users who want a side terminal panel of team chatter (closer to oh-my-codex tmux panes) can run `omc team watch --run <runId>` in a separate terminal while the leader runs in chat.
 
 ## State management
 

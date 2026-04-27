@@ -93,11 +93,14 @@ export function loadRole(filePath: string): Role | null {
 
 /**
  * Discover all role prompts in a directory.
+ *
+ * Files whose basename begins with `_` are treated as shared partials (e.g.
+ * `_team-protocol.md`) and skipped — they are not standalone roles.
  */
 export function discoverRoles(promptsDir: string): Role[] {
   if (!existsSync(promptsDir)) return [];
 
-  const files = readdirSync(promptsDir).filter((f) => f.endsWith(".md"));
+  const files = readdirSync(promptsDir).filter((f) => f.endsWith(".md") && !basename(f).startsWith("_"));
   const roles: Role[] = [];
 
   for (const file of files) {
@@ -106,6 +109,34 @@ export function discoverRoles(promptsDir: string): Role[] {
   }
 
   return roles;
+}
+
+/**
+ * Load the shared `_team-protocol.md` partial from the first prompts dir
+ * that contains it. Returns the partial body (without YAML frontmatter if
+ * any) or `null` when the file is missing.
+ */
+export function loadTeamProtocol(promptsDirs: string[]): string | null {
+  for (const dir of promptsDirs) {
+    const path = join(dir, "_team-protocol.md");
+    if (!existsSync(path)) continue;
+    const raw = readFileSync(path, "utf-8");
+    const { body } = parseRoleFrontmatter(raw);
+    return body.trim() || raw.trim();
+  }
+  return null;
+}
+
+/**
+ * Append the team-protocol partial to a role's body so the subagent knows to
+ * post its claim / progress / handoff / release events to the blackboard.
+ * Use this when composing the lane prompt for an `/omc-team` dispatch — the
+ * unmodified role is still returned to single-owner callers like `/omc-forge`.
+ */
+export function withTeamProtocol(role: Role, promptsDirs: string[]): string {
+  const protocol = loadTeamProtocol(promptsDirs);
+  if (!protocol) return role.content;
+  return `${role.content.trimEnd()}\n\n${protocol}\n`;
 }
 
 /**

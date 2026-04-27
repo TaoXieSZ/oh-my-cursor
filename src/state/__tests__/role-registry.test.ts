@@ -10,6 +10,8 @@ import {
   resolveInheritance,
   composeRoles,
   buildRegistry,
+  loadTeamProtocol,
+  withTeamProtocol,
 } from "../role-registry.js";
 
 describe("role-registry", () => {
@@ -164,6 +166,70 @@ extends: executor
     assert.ok(resolved.content.includes("Base identity"));
     assert.ok(resolved.content.includes("Security constraints"));
     assert.equal(resolved.metadata.complexity, "high");
+  });
+
+  it("discoverRoles skips underscore-prefixed partials", () => {
+    writeFileSync(
+      join(tempDir, "executor.md"),
+      '---\nname: executor\ndescription: "Base"\ncomplexity: standard\nposture: deep-worker\nmode: agent\n---\n\n<identity>Base</identity>'
+    );
+    writeFileSync(
+      join(tempDir, "_team-protocol.md"),
+      "<team_protocol>Do not load as a role</team_protocol>"
+    );
+    const roles = discoverRoles(tempDir);
+    assert.equal(roles.length, 1);
+    assert.equal(roles[0].metadata.name, "executor");
+  });
+
+  it("loadTeamProtocol returns the partial body", () => {
+    writeFileSync(
+      join(tempDir, "_team-protocol.md"),
+      "<team_protocol>\nPost claim/progress/release to blackboard.\n</team_protocol>"
+    );
+    const body = loadTeamProtocol([tempDir]);
+    assert.ok(body);
+    assert.ok(body!.includes("Post claim"));
+  });
+
+  it("loadTeamProtocol prefers the first matching dir", () => {
+    const dir1 = join(tempDir, "user");
+    const dir2 = join(tempDir, "project");
+    mkdirSync(dir1, { recursive: true });
+    mkdirSync(dir2, { recursive: true });
+    writeFileSync(join(dir1, "_team-protocol.md"), "<team_protocol>user-level</team_protocol>");
+    writeFileSync(join(dir2, "_team-protocol.md"), "<team_protocol>project-level</team_protocol>");
+    const body = loadTeamProtocol([dir1, dir2]);
+    assert.ok(body!.includes("user-level"));
+  });
+
+  it("loadTeamProtocol returns null when the partial is missing", () => {
+    assert.equal(loadTeamProtocol([tempDir]), null);
+  });
+
+  it("withTeamProtocol appends the partial to a role body", () => {
+    writeFileSync(
+      join(tempDir, "executor.md"),
+      '---\nname: executor\ndescription: "E"\ncomplexity: standard\nposture: deep-worker\nmode: agent\n---\n\n<identity>Executor.</identity>'
+    );
+    writeFileSync(
+      join(tempDir, "_team-protocol.md"),
+      "<team_protocol>\nPOST_TO_BLACKBOARD\n</team_protocol>"
+    );
+    const role = loadRole(join(tempDir, "executor.md"))!;
+    const composed = withTeamProtocol(role, [tempDir]);
+    assert.ok(composed.includes("<identity>Executor.</identity>"));
+    assert.ok(composed.includes("POST_TO_BLACKBOARD"));
+  });
+
+  it("withTeamProtocol returns the role unchanged when partial missing", () => {
+    writeFileSync(
+      join(tempDir, "executor.md"),
+      '---\nname: executor\ndescription: "E"\ncomplexity: standard\nposture: deep-worker\nmode: agent\n---\n\nBody only'
+    );
+    const role = loadRole(join(tempDir, "executor.md"))!;
+    const composed = withTeamProtocol(role, [tempDir]);
+    assert.equal(composed, role.content);
   });
 
   it("buildRegistry resolves extends across directories", () => {
