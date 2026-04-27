@@ -54,6 +54,9 @@ function showActiveMode(): void {
     try {
       const state = JSON.parse(readFileSync(`${stateDir}/${file}`, "utf-8"));
       const mode = file.replace("-state.json", "");
+      if (mode === "monitor" || mode.startsWith("monitor-")) {
+        continue;
+      }
       const status = state.completed_at ? "completed" : state.cancelled_at ? "cancelled" : "active";
       info(`Mode: ${mode} (${status})`);
       if (state.phase) dim(`  Phase: ${state.phase}`);

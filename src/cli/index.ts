@@ -9,22 +9,25 @@ const VERSION = "0.1.0";
 
 const HELP = `
 oh-my-cursor (omc) v${VERSION}
-Workflow orchestration layer for Cursor IDE
+Lightweight workflow toolkit for Cursor IDE
 
 Usage:
   omc <command> [options]
 
-Commands:
+Core commands:
   setup      Install rules, skills, and MCP servers into Cursor
   doctor     Verify installation health
   status     Show active mode, session, and state
-  skills     List all installed OMC skills
-  dashboard  Launch live web dashboard (http://localhost:3721)
+  skills     List core workflows and optional extras
   archive    Archive current session to .omc/archive/ and reset state
   archives   List all archived sessions
-  notify     Slack notifications (see subcommands below)
   help       Show this help message
   version    Print version
+
+Optional extras:
+  schedule   Manage generic scheduled task state and lifecycle
+  dashboard  Launch live web dashboard (http://localhost:3721)
+  notify     Slack notifications (see subcommands below)
 
 Options:
   --scope <user|project>  Installation scope (default: user)
@@ -37,15 +40,30 @@ Examples:
   omc setup --scope project  # Install to current project
   omc doctor                 # Check installation health
   omc status                 # Show current state
-  omc skills                 # List available skills
+  omc skills                 # Show the core path first
+  # Cursor chat default path: /omc-deep-interview -> /omc-blueprint -> /omc-forge
+
+Optional extras:
+  omc schedule list --scope user
+                           # Show user-scoped scheduled tasks
+  omc schedule add-rss --scope user --url <feed>
+                           # Register a user-scoped RSS watcher
+  omc schedule run-now task --scope user
+                           # Request an immediate rerun
   omc dashboard              # Launch live web dashboard
   omc dashboard --port 4000  # Custom port
-  omc archive                # Archive current session
-  omc archives               # List archived sessions
+  omc team watch [--run <id>] [--no-follow]
+                             # Tail multi-agent blackboard chatter
 
 Notify (Slack Incoming Webhooks):
   omc notify slack [message]   # Test webhook (default message if omitted)
   omc notify forge             # Push current forge-state.json snapshot to Slack
+  omc notify emit --task-id <id> --summary <text> [--status ok|warn|error|info] [--scope user|project]
+                              # Emit core OMC notification (feed + desktop by default)
+  omc notify recent [--limit N] [--scope user|project]
+                              # Show recent core notifications
+  omc notify test-desktop [message]
+                              # Emit a desktop notification for local verification
 
   Configure URL via OMC_SLACK_WEBHOOK_URL, OMC_FORGE_SLACK_WEBHOOK_URL,
   or notifications.slack_webhook_url in .omc/omc-config.json
@@ -71,9 +89,24 @@ export async function main(args: string[]): Promise<void> {
       await listSkills();
       break;
     }
+    case "schedule": {
+      const { schedule } = await import("./schedule.js");
+      await schedule(args.slice(1));
+      break;
+    }
     case "dashboard":
       await dashboard({ port: options.port, open: options.open });
       break;
+    case "team": {
+      const { parseTeamArgs, teamWatch } = await import("./team.js");
+      const { sub, opts } = parseTeamArgs(args.slice(1));
+      if (sub === "watch") {
+        await teamWatch(opts);
+        break;
+      }
+      log.fail("Use: omc team watch [--run <id>] [--no-follow]");
+      process.exit(1);
+    }
     case "archive": {
       const path = archiveCurrentSession();
       if (path) log.ok("Session archived → " + path);
@@ -93,6 +126,58 @@ export async function main(args: string[]): Promise<void> {
     }
     case "notify": {
       const sub = args[1];
+      if (sub === "emit") {
+        const parsed = parseNotifyEmitArgs(args.slice(2));
+        if (!parsed.taskId || !parsed.summary) {
+          log.fail("Use: omc notify emit --task-id <id> --summary <text> [--status ok|warn|error|info] [--details <text>] [--source <name>] [--title <text>] [--scope user|project] [--no-desktop] [--no-feed]");
+          process.exit(1);
+        }
+        const { emitNotification } = await import("../notify/notification-center.js");
+        const event = emitNotification({
+          scope: parsed.scope,
+          source: parsed.source,
+          taskId: parsed.taskId,
+          status: parsed.status,
+          summary: parsed.summary,
+          ...(parsed.details ? { details: parsed.details } : {}),
+          ...(parsed.title ? { title: parsed.title } : {}),
+          channels: {
+            desktop: parsed.desktop,
+            feed: parsed.feed,
+          },
+        });
+        log.ok(`Notification emitted (${event.status}) → ${event.taskId}`);
+        break;
+      }
+      if (sub === "recent") {
+        const { limit, scope } = parseNotifyRecentArgs(args.slice(2));
+        const { tailNotifications } = await import("../notify/notification-store.js");
+        const notifications = tailNotifications(limit, scope);
+        if (notifications.length === 0) {
+          log.info("No notifications yet.");
+          break;
+        }
+        log.heading("Recent Notifications");
+        for (const notification of notifications) {
+          log.info(`[${notification.status}] ${notification.taskId} — ${notification.summary}`);
+          log.dim(`${notification.ts} · ${notification.source}`);
+          if (notification.details) log.dim(notification.details);
+        }
+        break;
+      }
+      if (sub === "test-desktop") {
+        const { sendDesktopNotification } = await import("../notify/desktop-notify.js");
+        const message = args.slice(2).join(" ").trim() || "OMC desktop notification test";
+        const result = sendDesktopNotification("OMC Desktop Test", message, {
+          tone: "info",
+        });
+        if (!result.ok) {
+          log.fail(`Desktop notification failed: ${result.error ?? "unknown error"}`);
+          process.exit(1);
+        }
+        log.ok("Desktop notification sent.");
+        break;
+      }
       if (sub === "slack") {
         const { getForgeSlackWebhookUrl } = await import("../notify/config.js");
         const { postSlackIncomingWebhook } = await import("../notify/slack-webhook.js");
@@ -139,7 +224,7 @@ export async function main(args: string[]): Promise<void> {
         log.ok("Sent forge snapshot to Slack.");
         break;
       }
-      log.fail('Use: omc notify slack [message]  or  omc notify forge');
+      log.fail("Use: omc notify slack [message]  or  omc notify forge  or  omc notify emit|recent|test-desktop");
       process.exit(1);
     }
     case "version":
@@ -165,6 +250,18 @@ interface CliOptions {
   verbose: boolean;
   port?: number;
   open?: boolean;
+}
+
+interface NotifyEmitArgs {
+  scope: "user" | "project";
+  source: string;
+  taskId?: string;
+  status: "ok" | "warn" | "error" | "info";
+  summary?: string;
+  details?: string;
+  title?: string;
+  desktop: boolean;
+  feed: boolean;
 }
 
 function parseOptions(args: string[]): CliOptions {
@@ -197,4 +294,67 @@ function parseOptions(args: string[]): CliOptions {
   }
 
   return opts;
+}
+
+function parseNotifyEmitArgs(args: string[]): NotifyEmitArgs {
+  const result: NotifyEmitArgs = {
+    scope: "project",
+    source: "schedule",
+    status: "info",
+    desktop: true,
+    feed: true,
+  };
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === "--source" && args[i + 1]) {
+      result.source = args[++i];
+    } else if (arg === "--scope" && args[i + 1]) {
+      const scope = args[++i];
+      if (scope === "project" || scope === "user") {
+        result.scope = scope;
+      }
+    } else if (arg === "--task-id" && args[i + 1]) {
+      result.taskId = args[++i];
+    } else if (arg === "--status" && args[i + 1]) {
+      const status = args[++i];
+      if (status === "ok" || status === "warn" || status === "error" || status === "info") {
+        result.status = status;
+      }
+    } else if (arg === "--summary" && args[i + 1]) {
+      result.summary = args[++i];
+    } else if (arg === "--details" && args[i + 1]) {
+      result.details = args[++i];
+    } else if (arg === "--title" && args[i + 1]) {
+      result.title = args[++i];
+    } else if (arg === "--no-desktop") {
+      result.desktop = false;
+    } else if (arg === "--no-feed") {
+      result.feed = false;
+    }
+  }
+
+  return result;
+}
+
+function parseNotifyRecentArgs(args: string[]): {
+  limit: number;
+  scope: "user" | "project";
+} {
+  let limit = 10;
+  let scope: "user" | "project" = "project";
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === "--limit" && args[i + 1]) {
+      const parsed = parseInt(args[i + 1], 10);
+      if (!Number.isNaN(parsed) && parsed > 0) {
+        limit = parsed;
+      }
+    } else if (args[i] === "--scope" && args[i + 1]) {
+      const parsedScope = args[i + 1];
+      if (parsedScope === "project" || parsedScope === "user") {
+        scope = parsedScope;
+      }
+    }
+  }
+  return { limit, scope };
 }

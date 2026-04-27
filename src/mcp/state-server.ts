@@ -25,8 +25,9 @@ import { readModeState, writeModeState, parseStateFilename } from "../state/mode
 import type { ModeState } from "../state/mode-state.js";
 import { appendEvent, readEvents, tailEvents } from "../state/event-log.js";
 import type { RunEvent } from "../state/event-log.js";
-import { postMessage, readMessages, getAgentStatuses, clearBlackboard } from "../state/blackboard.js";
+import { postMessage, readMessages, getAgentStatuses, clearBlackboard, tailSince, writeTranscript } from "../state/blackboard.js";
 import type { BlackboardMessage } from "../state/blackboard.js";
+import { inspectHarnessReadiness } from "../state/harness.js";
 
 const server = new Server(
   { name: "omc-state", version: "0.2.0" },
@@ -135,14 +136,21 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
       },
     },
     {
+      name: "harness_readiness",
+      description: "Summarize OMC harness readiness for schedule-state contracts and generic workflow setup.",
+      inputSchema: { type: "object" as const, properties: {} },
+    },
+    {
       name: "blackboard_post",
-      description: "Post a message to the shared blackboard for multi-agent coordination. Use this when multiple agents work in parallel to share status, claim files, report blockers, or hand off work.",
+      description: "Post a message to the shared blackboard for multi-agent coordination. Use this when multiple agents work in parallel to share status, claim files, report blockers, or hand off work. When dispatched as a team lane, always include `lane` and `role` so the leader can render chatter in the chat session.",
       inputSchema: {
         type: "object" as const,
         properties: {
           agent: { type: "string", description: "Agent identifier (e.g. 'lane-1-executor', 'leader')" },
           kind: { type: "string", enum: ["status", "progress", "blocker", "handoff", "note", "claim", "release"], description: "Message type" },
           content: { type: "string", description: "Human-readable message" },
+          lane: { type: "string", description: "Lane identifier when posting from a team dispatch (e.g. 'lane-1' or '<runId>-lane-1')" },
+          role: { type: "string", description: "Role name the agent is playing (e.g. 'executor', 'designer')" },
           detail: { type: "object", description: "Optional structured data (e.g. { files: [...], progress: 3/5 })" },
         },
         required: ["agent", "kind", "content"],
@@ -150,13 +158,24 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: "blackboard_read",
-      description: "Read messages from the shared blackboard. Optionally filter by timestamp, agent, or message kind.",
+      description: "Read messages from the shared blackboard. Optionally filter by timestamp, agent, lane, or message kind.",
       inputSchema: {
         type: "object" as const,
         properties: {
           since: { type: "string", description: "ISO timestamp — return only messages after this time" },
           agent: { type: "string", description: "Filter by agent identifier" },
           kind: { type: "string", description: "Filter by message kind" },
+          lane: { type: "string", description: "Filter by lane identifier" },
+        },
+      },
+    },
+    {
+      name: "blackboard_tail",
+      description: "Incrementally tail the blackboard. Returns messages strictly newer than the provided cursor together with the latest timestamp as `nextCursor`. The leader uses this to echo new team chatter into the chat session each poll without re-reading the whole log.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          cursor: { type: "string", description: "ISO timestamp from a previous call's `nextCursor`. Omit on the first poll to get everything." },
         },
       },
     },
@@ -169,6 +188,16 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
       name: "blackboard_clear",
       description: "Clear the shared blackboard (use between team sessions).",
       inputSchema: { type: "object" as const, properties: {} },
+    },
+    {
+      name: "team_transcript_write",
+      description: "Write a per-run team transcript to `.omc/state/team/<runId>-transcript.md` from the current blackboard contents. If `runId` is omitted, the full blackboard is captured. Returns the absolute path of the written file so the leader can cite it in the final summary.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          runId: { type: "string", description: "Team run identifier used as the lane-id prefix (e.g. 'run123')" },
+        },
+      },
     },
   ],
 }));
@@ -283,20 +312,47 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return { content: [{ type: "text", text: JSON.stringify(events, null, 2) }] };
     }
 
+    case "harness_readiness": {
+      const readiness = inspectHarnessReadiness();
+      return { content: [{ type: "text", text: JSON.stringify(readiness, null, 2) }] };
+    }
+
     case "blackboard_post": {
-      const { agent, kind, content, detail } = args as { agent: string; kind: BlackboardMessage["kind"]; content: string; detail?: Record<string, unknown> };
-      const msg: BlackboardMessage = { ts: new Date().toISOString(), agent, kind, content, ...(detail ? { detail } : {}) };
+      const { agent, kind, content, lane, role, detail } = args as {
+        agent: string;
+        kind: BlackboardMessage["kind"];
+        content: string;
+        lane?: string;
+        role?: string;
+        detail?: Record<string, unknown>;
+      };
+      const msg: BlackboardMessage = {
+        ts: new Date().toISOString(),
+        agent,
+        kind,
+        content,
+        ...(lane ? { lane } : {}),
+        ...(role ? { role } : {}),
+        ...(detail ? { detail } : {}),
+      };
       postMessage(msg);
-      return { content: [{ type: "text", text: `Posted to blackboard: [${agent}] ${kind}: ${content}` }] };
+      const laneLabel = lane && role ? `[${lane}·${role}]` : `[${agent}]`;
+      return { content: [{ type: "text", text: `Posted to blackboard: ${laneLabel} ${kind}: ${content}` }] };
     }
 
     case "blackboard_read": {
-      const { since, agent, kind } = (args ?? {}) as { since?: string; agent?: string; kind?: string };
-      const messages = readMessages({ since, agent, kind });
+      const { since, agent, kind, lane } = (args ?? {}) as { since?: string; agent?: string; kind?: string; lane?: string };
+      const messages = readMessages({ since, agent, kind, lane });
       if (messages.length === 0) {
         return { content: [{ type: "text", text: "No messages on blackboard" }] };
       }
       return { content: [{ type: "text", text: JSON.stringify(messages, null, 2) }] };
+    }
+
+    case "blackboard_tail": {
+      const { cursor } = (args ?? {}) as { cursor?: string };
+      const result = tailSince(cursor);
+      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
     }
 
     case "blackboard_status": {
@@ -310,6 +366,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     case "blackboard_clear": {
       clearBlackboard();
       return { content: [{ type: "text", text: "Blackboard cleared" }] };
+    }
+
+    case "team_transcript_write": {
+      const { runId } = (args ?? {}) as { runId?: string };
+      const path = writeTranscript(runId);
+      return { content: [{ type: "text", text: `Team transcript written: ${path}` }] };
     }
 
     default:

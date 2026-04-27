@@ -15,6 +15,7 @@ import {
   isCursorInstalled,
 } from "../utils/paths.js";
 import { ok, warn, fail, info, heading, dim } from "../utils/log.js";
+import { inspectHarnessReadiness } from "../state/harness.js";
 
 interface DoctorOptions {
   scope: "user" | "project";
@@ -49,6 +50,7 @@ export async function doctor(options: DoctorOptions): Promise<void> {
     { name: "Hooks", fn: () => checkHooksInstalled(scope) },
     { name: "State directory", fn: checkStateDir },
     { name: "Setup metadata", fn: checkSetupMeta },
+    { name: "Harness contracts", fn: checkHarnessContracts },
   ];
 
   let passed = 0;
@@ -152,15 +154,20 @@ function checkPromptsInstalled(scope: "user" | "project"): CheckResult {
     return { ok: false, message: `Prompts directory missing: ${dir}` };
   }
 
-  const prompts = readdirSync(dir).filter((f) => f.endsWith(".md"));
+  const allMd = readdirSync(dir).filter((f) => f.endsWith(".md"));
+  const prompts = allMd.filter((f) => !f.startsWith("_"));
   if (prompts.length === 0) {
     return { ok: false, message: `No prompt files found in ${dir}` };
   }
 
+  const partials = allMd.filter((f) => f.startsWith("_"));
+  const detail = prompts.map((f) => f.replace(".md", "")).join(", ")
+    + (partials.length > 0 ? ` (partials: ${partials.map((f) => f.replace(".md", "")).join(", ")})` : "");
+
   return {
     ok: true,
     message: `${prompts.length} role prompts installed`,
-    detail: prompts.map((f) => f.replace(".md", "")).join(", "),
+    detail,
   };
 }
 
@@ -259,4 +266,18 @@ function checkSetupMeta(): CheckResult {
   } catch {
     return { ok: false, message: "Setup metadata corrupted" };
   }
+}
+
+function checkHarnessContracts(): CheckResult {
+  const readiness = inspectHarnessReadiness();
+  const details = readiness.checks.map((check) =>
+    `[${check.status}] ${check.summary}${check.detail ? ` — ${check.detail}` : ""}`
+  );
+  return {
+    ok: readiness.ok,
+    message: readiness.ok
+      ? `Harness contracts valid (${readiness.summary.okCount}/${readiness.summary.checkCount} checks passed)`
+      : `Harness contracts invalid (${readiness.summary.errorCount} error${readiness.summary.errorCount === 1 ? "" : "s"})`,
+    detail: details.join("\n"),
+  };
 }

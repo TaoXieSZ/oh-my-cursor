@@ -39,6 +39,7 @@ describe("collectState", () => {
     assert.deepEqual(state.activeModes, []);
     assert.deepEqual(state.completedModes, []);
     assert.deepEqual(state.archivedSessions, []);
+    assert.deepEqual(state.notifications, []);
     assert.deepEqual(state.plans, []);
     assert.deepEqual(state.memory, {});
     assert.equal(state.notepad, "");
@@ -164,6 +165,97 @@ describe("collectState", () => {
 
     const state = collectState();
     assert.ok(state.notepad.includes("Fix auth bug"));
+  });
+
+  it("reads notifications newest first", () => {
+    const stateDir = join(tmp, ".omc", "state");
+    mkdirSync(stateDir, { recursive: true });
+    writeFileSync(
+      join(stateDir, "notifications.jsonl"),
+      [
+        JSON.stringify({
+          id: "n1",
+          ts: "2026-04-04T10:00:00Z",
+          source: "schedule",
+          taskId: "dashboard-a",
+          status: "info",
+          summary: "first",
+          channels: { desktop: true, feed: true },
+        }),
+        JSON.stringify({
+          id: "n2",
+          ts: "2026-04-04T10:01:00Z",
+          source: "schedule",
+          taskId: "dashboard-b",
+          status: "warn",
+          summary: "second",
+          channels: { desktop: true, feed: true },
+        }),
+      ].join("\n") + "\n",
+    );
+
+    const state = collectState();
+    assert.equal(state.notifications.length, 2);
+    assert.equal(state.notifications[0].id, "n2");
+    assert.equal(state.notifications[1].id, "n1");
+  });
+
+  it("ignores deprecated monitor state files in the generic dashboard view", () => {
+    const stateDir = join(tmp, ".omc", "state");
+    mkdirSync(stateDir, { recursive: true });
+    writeFileSync(join(stateDir, "monitor-a1b2c3d4-state.json"), JSON.stringify({
+      mode: "monitor",
+      runId: "a1b2c3d4",
+      status: "active",
+      phase: "watching",
+      started_at: "2026-04-04T10:00:00Z",
+      task: "IMOC monitor",
+      monitorId: "imoc-dashboard",
+      sourceTaskId: "dashboard-a",
+      title: "IMOC Dashboard Monitor",
+      dashboardUrl: "https://grafana.example.com",
+      latestStatus: "warn",
+      latestSummary: "Something happened",
+      feed: [
+        {
+          id: "f1",
+          ts: "2026-04-04T10:01:00Z",
+          kind: "tick",
+          status: "warn",
+          summary: "Something happened",
+          actions: ["investigate", "acknowledge", "ignore"],
+          sourceTaskId: "dashboard-a",
+        },
+      ],
+    }));
+
+    const state = collectState();
+    assert.equal(state.activeModes.length, 0);
+    assert.equal(state.completedModes.length, 0);
+  });
+
+  it("skips corrupt notification lines", () => {
+    const stateDir = join(tmp, ".omc", "state");
+    mkdirSync(stateDir, { recursive: true });
+    writeFileSync(
+      join(stateDir, "notifications.jsonl"),
+      [
+        JSON.stringify({
+          id: "n1",
+          ts: "2026-04-04T10:00:00Z",
+          source: "schedule",
+          taskId: "dashboard-a",
+          status: "info",
+          summary: "first",
+          channels: { desktop: true, feed: true },
+        }),
+        "{invalid",
+      ].join("\n") + "\n",
+    );
+
+    const state = collectState();
+    assert.equal(state.notifications.length, 1);
+    assert.equal(state.notifications[0].id, "n1");
   });
 
   it("reads session", () => {

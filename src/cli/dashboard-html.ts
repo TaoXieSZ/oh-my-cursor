@@ -116,6 +116,20 @@ main{max-width:1400px;margin:0 auto;padding:24px 32px 64px}
   white-space:pre-wrap;line-height:1.6}
 .history-detail.open{display:block}
 
+.notif-list{display:flex;flex-direction:column;gap:10px}
+.notif-item{border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;background:var(--surface2)}
+.notif-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.notif-status{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.notif-status.ok{background:var(--green)}
+.notif-status.warn{background:var(--yellow)}
+.notif-status.error{background:var(--red)}
+.notif-status.info{background:var(--blue)}
+.notif-source{font-family:var(--font-mono);font-size:0.62rem;padding:2px 7px;border-radius:99px;background:var(--surface3);color:var(--text2);text-transform:uppercase}
+.notif-task{font-family:var(--font-mono);font-size:0.68rem;color:var(--text2)}
+.notif-time{margin-left:auto;font-family:var(--font-mono);font-size:0.65rem;color:var(--text3)}
+.notif-summary{font-size:0.82rem;color:var(--text);line-height:1.45}
+.notif-details{font-family:var(--font-mono);font-size:0.68rem;color:var(--text3);margin-top:6px;white-space:pre-wrap}
+
 .chat-link{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;
   border:1px solid var(--border);background:var(--surface2);color:var(--blue);font-size:0.65rem;
   font-family:var(--font-mono);cursor:pointer;transition:all .15s;white-space:nowrap;flex-shrink:0}
@@ -303,36 +317,42 @@ footer a:hover{text-decoration:underline}
 </header>
 
 <main>
-  <div id="stats-bar"></div>
-  <div class="section-header">
-    <div class="section-title">Active Sessions</div>
-    <div class="section-count" id="active-count">0</div>
-  </div>
-  <div class="cards" id="active-cards"></div>
+  <div id="overview-root">
+    <div id="stats-bar"></div>
+    <div class="section-header">
+      <div class="section-title">Active Sessions</div>
+      <div class="section-count" id="active-count">0</div>
+    </div>
+    <div class="cards" id="active-cards"></div>
 
-  <div class="columns">
-    <div>
-      <div class="panel">
-        <div class="panel-title">History</div>
-        <div id="history-body"></div>
+    <div class="columns">
+      <div>
+        <div class="panel">
+          <div class="panel-title">Notifications</div>
+          <div id="notifications-body"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">History</div>
+          <div id="history-body"></div>
+        </div>
+        <div class="panel" style="margin-top:20px">
+          <div class="panel-title">Plans</div>
+          <div id="plans-body"></div>
+        </div>
       </div>
-      <div class="panel" style="margin-top:20px">
-        <div class="panel-title">Plans</div>
-        <div id="plans-body"></div>
+      <div>
+        <div class="panel">
+          <div class="panel-title">Project Memory</div>
+          <div id="memory-body"></div>
+        </div>
+        <div class="panel" style="margin-top:20px">
+          <div class="panel-title">Notepad</div>
+          <div id="notepad-body"></div>
+        </div>
       </div>
     </div>
-    <div>
-      <div class="panel">
-        <div class="panel-title">Project Memory</div>
-        <div id="memory-body"></div>
-      </div>
-      <div class="panel" style="margin-top:20px">
-        <div class="panel-title">Notepad</div>
-        <div id="notepad-body"></div>
-      </div>
-    </div>
+    <div class="updated-at" id="updated-at"></div>
   </div>
-  <div class="updated-at" id="updated-at"></div>
 </main>
 
 <div class="toast" id="toast"></div>
@@ -661,6 +681,38 @@ footer a:hover{text-decoration:underline}
     el.innerHTML = html;
   }
 
+  function notificationToneClass(status) {
+    if (status === 'ok') return 'ok';
+    if (status === 'warn') return 'warn';
+    if (status === 'error') return 'error';
+    return 'info';
+  }
+
+  function renderNotifications(state) {
+    var el = document.getElementById('notifications-body');
+    var notifications = state.notifications || [];
+    if (notifications.length === 0) {
+      el.innerHTML = '<div class="empty">No notifications yet.</div>';
+      return;
+    }
+
+    var html = '<div class="notif-list">';
+    notifications.forEach(function(n) {
+      html += '<div class="notif-item">';
+      html += '<div class="notif-head">';
+      html += '<span class="notif-status ' + notificationToneClass(n.status) + '"></span>';
+      html += '<span class="notif-source">' + esc(n.source || 'notify') + '</span>';
+      html += '<span class="notif-task">' + esc(n.taskId || 'unknown-task') + '</span>';
+      html += '<span class="notif-time">' + timeAgo(n.ts) + '</span>';
+      html += '</div>';
+      html += '<div class="notif-summary">' + esc(n.summary || '') + '</div>';
+      if (n.details) html += '<div class="notif-details">' + esc(n.details) + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+    el.innerHTML = html;
+  }
+
   window._toggleHistory = function(id, runId) {
     var el = document.getElementById(id);
     if (el) {
@@ -840,6 +892,7 @@ footer a:hover{text-decoration:underline}
     document.getElementById('session-id').textContent = state.session ? state.session.id.slice(0,8) : '';
     renderStats(state);
     renderActiveCards(state);
+    renderNotifications(state);
     renderHistory(state);
     renderPlans(state);
     renderMemory(state);

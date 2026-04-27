@@ -9,6 +9,37 @@ interface SkillMeta {
   dir: string;
 }
 
+type SkillCategory = "Core Path" | "Supporting Tools" | "Optional Extras" | "Other";
+
+const SKILL_CATEGORY_ORDER: SkillCategory[] = [
+  "Core Path",
+  "Supporting Tools",
+  "Optional Extras",
+  "Other",
+];
+
+const CORE_PATH_SKILLS = new Set([
+  "omc-deep-interview",
+  "omc-blueprint",
+  "omc-forge",
+  "omc-cancel",
+]);
+
+const SUPPORTING_SKILLS = new Set([
+  "omc-analyze",
+  "omc-code-review",
+  "omc-ecomode",
+]);
+
+const OPTIONAL_SKILLS = new Set([
+  "omc-autopilot",
+  "omc-dashboard",
+  "omc-schedule",
+  "omc-tdd",
+  "omc-team",
+  "omc-web-clone",
+]);
+
 function parseSkillFrontmatter(skillDir: string): SkillMeta | null {
   const mdPath = join(skillDir, "SKILL.md");
   if (!existsSync(mdPath)) return null;
@@ -31,6 +62,13 @@ function scanSkillDirs(baseDir: string): SkillMeta[] {
     .filter((d) => d.isDirectory() && d.name.startsWith("omc-"))
     .map((d) => parseSkillFrontmatter(join(baseDir, d.name)))
     .filter((s): s is SkillMeta => s !== null);
+}
+
+function categorizeSkill(name: string): SkillCategory {
+  if (CORE_PATH_SKILLS.has(name)) return "Core Path";
+  if (SUPPORTING_SKILLS.has(name)) return "Supporting Tools";
+  if (OPTIONAL_SKILLS.has(name)) return "Optional Extras";
+  return "Other";
 }
 
 export async function skills(): Promise<void> {
@@ -65,12 +103,18 @@ export async function skills(): Promise<void> {
   all.sort((a, b) => a.name.localeCompare(b.name));
 
   const maxCmdLen = Math.max(...all.map((s) => s.name.length + 1));
-  for (const s of all) {
-    const cmd = `/${s.name}`;
-    const padded = cmd.padEnd(maxCmdLen + 2);
-    info(`${padded} ${s.description}`);
+  for (const category of SKILL_CATEGORY_ORDER) {
+    const skillsInCategory = all.filter((skill) => categorizeSkill(skill.name) === category);
+    if (skillsInCategory.length === 0) continue;
+    info(category);
+    for (const s of skillsInCategory) {
+      const cmd = `/${s.name}`;
+      const padded = cmd.padEnd(maxCmdLen + 2);
+      info(`${padded} ${s.description}`);
+    }
+    console.log();
   }
 
-  console.log();
+  dim("Start with the core path: /omc-deep-interview -> /omc-blueprint -> /omc-forge.");
   dim(`${all.length} skills available. Use /omc-name (primary), /name (legacy), or $name in Cursor chat.`);
 }

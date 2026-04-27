@@ -2,11 +2,12 @@ import { describe, it, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { tmpdir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
 import {
   getProjectRoot,
   getBaseStateDir,
+  getUserStateRoot,
   getStatePath,
   getModeStatePath,
   listModeStateFiles,
@@ -19,6 +20,16 @@ import {
   getNotepadPath,
   getProjectMemoryPath,
   getMemoryIndexPath,
+  getNotificationLogPath,
+  getScopedSessionPath,
+  getScopedPlanPath,
+  getScopedLogPath,
+  getScopedEventLogPath,
+  getScopedNotepadPath,
+  getScopedProjectMemoryPath,
+  getScopedMemoryIndexPath,
+  getScopedNotificationLogPath,
+  getScopedBlackboardPath,
 } from "../paths.js";
 
 describe("getProjectRoot", () => {
@@ -62,8 +73,16 @@ describe("state path helpers", () => {
     assert.equal(getBaseStateDir(), "/test/project/.omc");
   });
 
+  it("getUserStateRoot", () => {
+    assert.equal(getUserStateRoot(), join(homedir(), ".cursor", "omc"));
+  });
+
   it("getStatePath", () => {
     assert.equal(getStatePath("foo.json"), "/test/project/.omc/state/foo.json");
+  });
+
+  it("getStatePath user scope", () => {
+    assert.equal(getStatePath("foo.json", "user"), join(homedir(), ".cursor", "omc", "state", "foo.json"));
   });
 
   it("getModeStatePath without runId", () => {
@@ -76,6 +95,10 @@ describe("state path helpers", () => {
 
   it("getSessionPath", () => {
     assert.equal(getSessionPath(), "/test/project/.omc/state/session.json");
+  });
+
+  it("getScopedSessionPath user scope", () => {
+    assert.equal(getScopedSessionPath("user"), join(homedir(), ".cursor", "omc", "state", "session.json"));
   });
 
   it("getTeamDir without name", () => {
@@ -97,24 +120,60 @@ describe("state path helpers", () => {
     assert.equal(getPlanPath("prd-auth.md"), "/test/project/.omc/plans/prd-auth.md");
   });
 
+  it("getScopedPlanPath user scope", () => {
+    assert.equal(getScopedPlanPath("prd-auth.md", "user"), join(homedir(), ".cursor", "omc", "plans", "prd-auth.md"));
+  });
+
   it("getLogPath", () => {
     assert.equal(getLogPath("session.log"), "/test/project/.omc/logs/session.log");
+  });
+
+  it("getScopedLogPath user scope", () => {
+    assert.equal(getScopedLogPath("session.log", "user"), join(homedir(), ".cursor", "omc", "logs", "session.log"));
   });
 
   it("getEventLogPath", () => {
     assert.equal(getEventLogPath("abc12345"), "/test/project/.omc/logs/abc12345.jsonl");
   });
 
+  it("getScopedEventLogPath user scope", () => {
+    assert.equal(getScopedEventLogPath("abc12345", "user"), join(homedir(), ".cursor", "omc", "logs", "abc12345.jsonl"));
+  });
+
   it("getNotepadPath", () => {
     assert.equal(getNotepadPath(), "/test/project/.omc/notepad.md");
+  });
+
+  it("getScopedNotepadPath user scope", () => {
+    assert.equal(getScopedNotepadPath("user"), join(homedir(), ".cursor", "omc", "notepad.md"));
   });
 
   it("getProjectMemoryPath", () => {
     assert.equal(getProjectMemoryPath(), "/test/project/.omc/project-memory.json");
   });
 
+  it("getScopedProjectMemoryPath user scope", () => {
+    assert.equal(getScopedProjectMemoryPath("user"), join(homedir(), ".cursor", "omc", "project-memory.json"));
+  });
+
   it("getMemoryIndexPath", () => {
     assert.equal(getMemoryIndexPath(), "/test/project/.omc/memory-index.json");
+  });
+
+  it("getScopedMemoryIndexPath user scope", () => {
+    assert.equal(getScopedMemoryIndexPath("user"), join(homedir(), ".cursor", "omc", "memory-index.json"));
+  });
+
+  it("getNotificationLogPath", () => {
+    assert.equal(getNotificationLogPath(), "/test/project/.omc/state/notifications.jsonl");
+  });
+
+  it("getScopedNotificationLogPath user scope", () => {
+    assert.equal(getScopedNotificationLogPath("user"), join(homedir(), ".cursor", "omc", "state", "notifications.jsonl"));
+  });
+
+  it("getScopedBlackboardPath user scope", () => {
+    assert.equal(getScopedBlackboardPath("user"), join(homedir(), ".cursor", "omc", "blackboard.jsonl"));
   });
 });
 

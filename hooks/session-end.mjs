@@ -1,17 +1,20 @@
 #!/usr/bin/env node
 
 // OMC session-end hook
-// Archives completed runs and updates session state when agent stops.
+// Archives completed runs, updates session state, and suspends running
+// schedule tasks when the agent stops.
 // Receives: { type: "stop" | "sessionEnd" } on stdin
 // Responds: { continue: true } on stdout
 
 import { existsSync, readFileSync, readdirSync, mkdirSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { homedir } from "node:os";
 
 const projectRoot = process.env.OMC_PROJECT_ROOT || process.cwd();
 const omcDir = join(projectRoot, ".omc");
 const stateDir = join(omcDir, "state");
 const archiveDir = join(omcDir, "archive");
+const userOmcDir = process.env.OMC_USER_OMC_ROOT || join(homedir(), ".cursor", "omc");
 
 function archiveCompletedRuns() {
   if (!existsSync(stateDir)) return;
@@ -80,6 +83,36 @@ function updateSession() {
   }
 }
 
+function suspendRunningScheduleTasks(rootDir) {
+  const schedulePath = join(rootDir, "state", "schedule-state.json");
+  if (!existsSync(schedulePath)) return;
+
+  try {
+    const parsed = JSON.parse(readFileSync(schedulePath, "utf-8"));
+    if (!Array.isArray(parsed.tasks)) return;
+
+    const ts = new Date().toISOString();
+    let changed = false;
+    parsed.tasks = parsed.tasks.map((task) => {
+      if (task?.state !== "running") {
+        return task;
+      }
+      changed = true;
+      return {
+        ...task,
+        state: "suspended",
+        suspended_at: ts,
+        next_run_at: null,
+      };
+    });
+
+    if (!changed) return;
+    writeFileSync(schedulePath, JSON.stringify(parsed, null, 2) + "\n");
+  } catch {
+    // non-fatal
+  }
+}
+
 async function main() {
   let input = "";
   for await (const chunk of process.stdin) {
@@ -89,6 +122,8 @@ async function main() {
   try {
     archiveCompletedRuns();
     updateSession();
+    suspendRunningScheduleTasks(omcDir);
+    suspendRunningScheduleTasks(userOmcDir);
   } catch {
     // non-fatal — don't block agent teardown
   }

@@ -8,12 +8,13 @@ import { randomUUID } from "node:crypto";
 
 const OMC_BIN = join(import.meta.dirname, "..", "omc.js");
 
-function run(args: string[], cwd?: string): { stdout: string; stderr: string; exitCode: number } {
+function run(args: string[], cwd?: string, env?: Record<string, string>): { stdout: string; stderr: string; exitCode: number } {
   try {
     const stdout = execFileSync("node", [OMC_BIN, ...args], {
       cwd,
       encoding: "utf-8",
       timeout: 10000,
+      env: { ...process.env, OMC_DISABLE_SCHEDULE_WORKER_AUTOSTART: "1", ...env },
     });
     return { stdout, stderr: "", exitCode: 0 };
   } catch (err: any) {
@@ -36,6 +37,7 @@ describe("omc help", () => {
     const { stdout, exitCode } = run(["help"]);
     assert.equal(exitCode, 0);
     assert.ok(stdout.includes("oh-my-cursor"));
+    assert.ok(stdout.includes("Lightweight workflow toolkit"));
     assert.ok(stdout.includes("setup"));
     assert.ok(stdout.includes("doctor"));
     assert.ok(stdout.includes("status"));
@@ -163,6 +165,7 @@ describe("omc doctor --scope project", () => {
     assert.equal(exitCode, 0);
     assert.ok(stdout.includes("All") && stdout.includes("passed"));
     assert.ok(stdout.includes("role prompts installed"), "Doctor should report prompt installation");
+    assert.ok(stdout.includes("Harness contracts"), "Doctor should report harness readiness");
   });
 
   it("reports missing state dir before setup", () => {
@@ -195,6 +198,8 @@ describe("omc skills", () => {
     const { stdout, exitCode } = run(["skills"]);
     assert.equal(exitCode, 0);
     assert.ok(stdout.includes("OMC Skills"));
+    assert.ok(stdout.includes("Core Path"));
+    assert.ok(stdout.includes("Optional Extras"));
     const expected = [
       "omc-analyze", "omc-autopilot", "omc-blueprint", "omc-cancel", "omc-code-review",
       "omc-dashboard", "omc-deep-interview", "omc-ecomode", "omc-forge",
@@ -204,6 +209,205 @@ describe("omc skills", () => {
       assert.ok(stdout.includes(`/${name}`), `Missing skill: /${name}`);
     }
     assert.ok(stdout.includes("skills available"));
+  });
+});
+
+describe("omc team watch", () => {
+  let tmp: string;
+  beforeEach(() => { tmp = makeTmpProject(); });
+  afterEach(() => { rmSync(tmp, { recursive: true, force: true }); });
+
+  it("help text advertises team watch", () => {
+    const { stdout, exitCode } = run(["help"]);
+    assert.equal(exitCode, 0);
+    assert.ok(stdout.includes("team watch"));
+  });
+
+  it("dumps existing blackboard messages with --no-follow", () => {
+    const stateDir = join(tmp, ".omc");
+    mkdirSync(stateDir, { recursive: true });
+    const bbPath = join(stateDir, "blackboard.jsonl");
+    const rows = [
+      { ts: "2026-04-07T14:22:01Z", agent: "lane-1-executor", lane: "runABC-lane-1", role: "executor", kind: "status", content: "started" },
+      { ts: "2026-04-07T14:22:03Z", agent: "lane-1-executor", lane: "runABC-lane-1", role: "executor", kind: "claim", content: "src/api/users.ts" },
+      { ts: "2026-04-07T14:22:05Z", agent: "lane-2-designer", lane: "other-lane-2", role: "designer", kind: "progress", content: "other run" },
+    ];
+    writeFileSync(bbPath, rows.map((r) => JSON.stringify(r)).join("\n") + "\n");
+
+    const { stdout, exitCode } = run(["team", "watch", "--run", "runABC", "--no-follow"], tmp);
+    assert.equal(exitCode, 0);
+    assert.ok(stdout.includes("Team chatter — run runABC"));
+    assert.ok(stdout.includes("lane-1·executor"));
+    assert.ok(stdout.includes("src/api/users.ts"));
+    assert.ok(!stdout.includes("other run"), "other runs must be filtered out");
+  });
+
+  it("dumps the full blackboard when no --run is given", () => {
+    const stateDir = join(tmp, ".omc");
+    mkdirSync(stateDir, { recursive: true });
+    const bbPath = join(stateDir, "blackboard.jsonl");
+    writeFileSync(
+      bbPath,
+      JSON.stringify({ ts: "2026-04-07T14:22:01Z", agent: "leader", kind: "note", content: "dispatching" }) + "\n",
+    );
+    const { stdout, exitCode } = run(["team", "watch", "--no-follow"], tmp);
+    assert.equal(exitCode, 0);
+    assert.ok(stdout.includes("dispatching"));
+  });
+
+  it("handles an empty blackboard gracefully", () => {
+    const { stdout, exitCode } = run(["team", "watch", "--no-follow"], tmp);
+    assert.equal(exitCode, 0);
+    assert.ok(stdout.includes("Team chatter"));
+  });
+
+  it("rejects unknown team subcommand", () => {
+    const { stderr, stdout, exitCode } = run(["team", "nope"], tmp);
+    assert.equal(exitCode, 1);
+    assert.ok((stdout + stderr).includes("omc team watch"));
+  });
+});
+
+describe("omc notify", () => {
+  let tmp: string;
+  beforeEach(() => { tmp = makeTmpProject(); });
+  afterEach(() => { rmSync(tmp, { recursive: true, force: true }); });
+
+  it("emits a core notification and lists it in recent", () => {
+    const emitted = run([
+      "notify", "emit",
+      "--task-id", "dashboard-scan",
+      "--summary", "Dashboard tick completed",
+      "--status", "warn",
+      "--no-desktop",
+    ], tmp);
+    assert.equal(emitted.exitCode, 0);
+    assert.ok(emitted.stdout.includes("Notification emitted"));
+
+    const recent = run(["notify", "recent", "--limit", "5"], tmp);
+    assert.equal(recent.exitCode, 0);
+    assert.ok(recent.stdout.includes("dashboard-scan"));
+    assert.ok(recent.stdout.includes("Dashboard tick completed"));
+  });
+
+  it("shows empty state when no notifications exist", () => {
+    const recent = run(["notify", "recent"], tmp);
+    assert.equal(recent.exitCode, 0);
+    assert.ok(recent.stdout.includes("No notifications yet."));
+  });
+
+  it("test-desktop honors command override", () => {
+    const result = run(
+      ["notify", "test-desktop", "hello from test"],
+      tmp,
+      { OMC_DESKTOP_NOTIFY_COMMAND: "true" },
+    );
+    assert.equal(result.exitCode, 0);
+    assert.ok(result.stdout.includes("Desktop notification sent."));
+  });
+});
+
+describe("omc schedule", () => {
+  let tmp: string;
+  beforeEach(() => { tmp = makeTmpProject(); });
+  afterEach(() => { rmSync(tmp, { recursive: true, force: true }); });
+
+  it("lists schedule tasks", () => {
+    const stateDir = join(tmp, ".omc", "state");
+    mkdirSync(stateDir, { recursive: true });
+    writeFileSync(join(stateDir, "schedule-state.json"), JSON.stringify({
+      mode: "schedule",
+      status: "active",
+      started_at: "2026-04-15T00:00:00Z",
+      tasks: [
+        {
+          id: "dashboard-scan",
+          description: "Scan dashboard every 10 minutes",
+          interval_seconds: 600,
+          state: "running",
+          run_count: 2,
+          params: {},
+          created_at: "2026-04-15T00:00:00Z",
+          last_run_at: "2026-04-15T00:10:00Z",
+          last_result: "All green",
+          next_run_at: "2026-04-15T00:20:00Z",
+        },
+      ],
+    }, null, 2));
+
+    const result = run(
+      ["schedule", "list"],
+      tmp,
+    );
+
+    assert.equal(result.exitCode, 0);
+    assert.ok(result.stdout.includes("Scheduled Tasks"));
+    assert.ok(result.stdout.includes("dashboard-scan"));
+    assert.ok(result.stdout.includes("All green"));
+  });
+
+  it("cancel, resume, and run-now update schedule state", () => {
+    const stateDir = join(tmp, ".omc", "state");
+    mkdirSync(stateDir, { recursive: true });
+    writeFileSync(join(stateDir, "schedule-state.json"), JSON.stringify({
+      mode: "schedule",
+      status: "active",
+      started_at: "2026-04-15T00:00:00Z",
+      tasks: [
+        {
+          id: "dashboard-scan",
+          description: "Scan dashboard every 10 minutes",
+          interval_seconds: 600,
+          state: "suspended",
+          run_count: 2,
+          params: {},
+          created_at: "2026-04-15T00:00:00Z",
+          last_run_at: "2026-04-15T00:10:00Z",
+          last_result: "All green",
+          next_run_at: null,
+        },
+      ],
+    }, null, 2));
+
+    const resumed = run(["schedule", "resume", "dashboard-scan"], tmp);
+    assert.equal(resumed.exitCode, 0);
+    assert.ok(resumed.stdout.includes("Resumed scheduled task"));
+
+    const runNow = run(["schedule", "run-now", "dashboard-scan"], tmp);
+    assert.equal(runNow.exitCode, 0);
+    assert.ok(runNow.stdout.includes("Requested immediate run"));
+
+    const cancelled = run(["schedule", "cancel", "dashboard-scan"], tmp);
+    assert.equal(cancelled.exitCode, 0);
+    assert.ok(cancelled.stdout.includes("Cancelled scheduled task"));
+
+    const state = JSON.parse(readFileSync(join(stateDir, "schedule-state.json"), "utf-8"));
+    assert.equal(state.tasks[0].state, "cancelled");
+    assert.equal(state.tasks[0].next_run_at, null);
+  });
+
+  it("registers a user-scope RSS task", () => {
+    const userRoot = join(tmp, "user-omc");
+    mkdirSync(join(userRoot, "state"), { recursive: true });
+
+    const result = run([
+      "schedule",
+      "add-rss",
+      "--scope", "user",
+      "--url", "https://duanyytop.github.io/agents-radar/feed.xml",
+      "--every", "15m",
+      "--title", "Agents Radar RSS",
+    ], tmp, { OMC_USER_OMC_ROOT: userRoot });
+
+    assert.equal(result.exitCode, 0);
+    assert.ok(result.stdout.includes("Registered RSS scheduled task"));
+
+    const state = JSON.parse(readFileSync(join(userRoot, "state", "schedule-state.json"), "utf-8"));
+    assert.equal(state.tasks.length, 1);
+    assert.equal(state.tasks[0].scope, "user");
+    assert.equal(state.tasks[0].type, "rss-watch");
+    assert.equal(state.tasks[0].params.feed_url, "https://duanyytop.github.io/agents-radar/feed.xml");
+    assert.equal(typeof state.tasks[0].run_now_requested_at, "string");
   });
 });
 

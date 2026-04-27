@@ -1,12 +1,14 @@
 ---
 name: omc-schedule
-description: Schedule periodic tasks that run in background subagents. Supports watching PRs, polling APIs, monitoring services, and Slack alerts. Use when asked to "schedule", "poll", "watch", "monitor", "check periodically", or "every N minutes".
+description: Optional extra: schedule periodic tasks that run in background subagents. Supports watching PRs, polling APIs, monitoring services, and Slack alerts.
 argument-hint: "<task-description> [--every <interval>] [--until <condition>]"
 ---
 
 # Schedule
 
-A pure-Cursor scheduler that runs periodic tasks via background subagents. Tasks survive within a session and persist across sessions via hooks.
+A pure-Cursor optional extra that runs periodic tasks via background subagents or the
+built-in thin schedule worker. Tasks survive within a session and persist
+across sessions via hooks.
 
 ## When to use
 
@@ -28,6 +30,7 @@ A pure-Cursor scheduler that runs periodic tasks via background subagents. Tasks
 /omc-schedule list                    # show all scheduled tasks
 /omc-schedule cancel <task-id>        # cancel a task
 /omc-schedule resume                  # resume tasks from previous session
+/omc-schedule "watch agents-radar RSS" --every 15m --scope user
 ```
 
 ## Execution Protocol
@@ -42,16 +45,26 @@ Extract from user request:
 
 ### Step 2: Write state
 
-Persist task to `.omc/state/schedule-state.json` via MCP `state_write` or direct file write:
+Persist task to either the project runtime root or the user runtime root:
+
+- project scope: `.omc/state/schedule-state.json`
+- user scope: `~/.cursor/omc/state/schedule-state.json`
+
+Use user scope when the task should follow the user across projects but still
+remain session-bound.
+
+State shape:
 
 ```json
 {
   "mode": "schedule",
+  "scope": "user",
   "status": "active",
   "started_at": "ISO timestamp",
   "tasks": [
     {
       "id": "task-uuid",
+      "scope": "user",
       "type": "check-pr-merge",
       "description": "watch PR #42 merge",
       "interval_seconds": 120,
@@ -74,9 +87,10 @@ Persist task to `.omc/state/schedule-state.json` via MCP `state_write` or direct
 }
 ```
 
-### Step 3: Launch subagent polling loop
+### Step 3: Launch polling loop
 
-Use the Task tool to start a background subagent that runs the polling loop:
+Default approach: use the Task tool to start a background subagent that runs
+the polling loop:
 
 ```
 Task(subagent_type="generalPurpose", model="fast", description="Schedule: <task description>", prompt=<POLLING_PROMPT>)
@@ -90,6 +104,15 @@ The polling prompt instructs the subagent to:
 5. Update state file after each run
 6. Repeat
 
+For the built-in RSS watcher task type, OMC also exposes a thin CLI worker:
+
+```bash
+omc schedule add-rss --scope user --url <feed> --every 15m
+omc schedule worker --scope user --once
+```
+
+This is intentionally minimal and should not grow into a monitor product.
+
 ### Step 4: Main agent continues
 
 After launching the subagent, the main agent returns control to the user. The subagent runs independently.
@@ -99,13 +122,29 @@ After launching the subagent, the main agent returns control to the user. The su
 When a task's until_condition is met:
 1. Subagent updates state to `"state": "completed"`
 2. Subagent posts result to `.omc/state/schedule-state.json`
-3. If notify config exists, sends Slack message / alerts user
+3. Subagent emits an OMC core notification so the user gets:
+   - a macOS desktop notification
+   - a durable in-Cursor feed entry in the dashboard
+
+Use:
+
+```bash
+omc notify emit --source schedule --task-id "<task-id>" --status info --summary "<summary>" --details "<details>" --scope user
+```
 
 ### Step 6: Session boundary handling
 
-**On session stop** (hook): The `session-end.mjs` hook reads `schedule-state.json`. Tasks with `"state": "running"` are marked `"state": "suspended"` with `suspended_at` timestamp.
+**On session stop** (hook): The `session-end.mjs` hook reads both project- and
+user-scope schedule state files. Tasks with `"state": "running"` are marked
+`"state": "suspended"` with `suspended_at` timestamp.
 
-**On session start** (hook): The `session-start.mjs` hook detects suspended tasks and writes a marker file `.omc/state/schedule-resume-pending.json`. The agent rule reads this and prompts the user: "You have N suspended scheduled tasks. Resume?"
+**On session start** (hook): The `session-start.mjs` hook detects suspended
+tasks and writes a marker file into the matching runtime root:
+
+- project scope: `.omc/state/schedule-resume-pending.json`
+- user scope: `~/.cursor/omc/state/schedule-resume-pending.json`
+
+The agent rule can then prompt the user to resume them.
 
 ## Plugin Registry
 
@@ -175,6 +214,25 @@ Poll a Jira ticket for status change.
 
 **Success condition:** Issue status matches target_status or issue has been approved/resolved.
 
+### `rss-watch`
+
+Poll an RSS feed and notify only when new items appear.
+
+**Params:**
+
+- `feed_url`: RSS feed URL
+- `identity_strategy`: identity fallback order (default: `guid-link-title`)
+
+**Check logic:**
+
+- Fetch the RSS XML
+- Parse items
+- Use `guid`, then `link`, then title hash as stable identity
+- Establish baseline on the first successful run
+- Emit one batched notification when later polls discover unseen items
+
+**Success condition:** not an until-condition task by default; it runs until cancelled.
+
 ### `alert-slack`
 
 Send an alert to Slack. Not a polling task — used as a notification action by other plugins.
@@ -196,6 +254,12 @@ Free-form task. The agent interprets the description and runs appropriate checks
 - `commands`: Optional list of shell commands to run
 
 **Check logic:** Agent executes commands and evaluates output against the until_condition.
+
+**Notification contract:** For custom scheduled tasks, emit one `omc notify emit` call after each run so users can see every tick in both desktop alerts and the dashboard notification feed.
+
+**Boundary note:** Keep schedule generic inside OMC core. If a downstream repo
+wants a domain-specific monitor UI, browser surface, or alert action model,
+that belongs in the downstream product rather than inside `oh-my-cursor`.
 
 ## Task Chaining
 
@@ -224,10 +288,15 @@ When check-pr-merge succeeds, it waits 5 minutes then starts poll-api.
 | `/omc-schedule cancel <id>` | Cancel a running task |
 | `/omc-schedule resume` | Resume all suspended tasks from previous session |
 | `/omc-schedule status` | Show current task states with last results |
+| `omc schedule add-rss --scope user --url <feed>` | Register a global user-scoped RSS watcher |
+| `omc notify emit ... --scope user|project` | Send schedule result to desktop + durable feed |
 
 ## State File
 
-Path: `.omc/state/schedule-state.json`
+Path:
+
+- project scope: `.omc/state/schedule-state.json`
+- user scope: `~/.cursor/omc/state/schedule-state.json`
 
 The state file is the source of truth. Updated after every task run.
 
@@ -235,13 +304,13 @@ The state file is the source of truth. Updated after every task run.
 
 ### session-start hook addition
 
-Reads `schedule-state.json`. If any tasks have `"state": "suspended"`:
-- Writes `.omc/state/schedule-resume-pending.json` with task summaries
+Reads schedule state. If any tasks have `"state": "suspended"`:
+- Writes a matching `schedule-resume-pending.json` file with task summaries
 - Agent reads this on startup and prompts user to resume
 
 ### session-end hook addition
 
-Reads `schedule-state.json`. For tasks with `"state": "running"`:
+Reads schedule state. For tasks with `"state": "running"`:
 - Updates to `"state": "suspended"`, adds `suspended_at`
 - Preserves all task params and last results for resume
 

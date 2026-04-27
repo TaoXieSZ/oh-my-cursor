@@ -28,6 +28,33 @@ prompts/          # Agent role prompts (markdown)
 templates/        # Starter templates for custom skills, prompts, configs
 ```
 
+## Product scope
+
+OMC is a lightweight workflow toolkit for Cursor, not a full agent platform.
+
+Core product:
+
+- `omc setup`
+- `omc doctor`
+- durable `.omc/` state
+- the core workflow spine: `deep-interview`, `blueprint`, `forge`, `cancel`
+
+Optional extras:
+
+- dashboard
+- schedule
+- notifications
+- advanced MCP surfaces
+- multi-agent or highly autonomous workflows
+
+Before adding a feature, ask:
+
+1. Does this directly strengthen durable context or the core workflow path?
+2. Can a new user understand why it exists in one or two sentences?
+3. Should this be optional rather than part of the default OMC story?
+
+If a feature mainly expands runtime machinery or platform surface area, default to documenting it as optional or keeping it out of core.
+
 ## How to contribute
 
 ### Adding a new skill
@@ -36,6 +63,7 @@ templates/        # Starter templates for custom skills, prompts, configs
 2. Fill in the skill definition following the template
 3. Add keyword routing to `rules/omc-orchestration.mdc`
 4. Update the Skills reference table in `README.md`
+5. Decide whether the skill is core or optional; default to optional unless it clearly strengthens durable context or the core workflow spine
 
 ### Adding a new role prompt
 
@@ -50,6 +78,7 @@ templates/        # Starter templates for custom skills, prompts, configs
 2. Add the command to the switch in `src/cli/index.ts`
 3. Add tests in `src/cli/__tests__/<command>.test.ts`
 4. Update help text and `README.md`
+5. Keep the default command surface small; new commands that mainly add platform-style behavior should be framed as optional extras
 
 ### Fixing a bug or improving code
 

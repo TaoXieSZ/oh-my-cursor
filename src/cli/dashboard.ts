@@ -20,6 +20,8 @@ import { isSessionStale, archiveCurrentSession, listArchives } from "../state/ar
 import type { ArchivedSession } from "../state/archive.js";
 import { tailEvents, readEvents } from "../state/event-log.js";
 import type { RunEvent } from "../state/event-log.js";
+import { tailNotifications } from "../notify/notification-store.js";
+import type { NotificationEvent } from "../notify/notification-store.js";
 
 export interface PlanInfo {
   name: string;
@@ -59,6 +61,7 @@ export interface DashboardState {
   completedModes: ModeInfo[];
   archivedSessions: ArchivedSession[];
   stats: StatsData;
+  notifications: NotificationEvent[];
   plans: PlanInfo[];
   memory: Record<string, unknown>;
   memoryIndex: MemoryIndexMap;
@@ -88,6 +91,9 @@ export function collectState(): DashboardState {
         const parsed = parseStateFilename(file);
         if (parsed) data.mode = parsed.mode;
       }
+      if (data.mode === "monitor" || data.mode === "monitor-handoff") {
+        continue;
+      }
       if (!data.runId) {
         const parsed = parseStateFilename(file);
         if (parsed?.runId) data.runId = parsed.runId;
@@ -102,6 +108,7 @@ export function collectState(): DashboardState {
   }
 
   const archivedSessions = listArchives();
+  const notifications = tailNotifications(20);
 
   let plans: PlanInfo[] = [];
   if (existsSync(plansDir)) {
@@ -154,7 +161,7 @@ export function collectState(): DashboardState {
 
   const stats = computeStats(activeModes, completedModes, archivedSessions);
 
-  return { session, activeTask, activeModes, completedModes, archivedSessions, stats, plans, memory, memoryIndex, notepad, timestamp: new Date().toISOString() };
+  return { session, activeTask, activeModes, completedModes, archivedSessions, stats, notifications, plans, memory, memoryIndex, notepad, timestamp: new Date().toISOString() };
 }
 
 export function computeStats(
@@ -211,14 +218,15 @@ function broadcast(): void {
 
 function handleRequest(req: IncomingMessage, res: ServerResponse): void {
   const url = req.url ?? "/";
+  const parsedUrl = new URL(url, "http://localhost");
 
-  if (url === "/" || url === "/index.html") {
+  if (parsedUrl.pathname === "/" || parsedUrl.pathname === "/index.html") {
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
     res.end(getHTML());
     return;
   }
 
-  if (url === "/api/state") {
+  if (parsedUrl.pathname === "/api/state") {
     res.writeHead(200, {
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": "*",
@@ -227,8 +235,8 @@ function handleRequest(req: IncomingMessage, res: ServerResponse): void {
     return;
   }
 
-  if (url.startsWith("/api/plan?name=")) {
-    const name = decodeURIComponent(url.slice("/api/plan?name=".length));
+  if (parsedUrl.pathname === "/api/plan") {
+    const name = parsedUrl.searchParams.get("name") ?? "";
     const planPath = join(getBaseStateDir(), "plans", name);
     if (!existsSync(planPath) || name.includes("..")) {
       res.writeHead(404);
@@ -240,8 +248,8 @@ function handleRequest(req: IncomingMessage, res: ServerResponse): void {
     return;
   }
 
-  if (url.startsWith("/api/open?file=")) {
-    const file = decodeURIComponent(url.slice("/api/open?file=".length));
+  if (parsedUrl.pathname === "/api/open") {
+    const file = parsedUrl.searchParams.get("file") ?? "";
     if (!file || file.includes("..")) {
       res.writeHead(400, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ error: "Invalid file path" }));
@@ -268,8 +276,8 @@ function handleRequest(req: IncomingMessage, res: ServerResponse): void {
     return;
   }
 
-  if (url.startsWith("/api/events?runId=")) {
-    const runId = decodeURIComponent(url.slice("/api/events?runId=".length));
+  if (parsedUrl.pathname === "/api/events") {
+    const runId = parsedUrl.searchParams.get("runId") ?? "";
     if (!runId) {
       res.writeHead(400, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ error: "Missing runId" }));
@@ -283,7 +291,7 @@ function handleRequest(req: IncomingMessage, res: ServerResponse): void {
     return;
   }
 
-  if (url === "/events") {
+  if (parsedUrl.pathname === "/events") {
     res.writeHead(200, {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",

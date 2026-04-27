@@ -2,6 +2,8 @@ import { join } from "node:path";
 import { homedir } from "node:os";
 import { existsSync } from "node:fs";
 
+export type OmcPathScope = "user" | "project";
+
 export function cursorHome(): string {
   return join(homedir(), ".cursor");
 }
@@ -27,32 +29,39 @@ export function cursorMcpConfigPath(scope: "user" | "project"): string {
   return join(cursorHome(), "mcp.json");
 }
 
-export function omcStateDir(): string {
+export function omcUserDataDir(): string {
+  return process.env["OMC_USER_OMC_ROOT"]?.trim() || join(cursorHome(), "omc");
+}
+
+export function omcStateDir(scope: OmcPathScope = "project"): string {
+  if (scope === "user") {
+    return omcUserDataDir();
+  }
   return join(process.cwd(), ".omc");
 }
 
-export function omcPlansDir(): string {
-  return join(omcStateDir(), "plans");
+export function omcPlansDir(scope: OmcPathScope = "project"): string {
+  return join(omcStateDir(scope), "plans");
 }
 
-export function omcLogsDir(): string {
-  return join(omcStateDir(), "logs");
+export function omcLogsDir(scope: OmcPathScope = "project"): string {
+  return join(omcStateDir(scope), "logs");
 }
 
-export function omcStatePath(): string {
-  return join(omcStateDir(), "state");
+export function omcStatePath(scope: OmcPathScope = "project"): string {
+  return join(omcStateDir(scope), "state");
 }
 
-export function omcSetupScopePath(): string {
-  return join(omcStateDir(), "setup-scope.json");
+export function omcSetupScopePath(scope: OmcPathScope = "project"): string {
+  return join(omcStateDir(scope), "setup-scope.json");
 }
 
-export function omcProjectMemoryPath(): string {
-  return join(omcStateDir(), "project-memory.json");
+export function omcProjectMemoryPath(scope: OmcPathScope = "project"): string {
+  return join(omcStateDir(scope), "project-memory.json");
 }
 
-export function omcNotepadPath(): string {
-  return join(omcStateDir(), "notepad.md");
+export function omcNotepadPath(scope: OmcPathScope = "project"): string {
+  return join(omcStateDir(scope), "notepad.md");
 }
 
 export function isCursorInstalled(): boolean {

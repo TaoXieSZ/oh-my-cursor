@@ -1,4 +1,4 @@
-export { getProjectRoot, getBaseStateDir, getModeStatePath, listModeStateFiles, getSessionPath, getTeamDir, getWorkerProgressPath, getPlanPath, getLogPath, getEventLogPath, getNotepadPath, getProjectMemoryPath, getMemoryIndexPath } from "./paths.js";
+export { getProjectRoot, getBaseStateDir, getModeStatePath, listModeStateFiles, getSessionPath, getTeamDir, getWorkerProgressPath, getPlanPath, getLogPath, getEventLogPath, getNotepadPath, getProjectMemoryPath, getMemoryIndexPath, getNotificationLogPath } from "./paths.js";
 export { readModeState, writeModeState, startMode, updateMode, completeMode, cancelMode, listActiveModes } from "./mode-state.js";
 export type { ModeState } from "./mode-state.js";
 export { getOrCreateSession, readSession } from "./session.js";

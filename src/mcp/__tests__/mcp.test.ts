@@ -49,16 +49,18 @@ describe("omc-state MCP server", () => {
     rmSync(tmp, { recursive: true, force: true });
   });
 
-  it("lists 14 tools", async () => {
+  it("lists 17 tools", async () => {
     const { tools } = await client.listTools();
-    assert.equal(tools.length, 14);
+    assert.equal(tools.length, 17);
     const names = tools.map((t: any) => t.name).sort();
     assert.deepEqual(names, [
-      "blackboard_clear", "blackboard_post", "blackboard_read", "blackboard_status",
+      "blackboard_clear", "blackboard_post", "blackboard_read", "blackboard_status", "blackboard_tail",
       "event_append", "event_read",
+      "harness_readiness",
       "notepad_append", "notepad_read",
       "plan_list", "plan_read", "plan_write",
       "state_list", "state_read", "state_write",
+      "team_transcript_write",
     ]);
   });
 
@@ -213,6 +215,89 @@ describe("omc-state MCP server", () => {
     });
     const events = JSON.parse(result.content[0].text);
     assert.deepEqual(events, []);
+  });
+
+  it("harness_readiness reports contract status", async () => {
+    await client.callTool({
+      name: "state_write",
+      arguments: { mode: "schedule", state: { mode: "schedule", status: "active", started_at: "2026-04-15T00:00:00Z", tasks: [] } },
+    });
+
+    const result = await client.callTool({
+      name: "harness_readiness",
+      arguments: {},
+    });
+    const readiness = JSON.parse(result.content[0].text);
+    assert.equal(typeof readiness.ok, "boolean");
+    assert.equal(Array.isArray(readiness.checks), true);
+    assert.ok(readiness.checks.some((check: any) => check.id === "schedule-contract"));
+  });
+
+  it("blackboard_post persists lane and role", async () => {
+    await client.callTool({
+      name: "blackboard_post",
+      arguments: {
+        agent: "lane-1-executor",
+        kind: "claim",
+        content: "src/api/users.ts",
+        lane: "lane-1",
+        role: "executor",
+      },
+    });
+    const read = await client.callTool({ name: "blackboard_read", arguments: {} });
+    const msgs = JSON.parse(read.content[0].text);
+    assert.equal(msgs.length, 1);
+    assert.equal(msgs[0].lane, "lane-1");
+    assert.equal(msgs[0].role, "executor");
+  });
+
+  it("blackboard_tail returns only new messages and advances the cursor", async () => {
+    await client.callTool({
+      name: "blackboard_post",
+      arguments: { agent: "lane-1", kind: "status", content: "first", lane: "lane-1", role: "executor" },
+    });
+
+    const first = await client.callTool({ name: "blackboard_tail", arguments: {} });
+    const firstResult = JSON.parse(first.content[0].text);
+    assert.equal(firstResult.messages.length, 1);
+    assert.ok(firstResult.nextCursor);
+
+    const cursor = firstResult.nextCursor;
+    const emptyTail = await client.callTool({ name: "blackboard_tail", arguments: { cursor } });
+    const emptyResult = JSON.parse(emptyTail.content[0].text);
+    assert.equal(emptyResult.messages.length, 0);
+
+    await new Promise((r) => setTimeout(r, 5));
+    await client.callTool({
+      name: "blackboard_post",
+      arguments: { agent: "lane-2", kind: "progress", content: "second", lane: "lane-2", role: "designer" },
+    });
+
+    const after = await client.callTool({ name: "blackboard_tail", arguments: { cursor } });
+    const afterResult = JSON.parse(after.content[0].text);
+    assert.equal(afterResult.messages.length, 1);
+    assert.equal(afterResult.messages[0].content, "second");
+  });
+
+  it("team_transcript_write writes a markdown transcript and returns the path", async () => {
+    await client.callTool({
+      name: "blackboard_post",
+      arguments: { agent: "lane-1", kind: "status", content: "go", lane: "runABC-lane-1", role: "executor" },
+    });
+    await client.callTool({
+      name: "blackboard_post",
+      arguments: { agent: "lane-1", kind: "release", content: "done", lane: "runABC-lane-1", role: "executor" },
+    });
+
+    const result = await client.callTool({
+      name: "team_transcript_write",
+      arguments: { runId: "runABC" },
+    });
+    const match = result.content[0].text.match(/Team transcript written: (.+)/);
+    assert.ok(match, "expected transcript path in response");
+    const body = readFileSync(match![1], "utf-8");
+    assert.match(body, /Team transcript — run runABC/);
+    assert.match(body, /release\s+done/);
   });
 
   it("notepad_read + notepad_append", async () => {

@@ -1,12 +1,12 @@
 ---
 name: omc-dashboard
-description: Render an interactive OMC workflow dashboard inside Cursor via Canvas, or launch the standalone web dashboard.
+description: Optional extra: render an interactive OMC workflow dashboard inside Cursor via Canvas, or launch the standalone web dashboard.
 argument-hint: "[web]"
 ---
 
 # omc-dashboard
 
-> Render an interactive OMC workflow dashboard inside Cursor via Canvas, or launch the standalone web dashboard.
+> Optional extra: render an interactive OMC workflow dashboard inside Cursor via Canvas, or launch the standalone web dashboard.
 
 ## Invocation
 
