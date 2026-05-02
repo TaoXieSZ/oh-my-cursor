@@ -14,7 +14,7 @@ const projectRoot = process.env.OMC_PROJECT_ROOT || process.cwd();
 const omcDir = join(projectRoot, ".omc");
 const stateDir = join(omcDir, "state");
 const archiveDir = join(omcDir, "archive");
-const userOmcDir = process.env.OMC_USER_OMC_ROOT || join(homedir(), ".cursor", "omc");
+const userOmcDir = process.env.OMC_USER_OMC_ROOT || join(homedir(), ".cursor", "omr");
 
 function archiveCompletedRuns() {
   if (!existsSync(stateDir)) return;

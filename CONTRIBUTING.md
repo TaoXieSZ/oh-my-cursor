@@ -34,8 +34,8 @@ OMC is a lightweight workflow toolkit for Cursor, not a full agent platform.
 
 Core product:
 
-- `omc setup`
-- `omc doctor`
+- `omr setup`
+- `omr doctor`
 - durable `.omc/` state
 - the core workflow spine: `deep-interview`, `blueprint`, `forge`, `cancel`
 

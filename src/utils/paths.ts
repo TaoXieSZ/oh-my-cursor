@@ -30,7 +30,7 @@ export function cursorMcpConfigPath(scope: "user" | "project"): string {
 }
 
 export function omcUserDataDir(): string {
-  return process.env["OMC_USER_OMC_ROOT"]?.trim() || join(cursorHome(), "omc");
+  return process.env["OMC_USER_OMC_ROOT"]?.trim() || join(cursorHome(), "omr");
 }
 
 export function omcStateDir(scope: OmcPathScope = "project"): string {
@@ -95,7 +95,7 @@ export function omcPromptsDir(scope: "user" | "project"): string {
   if (scope === "project") {
     return join(process.cwd(), ".omc", "prompts");
   }
-  return join(cursorHome(), "omc-prompts");
+  return join(cursorHome(), "omr-prompts");
 }
 
 export function cursorHooksConfigPath(scope: "user" | "project"): string {

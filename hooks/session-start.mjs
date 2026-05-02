@@ -13,7 +13,7 @@ import { randomUUID } from "node:crypto";
 
 const projectRoot = process.env.OMC_PROJECT_ROOT || process.cwd();
 const omcDir = join(projectRoot, ".omc");
-const userOmcDir = process.env.OMC_USER_OMC_ROOT || join(homedir(), ".cursor", "omc");
+const userOmcDir = process.env.OMC_USER_OMC_ROOT || join(homedir(), ".cursor", "omr");
 
 function ensureDir(dir) {
   if (!existsSync(dir)) {

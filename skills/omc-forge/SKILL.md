@@ -84,9 +84,9 @@ When a Slack Incoming Webhook URL is configured, OMC posts updates when forge st
 
 **Behavior:** notifies on start, status changes (complete / cancelled / blocked), phase changes, task or blocker changes. Pure iteration bumps are skipped unless `OMC_SLACK_FORGE_VERBOSE=1`.
 
-**If you edit `forge-state.json` directly** (not via MCP), webhooks do not run automatically — use `omc notify forge` to push a snapshot to Slack.
+**If you edit `forge-state.json` directly** (not via MCP), webhooks do not run automatically — use `omr notify forge` to push a snapshot to Slack.
 
-**Test webhook:** `omc notify slack "hello from OMC"`
+**Test webhook:** `omr notify slack "hello from OMC"`
 
 ### Progress tracking
 

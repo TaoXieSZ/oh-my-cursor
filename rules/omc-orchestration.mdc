@@ -76,7 +76,7 @@ Detection rules:
 
 ## Role Catalog
 
-OMC ships role prompts that define agent "personalities" — identity, constraints, execution loop, and output contract. Role prompts are installed by `omc setup` and read at runtime by skills like `$team`.
+OMC ships role prompts that define agent "personalities" — identity, constraints, execution loop, and output contract. Role prompts are installed by `omr setup` and read at runtime by skills like `$team`.
 
 ### Core roles
 

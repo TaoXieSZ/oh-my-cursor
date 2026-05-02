@@ -74,7 +74,7 @@ describe("state path helpers", () => {
   });
 
   it("getUserStateRoot", () => {
-    assert.equal(getUserStateRoot(), join(homedir(), ".cursor", "omc"));
+    assert.equal(getUserStateRoot(), join(homedir(), ".cursor", "omr"));
   });
 
   it("getStatePath", () => {
@@ -82,7 +82,7 @@ describe("state path helpers", () => {
   });
 
   it("getStatePath user scope", () => {
-    assert.equal(getStatePath("foo.json", "user"), join(homedir(), ".cursor", "omc", "state", "foo.json"));
+    assert.equal(getStatePath("foo.json", "user"), join(homedir(), ".cursor", "omr", "state", "foo.json"));
   });
 
   it("getModeStatePath without runId", () => {
@@ -98,7 +98,7 @@ describe("state path helpers", () => {
   });
 
   it("getScopedSessionPath user scope", () => {
-    assert.equal(getScopedSessionPath("user"), join(homedir(), ".cursor", "omc", "state", "session.json"));
+    assert.equal(getScopedSessionPath("user"), join(homedir(), ".cursor", "omr", "state", "session.json"));
   });
 
   it("getTeamDir without name", () => {
@@ -121,7 +121,7 @@ describe("state path helpers", () => {
   });
 
   it("getScopedPlanPath user scope", () => {
-    assert.equal(getScopedPlanPath("prd-auth.md", "user"), join(homedir(), ".cursor", "omc", "plans", "prd-auth.md"));
+    assert.equal(getScopedPlanPath("prd-auth.md", "user"), join(homedir(), ".cursor", "omr", "plans", "prd-auth.md"));
   });
 
   it("getLogPath", () => {
@@ -129,7 +129,7 @@ describe("state path helpers", () => {
   });
 
   it("getScopedLogPath user scope", () => {
-    assert.equal(getScopedLogPath("session.log", "user"), join(homedir(), ".cursor", "omc", "logs", "session.log"));
+    assert.equal(getScopedLogPath("session.log", "user"), join(homedir(), ".cursor", "omr", "logs", "session.log"));
   });
 
   it("getEventLogPath", () => {
@@ -137,7 +137,7 @@ describe("state path helpers", () => {
   });
 
   it("getScopedEventLogPath user scope", () => {
-    assert.equal(getScopedEventLogPath("abc12345", "user"), join(homedir(), ".cursor", "omc", "logs", "abc12345.jsonl"));
+    assert.equal(getScopedEventLogPath("abc12345", "user"), join(homedir(), ".cursor", "omr", "logs", "abc12345.jsonl"));
   });
 
   it("getNotepadPath", () => {
@@ -145,7 +145,7 @@ describe("state path helpers", () => {
   });
 
   it("getScopedNotepadPath user scope", () => {
-    assert.equal(getScopedNotepadPath("user"), join(homedir(), ".cursor", "omc", "notepad.md"));
+    assert.equal(getScopedNotepadPath("user"), join(homedir(), ".cursor", "omr", "notepad.md"));
   });
 
   it("getProjectMemoryPath", () => {
@@ -153,7 +153,7 @@ describe("state path helpers", () => {
   });
 
   it("getScopedProjectMemoryPath user scope", () => {
-    assert.equal(getScopedProjectMemoryPath("user"), join(homedir(), ".cursor", "omc", "project-memory.json"));
+    assert.equal(getScopedProjectMemoryPath("user"), join(homedir(), ".cursor", "omr", "project-memory.json"));
   });
 
   it("getMemoryIndexPath", () => {
@@ -161,7 +161,7 @@ describe("state path helpers", () => {
   });
 
   it("getScopedMemoryIndexPath user scope", () => {
-    assert.equal(getScopedMemoryIndexPath("user"), join(homedir(), ".cursor", "omc", "memory-index.json"));
+    assert.equal(getScopedMemoryIndexPath("user"), join(homedir(), ".cursor", "omr", "memory-index.json"));
   });
 
   it("getNotificationLogPath", () => {
@@ -169,11 +169,11 @@ describe("state path helpers", () => {
   });
 
   it("getScopedNotificationLogPath user scope", () => {
-    assert.equal(getScopedNotificationLogPath("user"), join(homedir(), ".cursor", "omc", "state", "notifications.jsonl"));
+    assert.equal(getScopedNotificationLogPath("user"), join(homedir(), ".cursor", "omr", "state", "notifications.jsonl"));
   });
 
   it("getScopedBlackboardPath user scope", () => {
-    assert.equal(getScopedBlackboardPath("user"), join(homedir(), ".cursor", "omc", "blackboard.jsonl"));
+    assert.equal(getScopedBlackboardPath("user"), join(homedir(), ".cursor", "omr", "blackboard.jsonl"));
   });
 });
 

@@ -73,6 +73,6 @@ OMC registers Cursor lifecycle hooks for automatic state management:
 - **`sessionStart`**: Ensures `.omc/` directories exist and initializes/updates `session.json`.
 - **`stop`**: Archives completed/cancelled runs to `.omc/archive/` and marks the session as ended.
 
-Hooks are installed via `omc setup` into `~/.cursor/hooks/omc/` (user scope) or `.cursor/hooks/omc/` (project scope), with entries registered in `hooks.json`.
+Hooks are installed via `omr setup` into `~/.cursor/hooks/omc/` (user scope) or `.cursor/hooks/omc/` (project scope), with entries registered in `hooks.json`.
 
 Keyword routing remains in rules (the agent decides which skill to activate based on user intent — hooks cannot observe message content for this purpose).

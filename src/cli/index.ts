@@ -8,11 +8,11 @@ import * as log from "../utils/log.js";
 const VERSION = "0.1.0";
 
 const HELP = `
-oh-my-cursor (omc) v${VERSION}
+oh-my-cursor (omr) v${VERSION}
 Lightweight workflow toolkit for Cursor IDE
 
 Usage:
-  omc <command> [options]
+  omr <command> [options]
 
 Core commands:
   setup      Install rules, skills, and MCP servers into Cursor
@@ -36,33 +36,33 @@ Options:
   --port <number>         Dashboard port (default: 3721)
 
 Examples:
-  omc setup                  # Install to user scope
-  omc setup --scope project  # Install to current project
-  omc doctor                 # Check installation health
-  omc status                 # Show current state
-  omc skills                 # Show the core path first
+  omr setup                  # Install to user scope
+  omr setup --scope project  # Install to current project
+  omr doctor                 # Check installation health
+  omr status                 # Show current state
+  omr skills                 # Show the core path first
   # Cursor chat default path: /omc-deep-interview -> /omc-blueprint -> /omc-forge
 
 Optional extras:
-  omc schedule list --scope user
+  omr schedule list --scope user
                            # Show user-scoped scheduled tasks
-  omc schedule add-rss --scope user --url <feed>
+  omr schedule add-rss --scope user --url <feed>
                            # Register a user-scoped RSS watcher
-  omc schedule run-now task --scope user
+  omr schedule run-now task --scope user
                            # Request an immediate rerun
-  omc dashboard              # Launch live web dashboard
-  omc dashboard --port 4000  # Custom port
-  omc team watch [--run <id>] [--no-follow]
+  omr dashboard              # Launch live web dashboard
+  omr dashboard --port 4000  # Custom port
+  omr team watch [--run <id>] [--no-follow]
                              # Tail multi-agent blackboard chatter
 
 Notify (Slack Incoming Webhooks):
-  omc notify slack [message]   # Test webhook (default message if omitted)
-  omc notify forge             # Push current forge-state.json snapshot to Slack
-  omc notify emit --task-id <id> --summary <text> [--status ok|warn|error|info] [--scope user|project]
+  omr notify slack [message]   # Test webhook (default message if omitted)
+  omr notify forge             # Push current forge-state.json snapshot to Slack
+  omr notify emit --task-id <id> --summary <text> [--status ok|warn|error|info] [--scope user|project]
                               # Emit core OMC notification (feed + desktop by default)
-  omc notify recent [--limit N] [--scope user|project]
+  omr notify recent [--limit N] [--scope user|project]
                               # Show recent core notifications
-  omc notify test-desktop [message]
+  omr notify test-desktop [message]
                               # Emit a desktop notification for local verification
 
   Configure URL via OMC_SLACK_WEBHOOK_URL, OMC_FORGE_SLACK_WEBHOOK_URL,
@@ -104,7 +104,7 @@ export async function main(args: string[]): Promise<void> {
         await teamWatch(opts);
         break;
       }
-      log.fail("Use: omc team watch [--run <id>] [--no-follow]");
+      log.fail("Use: omr team watch [--run <id>] [--no-follow]");
       process.exit(1);
     }
     case "archive": {
@@ -129,7 +129,7 @@ export async function main(args: string[]): Promise<void> {
       if (sub === "emit") {
         const parsed = parseNotifyEmitArgs(args.slice(2));
         if (!parsed.taskId || !parsed.summary) {
-          log.fail("Use: omc notify emit --task-id <id> --summary <text> [--status ok|warn|error|info] [--details <text>] [--source <name>] [--title <text>] [--scope user|project] [--no-desktop] [--no-feed]");
+          log.fail("Use: omr notify emit --task-id <id> --summary <text> [--status ok|warn|error|info] [--details <text>] [--source <name>] [--title <text>] [--scope user|project] [--no-desktop] [--no-feed]");
           process.exit(1);
         }
         const { emitNotification } = await import("../notify/notification-center.js");
@@ -224,7 +224,7 @@ export async function main(args: string[]): Promise<void> {
         log.ok("Sent forge snapshot to Slack.");
         break;
       }
-      log.fail("Use: omc notify slack [message]  or  omc notify forge  or  omc notify emit|recent|test-desktop");
+      log.fail("Use: omr notify slack [message]  or  omr notify forge  or  omr notify emit|recent|test-desktop");
       process.exit(1);
     }
     case "version":

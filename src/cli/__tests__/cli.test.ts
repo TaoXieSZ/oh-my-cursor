@@ -264,7 +264,7 @@ describe("omc team watch", () => {
   it("rejects unknown team subcommand", () => {
     const { stderr, stdout, exitCode } = run(["team", "nope"], tmp);
     assert.equal(exitCode, 1);
-    assert.ok((stdout + stderr).includes("omc team watch"));
+    assert.ok((stdout + stderr).includes("omr team watch"));
   });
 });
 

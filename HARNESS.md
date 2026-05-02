@@ -10,8 +10,8 @@ OMC should do one thing extremely well:
 
 That means the core product is:
 
-- `omc setup`
-- `omc doctor`
+- `omr setup`
+- `omr doctor`
 - `.omc/` as the durable home for plans, notes, logs, and memory
 - a narrow workflow spine: `deep-interview`, `blueprint`, `forge`, `cancel`
 

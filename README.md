@@ -13,7 +13,7 @@ Cursor 3 introduced the Agents Window, `/worktree`, `/best-of-n`, and native Pla
 
 - **Durable context**: plans, notes, logs, and memory in `.omc/`
 - **A small workflow spine**: clarify → plan → execute → stop/resume cleanly
-- **Simple setup and health checks**: `omc setup` and `omc doctor`
+- **Simple setup and health checks**: `omr setup` and `omr doctor`
 - **Optional extras when you need them**: dashboard, schedule, notifications, and advanced workflows
 
 ## Quick start
@@ -27,7 +27,7 @@ Cursor 3 introduced the Agents Window, `/worktree`, `/best-of-n`, and native Pla
 
 ```bash
 npm install -g oh-my-cursor
-omc setup
+omr setup
 ```
 
 That's it. Restart Cursor to load the new rules and skills.
@@ -35,7 +35,7 @@ That's it. Restart Cursor to load the new rules and skills.
 ### Verify
 
 ```bash
-omc doctor
+omr doctor
 ```
 
 ## Core workflow
@@ -127,7 +127,7 @@ Use this as the default decision guide before reaching for optional extras:
 | ----------- | ---------------------------- | ------------------------------------------------------------- |
 | Rules       | `~/.cursor/rules/omc-*.mdc`  | Lightweight routing and workflow conventions                  |
 | Skills      | `~/.cursor/skills/omc-*/`    | Core workflows plus optional extras                           |
-| Prompts     | `~/.cursor/omc-prompts/*.md` | Optional role pack for deeper agent guidance                  |
+| Prompts     | `~/.cursor/omr-prompts/*.md` | Optional role pack for deeper agent guidance                  |
 | MCP servers | Cursor MCP config            | Persistence helpers for state and memory                      |
 | Hooks       | `~/.cursor/hooks/omc/`       | Simple lifecycle helpers (session init, archive)              |
 | State       | `.omc/` (project root)       | Durable project context: plans, logs, notes, memory           |
@@ -139,7 +139,7 @@ Use this as the default decision guide before reaching for optional extras:
 - **Project scope**: installs to `.cursor/` in the project — scoped to one project
 
 ```bash
-omc setup --scope project
+omr setup --scope project
 ```
 
 ## How OMC relates to Cursor 3
@@ -158,7 +158,7 @@ Think of OMC as **better task routing + durable context**, with a few opinionate
 
 ## Skills reference
 
-Type `/skills` in Cursor chat or run `omc skills` in the terminal to see all installed skills.
+Type `/skills` in Cursor chat or run `omr skills` in the terminal to see all installed skills.
 
 ### Core path
 
@@ -265,7 +265,7 @@ Under the hood:
 - Lanes post to the shared blackboard via the `blackboard_post` MCP tool (with `lane` + `role` set).
 - The leader polls `blackboard_tail(cursor)` for incremental updates and re-renders the two blocks in chat.
 - At the end of the run the leader calls `team_transcript_write` to save the full log to `.omc/state/team/<runId>-transcript.md`.
-- For a side-terminal view (closest to tmux panes), run `omc team watch --run <runId>` while the leader runs in chat.
+- For a side-terminal view (closest to tmux panes), run `omr team watch --run <runId>` while the leader runs in chat.
 
 ### Role routing
 
@@ -303,8 +303,8 @@ OMC includes optional extras for users who want more runtime surface area, but t
 ### Dashboard
 
 ```bash
-omc dashboard              # Launch at http://localhost:3721
-omc dashboard --port 4000  # Custom port
+omr dashboard              # Launch at http://localhost:3721
+omr dashboard --port 4000  # Custom port
 ```
 
 The dashboard shows:
@@ -322,46 +322,46 @@ You can also invoke `/omc-dashboard` inside Cursor to render the dashboard as an
 ## CLI reference
 
 ```bash
-omc setup [--scope user|project] [--force]    # Install workflows and durable context conventions
-omc doctor [--scope user|project] [--verbose] # Verify installation health
-omc status                                    # Show active mode and durable context state
-omc skills                                    # List core workflows and optional extras
-omc archive                                   # Archive session → .omc/archive/
-omc archives                                  # List archived sessions
+omr setup [--scope user|project] [--force]    # Install workflows and durable context conventions
+omr doctor [--scope user|project] [--verbose] # Verify installation health
+omr status                                    # Show active mode and durable context state
+omr skills                                    # List core workflows and optional extras
+omr archive                                   # Archive session → .omc/archive/
+omr archives                                  # List archived sessions
 
 # Optional extras
-omc schedule list [--scope user|project]      # Show scheduled tasks
-omc schedule add-rss --scope user --url <feed>
+omr schedule list [--scope user|project]      # Show scheduled tasks
+omr schedule add-rss --scope user --url <feed>
                                               # Register a user-scoped RSS watcher
-omc schedule cancel <id> [--scope user|project]
+omr schedule cancel <id> [--scope user|project]
                                               # Cancel a scheduled task
-omc schedule resume [id] [--scope user|project]
+omr schedule resume [id] [--scope user|project]
                                               # Resume one or all suspended tasks
-omc schedule run-now <id> [--scope user|project]
+omr schedule run-now <id> [--scope user|project]
                                               # Request an immediate rerun
-omc dashboard [--port <number>]               # Launch live web dashboard
-omc team watch [--run <id>] [--no-follow]     # Tail team chatter from the blackboard
-omc notify emit --task-id <id> --summary <text> [--scope user|project]
+omr dashboard [--port <number>]               # Launch live web dashboard
+omr team watch [--run <id>] [--no-follow]     # Tail team chatter from the blackboard
+omr notify emit --task-id <id> --summary <text> [--scope user|project]
                                               # Emit core desktop + feed notification
-omc notify recent [--limit N] [--scope user|project]
+omr notify recent [--limit N] [--scope user|project]
                                               # Show recent core notifications
-omc notify test-desktop [message]              # Desktop notification smoke test
-omc notify slack [message]                     # Test Slack webhook (forge-related URL)
-omc notify forge                              # Push forge-state snapshot to Slack
-omc help                                      # Show help
-omc version                                   # Print version
+omr notify test-desktop [message]              # Desktop notification smoke test
+omr notify slack [message]                     # Test Slack webhook (forge-related URL)
+omr notify forge                              # Push forge-state snapshot to Slack
+omr help                                      # Show help
+omr version                                   # Print version
 ```
 
-Run `omc help` for the full command list and notify options.
+Run `omr help` for the full command list and notify options.
 
 ### Notifications (optional)
 
 OMC can post to a [Slack Incoming Webhook](https://api.slack.com/messaging/webhooks) when **forge** workflow state is saved through the OMC state API (including MCP `state_write` for mode `forge`). Configure `OMC_SLACK_WEBHOOK_URL`, `OMC_FORGE_SLACK_WEBHOOK_URL`, or `notifications.slack_webhook_url` in `.omc/omc-config.json`.
 
-**Other modes** (`deep-interview`, `blueprint`, `team`, etc.) **do not** trigger that automatic webhook. To send a manual message or a snapshot of current forge state, use `omc notify slack` or `omc notify forge`. See `skills/omc-forge/SKILL.md` for details.
+**Other modes** (`deep-interview`, `blueprint`, `team`, etc.) **do not** trigger that automatic webhook. To send a manual message or a snapshot of current forge state, use `omr notify slack` or `omr notify forge`. See `skills/omc-forge/SKILL.md` for details.
 
 OMC also supports a built-in notification feed for non-Slack workflows such as
-scheduled checks. Use `omc notify emit` to create a durable dashboard entry and,
+scheduled checks. Use `omr notify emit` to create a durable dashboard entry and,
 by default, a macOS desktop notification at the same time.
 
 For user-scoped scheduled tasks, pass `--scope user` so the durable
@@ -370,18 +370,18 @@ state.
 
 ### Schedule lifecycle helpers
 
-OMC keeps scheduling generic. Use `omc schedule list`, `cancel`, `resume`, and
+OMC keeps scheduling generic. Use `omr schedule list`, `cancel`, `resume`, and
 `run-now` to inspect or adjust scheduled task state. The primary user workflow
 still lives in `/omc-schedule`, while the CLI stays a thin lifecycle surface.
 
 For global, cross-project tasks, use `--scope user`. User-scoped schedule state
-and resume markers live under `~/.cursor/omc/`, while project-scoped runtime
+and resume markers live under `~/.cursor/omr/`, while project-scoped runtime
 state continues to live under the current repo's `.omc/`.
 
 The built-in RSS watcher is intentionally thin:
 
 ```bash
-omc schedule add-rss --scope user \
+omr schedule add-rss --scope user \
   --url https://duanyytop.github.io/agents-radar/feed.xml \
   --every 15m \
   --title "Agents Radar RSS"
@@ -391,7 +391,7 @@ This registers the task, requests an immediate baseline run, and lets the
 schedule worker continue polling while the current OMC session remains active.
 
 Downstream products that previously depended on monitor-specific OMC commands
-should migrate to generic schedule state plus `omc notify emit`. Any
+should migrate to generic schedule state plus `omr notify emit`. Any
 domain-specific monitor UI belongs downstream, not in OMC core.
 
 ## State management

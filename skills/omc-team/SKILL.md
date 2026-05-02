@@ -24,7 +24,7 @@ Decomposes a task into independent parallel lanes with role assignments and file
 
 ## Available roles
 
-Roles map to prompt files installed by `omc setup`:
+Roles map to prompt files installed by `omr setup`:
 
 **Core**: `executor`, `architect`, `debugger`, `verifier`, `explorer`, `planner`
 **Specialist**: `code-reviewer`, `test-engineer`, `writer`, `security-reviewer`, `designer`, `build-fixer`
@@ -32,7 +32,7 @@ Roles map to prompt files installed by `omc setup`:
 Default role if omitted: `executor`.
 
 Role prompts are loaded from:
-- **User scope**: `~/.cursor/omc-prompts/{role}.md`
+- **User scope**: `~/.cursor/omr-prompts/{role}.md`
 - **Project scope**: `.omc/prompts/{role}.md`
 
 ## Execution protocol
@@ -82,8 +82,8 @@ The leader spawns workers via the Task tool, injecting the role prompt plus the 
 
 ```
 For each lane:
-  1. Read role prompt from ~/.cursor/omc-prompts/{role}.md
-  2. Read team-protocol partial from ~/.cursor/omc-prompts/_team-protocol.md
+  1. Read role prompt from ~/.cursor/omr-prompts/{role}.md
+  2. Read team-protocol partial from ~/.cursor/omr-prompts/_team-protocol.md
   3. Stamp lane id as TEAM_LANE_ID = "<runId>-lane-{N}" and role as TEAM_ROLE_NAME
   4. Task(subagent_type="generalPurpose", prompt="""
     {role prompt contents}
@@ -177,7 +177,7 @@ The human watching chat should never wonder "what are the agents doing?" — the
 6. **Save the transcript.** Call `team_transcript_write({ runId })` (from the `omc-state` MCP server) to capture the full chatter log at `.omc/state/team/<runId>-transcript.md`. Cite that path in the leader's final summary so the user can re-read the run later or share it.
 7. Clear the blackboard for the next session: `blackboard_clear`.
 
-> Tip: users who want a side terminal panel of team chatter (closer to oh-my-codex tmux panes) can run `omc team watch --run <runId>` in a separate terminal while the leader runs in chat.
+> Tip: users who want a side terminal panel of team chatter (closer to oh-my-codex tmux panes) can run `omr team watch --run <runId>` in a separate terminal while the leader runs in chat.
 
 ## State management
 

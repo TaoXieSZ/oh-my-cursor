@@ -12,7 +12,7 @@ argument-hint: "[web]"
 
 ```
 $dashboard          — render Canvas dashboard in Cursor
-$dashboard web      — launch omc dashboard web server
+$dashboard web      — launch omr dashboard web server
 ```
 
 ## When to use
@@ -38,7 +38,7 @@ $dashboard web      — launch omc dashboard web server
 
 ### Web mode
 
-Run `omc dashboard` in a terminal. This starts a local HTTP server (default port 3721) with:
+Run `omr dashboard` in a terminal. This starts a local HTTP server (default port 3721) with:
 - Real-time SSE updates when `.omc/` files change
 - Full dashboard at `http://localhost:3721`
 - API endpoint at `/api/state` returning JSON

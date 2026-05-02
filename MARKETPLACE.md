@@ -31,17 +31,17 @@ The `.cursor-plugin/plugin.json` manifest exists. The plugin components are stru
 
 ## Architecture for marketplace
 
-The marketplace install should replicate what `omc setup` does:
+The marketplace install should replicate what `omr setup` does:
 
 1. Rules → copied to user or project `.cursor/rules/`
 2. Skills → copied to `.cursor/skills/`
-3. Prompts → copied to `~/.cursor/omc-prompts/` or `.omc/prompts/`
+3. Prompts → copied to `~/.cursor/omr-prompts/` or `.omc/prompts/`
 4. Hooks → copied to `~/.cursor/hooks/omc/`, registered in `hooks.json`
 5. MCP → registered in `mcp.json` with correct server paths
 6. State dirs → `.omc/` created in project root
 
-The `omc` CLI remains available as an optional companion tool for:
-- `omc dashboard` — live web dashboard
-- `omc archive` / `omc archives` — session archiving
-- `omc notify` — Slack notifications
-- `omc doctor` — health checks
+The `omr` CLI remains available as an optional companion tool for:
+- `omr dashboard` — live web dashboard
+- `omr archive` / `omr archives` — session archiving
+- `omr notify` — Slack notifications
+- `omr doctor` — health checks

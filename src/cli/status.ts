@@ -25,7 +25,7 @@ export async function status(_options: StatusOptions): Promise<void> {
 function showSetupInfo(): void {
   const metaPath = omcSetupScopePath();
   if (!existsSync(metaPath)) {
-    warn("Not set up. Run 'omc setup' first.");
+    warn("Not set up. Run 'omr setup' first.");
     return;
   }
 

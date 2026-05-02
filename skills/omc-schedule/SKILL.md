@@ -48,7 +48,7 @@ Extract from user request:
 Persist task to either the project runtime root or the user runtime root:
 
 - project scope: `.omc/state/schedule-state.json`
-- user scope: `~/.cursor/omc/state/schedule-state.json`
+- user scope: `~/.cursor/omr/state/schedule-state.json`
 
 Use user scope when the task should follow the user across projects but still
 remain session-bound.
@@ -142,7 +142,7 @@ user-scope schedule state files. Tasks with `"state": "running"` are marked
 tasks and writes a marker file into the matching runtime root:
 
 - project scope: `.omc/state/schedule-resume-pending.json`
-- user scope: `~/.cursor/omc/state/schedule-resume-pending.json`
+- user scope: `~/.cursor/omr/state/schedule-resume-pending.json`
 
 The agent rule can then prompt the user to resume them.
 
@@ -255,7 +255,7 @@ Free-form task. The agent interprets the description and runs appropriate checks
 
 **Check logic:** Agent executes commands and evaluates output against the until_condition.
 
-**Notification contract:** For custom scheduled tasks, emit one `omc notify emit` call after each run so users can see every tick in both desktop alerts and the dashboard notification feed.
+**Notification contract:** For custom scheduled tasks, emit one `omr notify emit` call after each run so users can see every tick in both desktop alerts and the dashboard notification feed.
 
 **Boundary note:** Keep schedule generic inside OMC core. If a downstream repo
 wants a domain-specific monitor UI, browser surface, or alert action model,
@@ -288,15 +288,15 @@ When check-pr-merge succeeds, it waits 5 minutes then starts poll-api.
 | `/omc-schedule cancel <id>` | Cancel a running task |
 | `/omc-schedule resume` | Resume all suspended tasks from previous session |
 | `/omc-schedule status` | Show current task states with last results |
-| `omc schedule add-rss --scope user --url <feed>` | Register a global user-scoped RSS watcher |
-| `omc notify emit ... --scope user|project` | Send schedule result to desktop + durable feed |
+| `omr schedule add-rss --scope user --url <feed>` | Register a global user-scoped RSS watcher |
+| `omr notify emit ... --scope user|project` | Send schedule result to desktop + durable feed |
 
 ## State File
 
 Path:
 
 - project scope: `.omc/state/schedule-state.json`
-- user scope: `~/.cursor/omc/state/schedule-state.json`
+- user scope: `~/.cursor/omr/state/schedule-state.json`
 
 The state file is the source of truth. Updated after every task run.
 

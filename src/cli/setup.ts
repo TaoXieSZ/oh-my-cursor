@@ -65,11 +65,11 @@ export async function setup(options: SetupOptions): Promise<void> {
     console.log();
     dim("Next steps:");
     dim("  1. Restart Cursor to load new rules and skills");
-    dim("  2. Run 'omc doctor' to verify installation");
+    dim("  2. Run 'omr doctor' to verify installation");
     dim("  3. Try '/deep-interview \"describe your task\"' in Cursor chat");
   } else {
     warn(`Setup partially complete (${passed}/${steps.length} steps)`);
-    dim("Run 'omc doctor' to diagnose issues");
+    dim("Run 'omr doctor' to diagnose issues");
   }
 }
 

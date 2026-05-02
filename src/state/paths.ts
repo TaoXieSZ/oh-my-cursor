@@ -9,7 +9,7 @@ export function getProjectRoot(): string {
 }
 
 export function getUserStateRoot(): string {
-  return process.env["OMC_USER_OMC_ROOT"]?.trim() || join(homedir(), ".cursor", "omc");
+  return process.env["OMC_USER_OMC_ROOT"]?.trim() || join(homedir(), ".cursor", "omr");
 }
 
 export function getBaseStateDir(scope: OmcStateScope = "project"): string {

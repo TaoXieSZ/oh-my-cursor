@@ -60,7 +60,7 @@ describe("omc paths are rooted at cwd", () => {
   const cwd = process.cwd();
 
   it("omcUserDataDir", () => {
-    assert.equal(omcUserDataDir(), join(homedir(), ".cursor", "omc"));
+    assert.equal(omcUserDataDir(), join(homedir(), ".cursor", "omr"));
   });
 
   it("omcStateDir", () => {
@@ -68,7 +68,7 @@ describe("omc paths are rooted at cwd", () => {
   });
 
   it("omcStateDir user scope", () => {
-    assert.equal(omcStateDir("user"), join(homedir(), ".cursor", "omc"));
+    assert.equal(omcStateDir("user"), join(homedir(), ".cursor", "omr"));
   });
 
   it("omcPlansDir", () => {
@@ -76,7 +76,7 @@ describe("omc paths are rooted at cwd", () => {
   });
 
   it("omcPlansDir user scope", () => {
-    assert.equal(omcPlansDir("user"), join(homedir(), ".cursor", "omc", "plans"));
+    assert.equal(omcPlansDir("user"), join(homedir(), ".cursor", "omr", "plans"));
   });
 
   it("omcLogsDir", () => {
@@ -84,7 +84,7 @@ describe("omc paths are rooted at cwd", () => {
   });
 
   it("omcLogsDir user scope", () => {
-    assert.equal(omcLogsDir("user"), join(homedir(), ".cursor", "omc", "logs"));
+    assert.equal(omcLogsDir("user"), join(homedir(), ".cursor", "omr", "logs"));
   });
 
   it("omcStatePath", () => {
@@ -92,7 +92,7 @@ describe("omc paths are rooted at cwd", () => {
   });
 
   it("omcStatePath user scope", () => {
-    assert.equal(omcStatePath("user"), join(homedir(), ".cursor", "omc", "state"));
+    assert.equal(omcStatePath("user"), join(homedir(), ".cursor", "omr", "state"));
   });
 
   it("omcSetupScopePath", () => {
@@ -104,7 +104,7 @@ describe("omc paths are rooted at cwd", () => {
   });
 
   it("omcProjectMemoryPath user scope", () => {
-    assert.equal(omcProjectMemoryPath("user"), join(homedir(), ".cursor", "omc", "project-memory.json"));
+    assert.equal(omcProjectMemoryPath("user"), join(homedir(), ".cursor", "omr", "project-memory.json"));
   });
 
   it("omcNotepadPath", () => {
@@ -112,7 +112,7 @@ describe("omc paths are rooted at cwd", () => {
   });
 
   it("omcNotepadPath user scope", () => {
-    assert.equal(omcNotepadPath("user"), join(homedir(), ".cursor", "omc", "notepad.md"));
+    assert.equal(omcNotepadPath("user"), join(homedir(), ".cursor", "omr", "notepad.md"));
   });
 });
 

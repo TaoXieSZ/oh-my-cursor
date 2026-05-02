@@ -74,7 +74,7 @@ export async function doctor(options: DoctorOptions): Promise<void> {
     ok(`All ${checks.length} checks passed`);
   } else {
     warn(`${passed}/${checks.length} checks passed`);
-    dim("Run 'omc setup' to fix issues");
+    dim("Run 'omr setup' to fix issues");
   }
 }
 
@@ -201,7 +201,7 @@ function checkHooksInstalled(scope: "user" | "project"): CheckResult {
   const configPath = cursorHooksConfigPath(scope);
 
   if (!existsSync(hooksDir)) {
-    return { ok: false, message: `Hooks directory missing: ${hooksDir}`, detail: "Run 'omc setup' to install hooks" };
+    return { ok: false, message: `Hooks directory missing: ${hooksDir}`, detail: "Run 'omr setup' to install hooks" };
   }
 
   const hookFiles = readdirSync(hooksDir).filter((f) => f.endsWith(".mjs"));
@@ -254,7 +254,7 @@ function checkStateDir(): CheckResult {
 function checkSetupMeta(): CheckResult {
   const path = omcSetupScopePath();
   if (!existsSync(path)) {
-    return { ok: false, message: "Setup metadata missing (run 'omc setup')" };
+    return { ok: false, message: "Setup metadata missing (run 'omr setup')" };
   }
 
   try {

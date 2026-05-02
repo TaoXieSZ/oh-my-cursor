@@ -39,4 +39,4 @@ Reference configuration for OMC project settings. This file documents the availa
 2. Fill in `<identity>`, `<constraints>`, `<execution_loop>`, `<output_contract>`
 3. Set `complexity` (low/standard/high) and `posture` (deep-worker/read-only/fast-lane)
 4. Add to the role catalog in `omc-orchestration.mdc`
-5. Run `omc setup` to install
+5. Run `omr setup` to install

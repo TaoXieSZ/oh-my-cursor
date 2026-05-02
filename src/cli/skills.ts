@@ -96,7 +96,7 @@ export async function skills(): Promise<void> {
   }
 
   if (all.length === 0) {
-    warn("No OMC skills found. Run 'omc setup' first.");
+    warn("No OMC skills found. Run 'omr setup' first.");
     return;
   }
 
