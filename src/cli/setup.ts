@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   cursorRulesDir,
@@ -29,7 +29,12 @@ interface SetupOptions {
   verbose: boolean;
 }
 
-const DEPRECATED_SKILLS = ["omr-plan", "omr-ralph", "omr-ralplan"];
+// Skill dirs left behind by the OMC → OMR rename. Any skill folder with the
+// `omc-` prefix is treated as a stale install from an earlier oh-my-cursor
+// version and removed during setup. Covers both rename leftovers (omc-forge,
+// omc-blueprint, ...) and earlier consolidations (omc-plan → omc-blueprint,
+// omc-ralph → omc-forge, omc-ralplan → omc-blueprint).
+const LEGACY_SKILL_PREFIX = "omc-";
 
 export async function setup(options: SetupOptions): Promise<void> {
   heading("oh-my-cursor setup");
@@ -94,20 +99,21 @@ function installSkills(options: SetupOptions): void {
   }
 
   const count = copyDir(srcDir, destDir);
-  const removed = removeDeprecatedSkills(destDir);
+  const removed = removeLegacyOmcSkills(destDir);
   ok(`Installed ${count} skill files → ${destDir}`);
   if (removed.length > 0) {
-    ok(`Removed deprecated skills: ${removed.join(", ")}`);
+    ok(`Removed ${removed.length} legacy omc-* skill(s): ${removed.join(", ")}`);
   }
 }
 
-function removeDeprecatedSkills(skillsDir: string): string[] {
+function removeLegacyOmcSkills(skillsDir: string): string[] {
+  if (!existsSync(skillsDir)) return [];
   const removed: string[] = [];
-  for (const skill of DEPRECATED_SKILLS) {
-    const path = join(skillsDir, skill);
-    if (!existsSync(path)) continue;
-    rmSync(path, { recursive: true, force: true });
-    removed.push(skill);
+  for (const entry of readdirSync(skillsDir, { withFileTypes: true })) {
+    if (entry.isDirectory() && entry.name.startsWith(LEGACY_SKILL_PREFIX)) {
+      rmSync(join(skillsDir, entry.name), { recursive: true, force: true });
+      removed.push(entry.name);
+    }
   }
   return removed;
 }

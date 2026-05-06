@@ -138,17 +138,17 @@ describe("omr setup --scope project", () => {
     assert.equal(exitCode, 0);
   });
 
-  it("removes deprecated built-in skills from existing installs", () => {
-    const deprecatedNames = ["omr-plan", "omr-ralph", "omr-ralplan"];
-    for (const name of deprecatedNames) {
-      const deprecated = join(tmp, ".cursor", "skills", name);
-      mkdirSync(deprecated, { recursive: true });
-      writeFileSync(join(deprecated, "SKILL.md"), `---\nname: ${name}\n---\n`);
+  it("removes legacy omc-* skills (rename + earlier consolidations) from existing installs", () => {
+    const legacyNames = ["omc-plan", "omc-ralph", "omc-ralplan", "omc-forge", "omc-blueprint"];
+    for (const name of legacyNames) {
+      const legacy = join(tmp, ".cursor", "skills", name);
+      mkdirSync(legacy, { recursive: true });
+      writeFileSync(join(legacy, "SKILL.md"), `---\nname: ${name}\n---\n`);
     }
 
     const { exitCode } = run(["setup", "--scope", "project"], tmp);
     assert.equal(exitCode, 0);
-    for (const name of deprecatedNames) {
+    for (const name of legacyNames) {
       assert.ok(!existsSync(join(tmp, ".cursor", "skills", name)), `${name} should be removed by setup`);
     }
   });
