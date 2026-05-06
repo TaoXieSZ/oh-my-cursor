@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-// OMC session-start hook
-// Ensures .omc/ state dirs exist, initializes a session, and records schedule
+// OMR session-start hook
+// Ensures .omr/ state dirs exist, initializes a session, and records schedule
 // resume markers for suspended tasks.
 // Receives: { type: "sessionStart" } on stdin
 // Responds: { continue: true } on stdout
@@ -11,9 +11,9 @@ import { join } from "node:path";
 import { homedir } from "node:os";
 import { randomUUID } from "node:crypto";
 
-const projectRoot = process.env.OMC_PROJECT_ROOT || process.cwd();
-const omcDir = join(projectRoot, ".omc");
-const userOmcDir = process.env.OMC_USER_OMC_ROOT || join(homedir(), ".cursor", "omr");
+const projectRoot = process.env.OMR_PROJECT_ROOT || process.cwd();
+const omcDir = join(projectRoot, ".omr");
+const userOmrDir = process.env.OMR_USER_DATA_ROOT || join(homedir(), ".cursor", "omr");
 
 function ensureDir(dir) {
   if (!existsSync(dir)) {
@@ -25,7 +25,7 @@ function initSession() {
   ensureDir(join(omcDir, "state"));
   ensureDir(join(omcDir, "plans"));
   ensureDir(join(omcDir, "logs"));
-  ensureDir(join(userOmcDir, "state"));
+  ensureDir(join(userOmrDir, "state"));
 
   const sessionPath = join(omcDir, "state", "session.json");
 
@@ -95,7 +95,7 @@ async function main() {
   try {
     initSession();
     refreshScheduleResumePending("project", omcDir);
-    refreshScheduleResumePending("user", userOmcDir);
+    refreshScheduleResumePending("user", userOmrDir);
   } catch {
     // non-fatal — don't block the agent
   }

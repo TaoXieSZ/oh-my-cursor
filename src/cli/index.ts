@@ -19,7 +19,7 @@ Core commands:
   doctor     Verify installation health
   status     Show active mode, session, and state
   skills     List core workflows and optional extras
-  archive    Archive current session to .omc/archive/ and reset state
+  archive    Archive current session to .omr/archive/ and reset state
   archives   List all archived sessions
   help       Show this help message
   version    Print version
@@ -41,7 +41,7 @@ Examples:
   omr doctor                 # Check installation health
   omr status                 # Show current state
   omr skills                 # Show the core path first
-  # Cursor chat default path: /omc-deep-interview -> /omc-blueprint -> /omc-forge
+  # Cursor chat default path: /omr-deep-interview -> /omr-blueprint -> /omr-forge
 
 Optional extras:
   omr schedule list --scope user
@@ -59,14 +59,14 @@ Notify (Slack Incoming Webhooks):
   omr notify slack [message]   # Test webhook (default message if omitted)
   omr notify forge             # Push current forge-state.json snapshot to Slack
   omr notify emit --task-id <id> --summary <text> [--status ok|warn|error|info] [--scope user|project]
-                              # Emit core OMC notification (feed + desktop by default)
+                              # Emit core OMR notification (feed + desktop by default)
   omr notify recent [--limit N] [--scope user|project]
                               # Show recent core notifications
   omr notify test-desktop [message]
                               # Emit a desktop notification for local verification
 
-  Configure URL via OMC_SLACK_WEBHOOK_URL, OMC_FORGE_SLACK_WEBHOOK_URL,
-  or notifications.slack_webhook_url in .omc/omc-config.json
+  Configure URL via OMR_SLACK_WEBHOOK_URL, OMR_FORGE_SLACK_WEBHOOK_URL,
+  or notifications.slack_webhook_url in .omr/omr-config.json
 `.trim();
 
 export async function main(args: string[]): Promise<void> {
@@ -167,8 +167,8 @@ export async function main(args: string[]): Promise<void> {
       }
       if (sub === "test-desktop") {
         const { sendDesktopNotification } = await import("../notify/desktop-notify.js");
-        const message = args.slice(2).join(" ").trim() || "OMC desktop notification test";
-        const result = sendDesktopNotification("OMC Desktop Test", message, {
+        const message = args.slice(2).join(" ").trim() || "OMR desktop notification test";
+        const result = sendDesktopNotification("OMR Desktop Test", message, {
           tone: "info",
         });
         if (!result.ok) {
@@ -184,11 +184,11 @@ export async function main(args: string[]): Promise<void> {
         const url = getForgeSlackWebhookUrl();
         if (!url) {
           log.fail(
-            "No Slack webhook URL. Set OMC_SLACK_WEBHOOK_URL or OMC_FORGE_SLACK_WEBHOOK_URL, or add notifications.slack_webhook_url to .omc/omc-config.json"
+            "No Slack webhook URL. Set OMR_SLACK_WEBHOOK_URL or OMR_FORGE_SLACK_WEBHOOK_URL, or add notifications.slack_webhook_url to .omr/omr-config.json"
           );
           process.exit(1);
         }
-        const msg = args.slice(2).join(" ").trim() || "OMC Slack webhook test";
+        const msg = args.slice(2).join(" ").trim() || "OMR Slack webhook test";
         const res = await postSlackIncomingWebhook(url, { text: msg });
         if (!res.ok) {
           log.fail(`Slack webhook HTTP ${res.status}`);
@@ -206,13 +206,13 @@ export async function main(args: string[]): Promise<void> {
         const url = getForgeSlackWebhookUrl();
         if (!url) {
           log.fail(
-            "No Slack webhook URL. Set OMC_SLACK_WEBHOOK_URL or OMC_FORGE_SLACK_WEBHOOK_URL, or add notifications.slack_webhook_url to .omc/omc-config.json"
+            "No Slack webhook URL. Set OMR_SLACK_WEBHOOK_URL or OMR_FORGE_SLACK_WEBHOOK_URL, or add notifications.slack_webhook_url to .omr/omr-config.json"
           );
           process.exit(1);
         }
         const state = readModeState("forge");
         if (!state) {
-          log.fail("No forge state at .omc/state/forge-state.json");
+          log.fail("No forge state at .omr/state/forge-state.json");
           process.exit(1);
         }
         const text = formatForgeSnapshotMessage(state, getProjectRoot());

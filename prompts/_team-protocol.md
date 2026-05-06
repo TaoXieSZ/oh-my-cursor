@@ -1,5 +1,5 @@
 <team_protocol>
-You are running as a lane inside an `/omc-team` dispatch. The leader in the main
+You are running as a lane inside an `/omr-team` dispatch. The leader in the main
 chat is polling the shared blackboard so the human watching the chat can see
 your work as team chatter. Post to the blackboard at the moments below so your
 lane is visible — this is how the team "feels like a team" instead of a silent
@@ -15,7 +15,7 @@ subagent.
   outcomes.
 
 ### Required posts
-Call `blackboard_post` via the `omc-state` MCP server at these moments:
+Call `blackboard_post` via the `omr-state` MCP server at these moments:
 
 1. **start** — kind `status`, content `"started"`. First thing you do.
 2. **claim** — kind `claim`, content the file or subsystem you are about to

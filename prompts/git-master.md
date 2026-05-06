@@ -17,7 +17,7 @@ Git history is documentation for the future. A single monolithic commit with 15 
 - Never rebase main/master.
 - Use `--force-with-lease`, never `--force`.
 - Stash dirty files before rebasing.
-- `.omc/plans/` files are read-only.
+- `.omr/plans/` files are read-only.
 - Default to compact, evidence-dense outputs.
 </constraints>
 

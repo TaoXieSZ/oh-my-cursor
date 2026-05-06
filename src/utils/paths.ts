@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { homedir } from "node:os";
 import { existsSync } from "node:fs";
 
-export type OmcPathScope = "user" | "project";
+export type OmrPathScope = "user" | "project";
 
 export function cursorHome(): string {
   return join(homedir(), ".cursor");
@@ -29,39 +29,39 @@ export function cursorMcpConfigPath(scope: "user" | "project"): string {
   return join(cursorHome(), "mcp.json");
 }
 
-export function omcUserDataDir(): string {
-  return process.env["OMC_USER_OMC_ROOT"]?.trim() || join(cursorHome(), "omr");
+export function omrUserDataDir(): string {
+  return process.env["OMR_USER_DATA_ROOT"]?.trim() || join(cursorHome(), "omr");
 }
 
-export function omcStateDir(scope: OmcPathScope = "project"): string {
+export function omrStateDir(scope: OmrPathScope = "project"): string {
   if (scope === "user") {
-    return omcUserDataDir();
+    return omrUserDataDir();
   }
-  return join(process.cwd(), ".omc");
+  return join(process.cwd(), ".omr");
 }
 
-export function omcPlansDir(scope: OmcPathScope = "project"): string {
-  return join(omcStateDir(scope), "plans");
+export function omrPlansDir(scope: OmrPathScope = "project"): string {
+  return join(omrStateDir(scope), "plans");
 }
 
-export function omcLogsDir(scope: OmcPathScope = "project"): string {
-  return join(omcStateDir(scope), "logs");
+export function omrLogsDir(scope: OmrPathScope = "project"): string {
+  return join(omrStateDir(scope), "logs");
 }
 
-export function omcStatePath(scope: OmcPathScope = "project"): string {
-  return join(omcStateDir(scope), "state");
+export function omrStatePath(scope: OmrPathScope = "project"): string {
+  return join(omrStateDir(scope), "state");
 }
 
-export function omcSetupScopePath(scope: OmcPathScope = "project"): string {
-  return join(omcStateDir(scope), "setup-scope.json");
+export function omrSetupScopePath(scope: OmrPathScope = "project"): string {
+  return join(omrStateDir(scope), "setup-scope.json");
 }
 
-export function omcProjectMemoryPath(scope: OmcPathScope = "project"): string {
-  return join(omcStateDir(scope), "project-memory.json");
+export function omrProjectMemoryPath(scope: OmrPathScope = "project"): string {
+  return join(omrStateDir(scope), "project-memory.json");
 }
 
-export function omcNotepadPath(scope: OmcPathScope = "project"): string {
-  return join(omcStateDir(scope), "notepad.md");
+export function omrNotepadPath(scope: OmrPathScope = "project"): string {
+  return join(omrStateDir(scope), "notepad.md");
 }
 
 export function isCursorInstalled(): boolean {
@@ -91,9 +91,9 @@ export function packagePromptsDir(): string {
   return join(packageRoot(), "prompts");
 }
 
-export function omcPromptsDir(scope: "user" | "project"): string {
+export function omrPromptsDir(scope: "user" | "project"): string {
   if (scope === "project") {
-    return join(process.cwd(), ".omc", "prompts");
+    return join(process.cwd(), ".omr", "prompts");
   }
   return join(cursorHome(), "omr-prompts");
 }
@@ -105,11 +105,11 @@ export function cursorHooksConfigPath(scope: "user" | "project"): string {
   return join(cursorHome(), "hooks.json");
 }
 
-export function omcHooksDir(scope: "user" | "project"): string {
+export function omrHooksDir(scope: "user" | "project"): string {
   if (scope === "project") {
-    return join(process.cwd(), ".cursor", "hooks", "omc");
+    return join(process.cwd(), ".cursor", "hooks", "omr");
   }
-  return join(cursorHome(), "hooks", "omc");
+  return join(cursorHome(), "hooks", "omr");
 }
 
 export function packageHooksDir(): string {

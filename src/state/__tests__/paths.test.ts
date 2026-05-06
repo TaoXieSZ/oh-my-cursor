@@ -33,44 +33,44 @@ import {
 } from "../paths.js";
 
 describe("getProjectRoot", () => {
-  const origEnv = process.env["OMC_PROJECT_ROOT"];
+  const origEnv = process.env["OMR_PROJECT_ROOT"];
 
   afterEach(() => {
     if (origEnv === undefined) {
-      delete process.env["OMC_PROJECT_ROOT"];
+      delete process.env["OMR_PROJECT_ROOT"];
     } else {
-      process.env["OMC_PROJECT_ROOT"] = origEnv;
+      process.env["OMR_PROJECT_ROOT"] = origEnv;
     }
   });
 
   it("defaults to cwd when env is unset", () => {
-    delete process.env["OMC_PROJECT_ROOT"];
+    delete process.env["OMR_PROJECT_ROOT"];
     assert.equal(getProjectRoot(), process.cwd());
   });
 
-  it("uses OMC_PROJECT_ROOT env when set", () => {
-    process.env["OMC_PROJECT_ROOT"] = "/custom/root";
+  it("uses OMR_PROJECT_ROOT env when set", () => {
+    process.env["OMR_PROJECT_ROOT"] = "/custom/root";
     assert.equal(getProjectRoot(), "/custom/root");
   });
 });
 
 describe("state path helpers", () => {
-  const origEnv = process.env["OMC_PROJECT_ROOT"];
+  const origEnv = process.env["OMR_PROJECT_ROOT"];
 
   beforeEach(() => {
-    process.env["OMC_PROJECT_ROOT"] = "/test/project";
+    process.env["OMR_PROJECT_ROOT"] = "/test/project";
   });
 
   afterEach(() => {
     if (origEnv === undefined) {
-      delete process.env["OMC_PROJECT_ROOT"];
+      delete process.env["OMR_PROJECT_ROOT"];
     } else {
-      process.env["OMC_PROJECT_ROOT"] = origEnv;
+      process.env["OMR_PROJECT_ROOT"] = origEnv;
     }
   });
 
   it("getBaseStateDir", () => {
-    assert.equal(getBaseStateDir(), "/test/project/.omc");
+    assert.equal(getBaseStateDir(), "/test/project/.omr");
   });
 
   it("getUserStateRoot", () => {
@@ -78,7 +78,7 @@ describe("state path helpers", () => {
   });
 
   it("getStatePath", () => {
-    assert.equal(getStatePath("foo.json"), "/test/project/.omc/state/foo.json");
+    assert.equal(getStatePath("foo.json"), "/test/project/.omr/state/foo.json");
   });
 
   it("getStatePath user scope", () => {
@@ -86,15 +86,15 @@ describe("state path helpers", () => {
   });
 
   it("getModeStatePath without runId", () => {
-    assert.equal(getModeStatePath("forge"), "/test/project/.omc/state/forge-state.json");
+    assert.equal(getModeStatePath("forge"), "/test/project/.omr/state/forge-state.json");
   });
 
   it("getModeStatePath with runId", () => {
-    assert.equal(getModeStatePath("forge", "abc12345"), "/test/project/.omc/state/forge-abc12345-state.json");
+    assert.equal(getModeStatePath("forge", "abc12345"), "/test/project/.omr/state/forge-abc12345-state.json");
   });
 
   it("getSessionPath", () => {
-    assert.equal(getSessionPath(), "/test/project/.omc/state/session.json");
+    assert.equal(getSessionPath(), "/test/project/.omr/state/session.json");
   });
 
   it("getScopedSessionPath user scope", () => {
@@ -102,22 +102,22 @@ describe("state path helpers", () => {
   });
 
   it("getTeamDir without name", () => {
-    assert.equal(getTeamDir(), "/test/project/.omc/state/team");
+    assert.equal(getTeamDir(), "/test/project/.omr/state/team");
   });
 
   it("getTeamDir with name", () => {
-    assert.equal(getTeamDir("alpha"), "/test/project/.omc/state/team/alpha");
+    assert.equal(getTeamDir("alpha"), "/test/project/.omr/state/team/alpha");
   });
 
   it("getWorkerProgressPath", () => {
     assert.equal(
       getWorkerProgressPath("worker-1"),
-      "/test/project/.omc/state/team/worker-1/progress.json"
+      "/test/project/.omr/state/team/worker-1/progress.json"
     );
   });
 
   it("getPlanPath", () => {
-    assert.equal(getPlanPath("prd-auth.md"), "/test/project/.omc/plans/prd-auth.md");
+    assert.equal(getPlanPath("prd-auth.md"), "/test/project/.omr/plans/prd-auth.md");
   });
 
   it("getScopedPlanPath user scope", () => {
@@ -125,7 +125,7 @@ describe("state path helpers", () => {
   });
 
   it("getLogPath", () => {
-    assert.equal(getLogPath("session.log"), "/test/project/.omc/logs/session.log");
+    assert.equal(getLogPath("session.log"), "/test/project/.omr/logs/session.log");
   });
 
   it("getScopedLogPath user scope", () => {
@@ -133,7 +133,7 @@ describe("state path helpers", () => {
   });
 
   it("getEventLogPath", () => {
-    assert.equal(getEventLogPath("abc12345"), "/test/project/.omc/logs/abc12345.jsonl");
+    assert.equal(getEventLogPath("abc12345"), "/test/project/.omr/logs/abc12345.jsonl");
   });
 
   it("getScopedEventLogPath user scope", () => {
@@ -141,7 +141,7 @@ describe("state path helpers", () => {
   });
 
   it("getNotepadPath", () => {
-    assert.equal(getNotepadPath(), "/test/project/.omc/notepad.md");
+    assert.equal(getNotepadPath(), "/test/project/.omr/notepad.md");
   });
 
   it("getScopedNotepadPath user scope", () => {
@@ -149,7 +149,7 @@ describe("state path helpers", () => {
   });
 
   it("getProjectMemoryPath", () => {
-    assert.equal(getProjectMemoryPath(), "/test/project/.omc/project-memory.json");
+    assert.equal(getProjectMemoryPath(), "/test/project/.omr/project-memory.json");
   });
 
   it("getScopedProjectMemoryPath user scope", () => {
@@ -157,7 +157,7 @@ describe("state path helpers", () => {
   });
 
   it("getMemoryIndexPath", () => {
-    assert.equal(getMemoryIndexPath(), "/test/project/.omc/memory-index.json");
+    assert.equal(getMemoryIndexPath(), "/test/project/.omr/memory-index.json");
   });
 
   it("getScopedMemoryIndexPath user scope", () => {
@@ -165,7 +165,7 @@ describe("state path helpers", () => {
   });
 
   it("getNotificationLogPath", () => {
-    assert.equal(getNotificationLogPath(), "/test/project/.omc/state/notifications.jsonl");
+    assert.equal(getNotificationLogPath(), "/test/project/.omr/state/notifications.jsonl");
   });
 
   it("getScopedNotificationLogPath user scope", () => {
@@ -179,18 +179,18 @@ describe("state path helpers", () => {
 
 describe("listModeStateFiles", () => {
   let tmp: string;
-  const origEnv = process.env["OMC_PROJECT_ROOT"];
+  const origEnv = process.env["OMR_PROJECT_ROOT"];
 
   beforeEach(() => {
-    tmp = join(tmpdir(), `omc-paths-test-${randomUUID()}`);
-    mkdirSync(join(tmp, ".omc", "state"), { recursive: true });
-    process.env["OMC_PROJECT_ROOT"] = tmp;
+    tmp = join(tmpdir(), `omr-paths-test-${randomUUID()}`);
+    mkdirSync(join(tmp, ".omr", "state"), { recursive: true });
+    process.env["OMR_PROJECT_ROOT"] = tmp;
   });
 
   afterEach(() => {
     rmSync(tmp, { recursive: true, force: true });
-    if (origEnv === undefined) delete process.env["OMC_PROJECT_ROOT"];
-    else process.env["OMC_PROJECT_ROOT"] = origEnv;
+    if (origEnv === undefined) delete process.env["OMR_PROJECT_ROOT"];
+    else process.env["OMR_PROJECT_ROOT"] = origEnv;
   });
 
   it("returns empty for no state files", () => {
@@ -198,7 +198,7 @@ describe("listModeStateFiles", () => {
   });
 
   it("returns all state files excluding session.json", () => {
-    const stateDir = join(tmp, ".omc", "state");
+    const stateDir = join(tmp, ".omr", "state");
     writeFileSync(join(stateDir, "forge-state.json"), "{}");
     writeFileSync(join(stateDir, "forge-a1b2c3d4-state.json"), "{}");
     writeFileSync(join(stateDir, "session.json"), "{}");
@@ -208,7 +208,7 @@ describe("listModeStateFiles", () => {
   });
 
   it("filters by mode", () => {
-    const stateDir = join(tmp, ".omc", "state");
+    const stateDir = join(tmp, ".omr", "state");
     writeFileSync(join(stateDir, "forge-state.json"), "{}");
     writeFileSync(join(stateDir, "forge-a1b2c3d4-state.json"), "{}");
     writeFileSync(join(stateDir, "blueprint-state.json"), "{}");
@@ -218,7 +218,7 @@ describe("listModeStateFiles", () => {
   });
 
   it("returns empty for nonexistent state dir", () => {
-    rmSync(join(tmp, ".omc", "state"), { recursive: true, force: true });
+    rmSync(join(tmp, ".omr", "state"), { recursive: true, force: true });
     assert.deepEqual(listModeStateFiles(), []);
   });
 });

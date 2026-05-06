@@ -4,7 +4,7 @@ export function getHTML(): string {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>OMC Dashboard</title>
+<title>OMR Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -304,7 +304,7 @@ footer a:hover{text-decoration:underline}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--orange)">
       <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
     </svg>
-    OMC
+    OMR
   </div>
   <div class="header-right">
     <div class="session-id" id="session-id"></div>
@@ -902,13 +902,13 @@ footer a:hover{text-decoration:underline}
 
   // Theme toggle
   (function initTheme() {
-    var saved = localStorage.getItem('omc-theme') || 'dark';
+    var saved = localStorage.getItem('omr-theme') || 'dark';
     document.documentElement.dataset.theme = saved;
     updateThemeIcon(saved);
     document.getElementById('theme-toggle').addEventListener('click', function() {
       var cur = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
       document.documentElement.dataset.theme = cur;
-      localStorage.setItem('omc-theme', cur);
+      localStorage.setItem('omr-theme', cur);
       updateThemeIcon(cur);
     });
   })();

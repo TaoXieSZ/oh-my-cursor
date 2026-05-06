@@ -1,5 +1,5 @@
 /**
- * `omc team` CLI commands.
+ * `omr team` CLI commands.
  *
  * Right now this surface has one subcommand — `watch` — which tails the shared
  * blackboard and renders chatter in a terminal using the same canonical format
@@ -68,7 +68,7 @@ function colorize(line: string, role: string | undefined, color: boolean): strin
  * Stream blackboard chatter to stdout, newest at the bottom.
  *
  * - When `follow` is true, the watcher keeps the process alive and prints
- *   new messages as they appear (the default for `omc team watch`).
+ *   new messages as they appear (the default for `omr team watch`).
  * - When `follow` is false, the existing chatter is dumped once and the
  *   function returns — used by tests and one-shot `--no-follow` calls.
  */
@@ -126,7 +126,7 @@ export async function teamWatch(opts: TeamWatchOptions = {}): Promise<void> {
 }
 
 /**
- * Parse the argv slice for `omc team <sub>` into a known command + options.
+ * Parse the argv slice for `omr team <sub>` into a known command + options.
  * Exposed as a pure function so the CLI entry can dispatch without pulling in
  * the watcher.
  */

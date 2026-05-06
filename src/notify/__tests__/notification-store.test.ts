@@ -13,24 +13,24 @@ import {
 import { getNotificationLogPath } from "../../state/paths.js";
 
 function makeTmpProject(): string {
-  const dir = join(tmpdir(), `omc-notify-test-${randomUUID()}`);
-  mkdirSync(join(dir, ".omc", "state"), { recursive: true });
+  const dir = join(tmpdir(), `omr-notify-test-${randomUUID()}`);
+  mkdirSync(join(dir, ".omr", "state"), { recursive: true });
   return dir;
 }
 
 describe("notification-store", () => {
   let projectRoot: string;
-  const origEnv = process.env["OMC_PROJECT_ROOT"];
+  const origEnv = process.env["OMR_PROJECT_ROOT"];
 
   beforeEach(() => {
     projectRoot = makeTmpProject();
-    process.env["OMC_PROJECT_ROOT"] = projectRoot;
+    process.env["OMR_PROJECT_ROOT"] = projectRoot;
   });
 
   afterEach(() => {
     rmSync(projectRoot, { recursive: true, force: true });
-    if (origEnv === undefined) delete process.env["OMC_PROJECT_ROOT"];
-    else process.env["OMC_PROJECT_ROOT"] = origEnv;
+    if (origEnv === undefined) delete process.env["OMR_PROJECT_ROOT"];
+    else process.env["OMR_PROJECT_ROOT"] = origEnv;
   });
 
   it("createNotificationEvent applies defaults", () => {

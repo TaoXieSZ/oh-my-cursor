@@ -1,17 +1,17 @@
-# oh-my-cursor (OMC)
+# oh-my-cursor (OMR)
 
-> Cursor 3 gives you a powerful engine. OMC gives you a better way to drive it.
+> Cursor 3 gives you a powerful engine. OMR gives you a better way to drive it.
 
 [CI](https://github.com/TaoXieSZ/oh-my-cursor/actions/workflows/ci.yml)
 [npm version](https://www.npmjs.com/package/oh-my-cursor)
 [License: MIT](https://opensource.org/licenses/MIT)
 [Node.js](https://nodejs.org)
 
-OMC is a lightweight workflow toolkit for [Cursor IDE](https://cursor.sh).
+OMR is a lightweight workflow toolkit for [Cursor IDE](https://cursor.sh).
 
-Cursor 3 introduced the Agents Window, `/worktree`, `/best-of-n`, and native Plan Mode — great low-level primitives. OMC builds on top of these to provide:
+Cursor 3 introduced the Agents Window, `/worktree`, `/best-of-n`, and native Plan Mode — great low-level primitives. OMR builds on top of these to provide:
 
-- **Durable context**: plans, notes, logs, and memory in `.omc/`
+- **Durable context**: plans, notes, logs, and memory in `.omr/`
 - **A small workflow spine**: clarify → plan → execute → stop/resume cleanly
 - **Simple setup and health checks**: `omr setup` and `omr doctor`
 - **Optional extras when you need them**: dashboard, schedule, notifications, and advanced workflows
@@ -40,28 +40,28 @@ omr doctor
 
 ## Core workflow
 
-1. `**/omc-deep-interview**` — clarify scope when the request or boundaries are vague
-2. `**/omc-blueprint**` — approve the implementation plan and review tradeoffs
-3. `**/omc-forge**` — execute with a persistent verify-fix loop until done
-4. `**/omc-cancel**` — stop a workflow cleanly when the loop should not continue
+1. `**/omr-deep-interview**` — clarify scope when the request or boundaries are vague
+2. `**/omr-blueprint**` — approve the implementation plan and review tradeoffs
+3. `**/omr-forge**` — execute with a persistent verify-fix loop until done
+4. `**/omr-cancel**` — stop a workflow cleanly when the loop should not continue
 
 ```text
-/omc-deep-interview "clarify the authentication change"
-/omc-blueprint "approve the safest implementation path"
-/omc-forge "carry the approved plan to completion"
+/omr-deep-interview "clarify the authentication change"
+/omr-blueprint "approve the safest implementation path"
+/omr-forge "carry the approved plan to completion"
 ```
 
-> **Tip**: type `/skills` in Cursor chat to see all available skills. In Cursor's slash picker, you'll typically see `/omc-`* command names.
+> **Tip**: type `/skills` in Cursor chat to see all available skills. In Cursor's slash picker, you'll typically see `/omr-`* command names.
 
 ## Optional extras
 
-OMC keeps the default story small. These extras are available, but they are not the product center:
+OMR keeps the default story small. These extras are available, but they are not the product center:
 
-- `/omc-team` for parallel work with clear file ownership
-- `/omc-dashboard` for live workflow visibility
-- `/omc-schedule` for periodic checks while a session is active
-- `/omc-autopilot` and `/omc-web-clone` for heavier, specialized workflows
-- `/omc-analyze`, `/omc-code-review`, `/omc-tdd`, and `/omc-ecomode` as supporting tools around the core path
+- `/omr-team` for parallel work with clear file ownership
+- `/omr-dashboard` for live workflow visibility
+- `/omr-schedule` for periodic checks while a session is active
+- `/omr-autopilot` and `/omr-web-clone` for heavier, specialized workflows
+- `/omr-analyze`, `/omr-code-review`, `/omr-tdd`, and `/omr-ecomode` as supporting tools around the core path
 
 ## Core command guide
 
@@ -70,25 +70,25 @@ Use this as the default decision guide before reaching for optional extras:
 
 | Command               | Use when                                                    | Avoid when                                       |
 | --------------------- | ----------------------------------------------------------- | ------------------------------------------------ |
-| `/omc-deep-interview` | Requirement is vague, user says "don't assume"              | Task is already fully scoped                     |
-| `/omc-blueprint`      | Need a reviewed plan before coding                          | One-file trivial changes                         |
-| `/omc-forge`          | Plan is approved and one owner should push to done          | Work splits cleanly into independent lanes       |
-| `/omc-cancel`         | You need to stop active OMC modes cleanly                   | You still expect the current loop to continue    |
+| `/omr-deep-interview` | Requirement is vague, user says "don't assume"              | Task is already fully scoped                     |
+| `/omr-blueprint`      | Need a reviewed plan before coding                          | One-file trivial changes                         |
+| `/omr-forge`          | Plan is approved and one owner should push to done          | Work splits cleanly into independent lanes       |
+| `/omr-cancel`         | You need to stop active OMR modes cleanly                   | You still expect the current loop to continue    |
 
 ### Core path examples
 
 ```text
 # 1) Requirement is unclear
-/omc-deep-interview "we need to improve onboarding, clarify scope and acceptance criteria first"
+/omr-deep-interview "we need to improve onboarding, clarify scope and acceptance criteria first"
 
 # 2) Medium task, want lightweight planning
-/omc-blueprint --quick "add API pagination for /users and /orders with backward compatibility"
+/omr-blueprint --quick "add API pagination for /users and /orders with backward compatibility"
 
 # 3) Complex task, need full planning + risks
-/omc-blueprint "design a safe migration from local cache to redis with rollback plan"
+/omr-blueprint "design a safe migration from local cache to redis with rollback plan"
 
 # 4) Approved plan, single-owner execution
-/omc-forge "execute the approved redis migration plan to completion with full verification"
+/omr-forge "execute the approved redis migration plan to completion with full verification"
 
 ```
 
@@ -96,41 +96,41 @@ Use this as the default decision guide before reaching for optional extras:
 
 ```text
 # Parallelizable feature
-/omc-team "split auth revamp into backend, frontend, and tests with clear file ownership"
+/omr-team "split auth revamp into backend, frontend, and tests with clear file ownership"
 
 # Bug/incident investigation
-/omc-analyze "investigate why webhook retries spike after deploy and identify root cause"
+/omr-analyze "investigate why webhook retries spike after deploy and identify root cause"
 
 # Test-first delivery
-/omc-tdd "add rate limiting middleware for login endpoint using test-first workflow"
+/omr-tdd "add rate limiting middleware for login endpoint using test-first workflow"
 
 # Pre-merge safety check
-/omc-code-review "review current diff for correctness, regressions, and missing tests"
+/omr-code-review "review current diff for correctness, regressions, and missing tests"
 
 # Observe workflow state
-/omc-dashboard "show active modes and plan/test artifact status"
+/omr-dashboard "show active modes and plan/test artifact status"
 
 # Abort active workflow
-/omc-cancel "cancel current forge run and mark state as cancelled"
+/omr-cancel "cancel current forge run and mark state as cancelled"
 
 # Budget mode
-/omc-ecomode "enable token-efficient mode for this debugging session"
+/omr-ecomode "enable token-efficient mode for this debugging session"
 
 # Full automatic pipeline
-/omc-autopilot "build a minimal internal changelog viewer from markdown files"
+/omr-autopilot "build a minimal internal changelog viewer from markdown files"
 ```
 
-## What OMC installs
+## What OMR installs
 
 
 | Component   | Location                     | Purpose                                                       |
 | ----------- | ---------------------------- | ------------------------------------------------------------- |
-| Rules       | `~/.cursor/rules/omc-*.mdc`  | Lightweight routing and workflow conventions                  |
-| Skills      | `~/.cursor/skills/omc-*/`    | Core workflows plus optional extras                           |
+| Rules       | `~/.cursor/rules/omr-*.mdc`  | Lightweight routing and workflow conventions                  |
+| Skills      | `~/.cursor/skills/omr-*/`    | Core workflows plus optional extras                           |
 | Prompts     | `~/.cursor/omr-prompts/*.md` | Optional role pack for deeper agent guidance                  |
 | MCP servers | Cursor MCP config            | Persistence helpers for state and memory                      |
-| Hooks       | `~/.cursor/hooks/omc/`       | Simple lifecycle helpers (session init, archive)              |
-| State       | `.omc/` (project root)       | Durable project context: plans, logs, notes, memory           |
+| Hooks       | `~/.cursor/hooks/omr/`       | Simple lifecycle helpers (session init, archive)              |
+| State       | `.omr/` (project root)       | Durable project context: plans, logs, notes, memory           |
 
 
 ### Scopes
@@ -142,19 +142,19 @@ Use this as the default decision guide before reaching for optional extras:
 omr setup --scope project
 ```
 
-## How OMC relates to Cursor 3
+## How OMR relates to Cursor 3
 
-OMC does **not** replace Cursor — it adds a small workflow and context layer around it.
+OMR does **not** replace Cursor — it adds a small workflow and context layer around it.
 
 
-| Concern         | Cursor 3 native                 | OMC adds                                                                    |
+| Concern         | Cursor 3 native                 | OMR adds                                                                    |
 | --------------- | ------------------------------- | --------------------------------------------------------------------------- |
 | Planning        | Plan Mode (`Shift+Tab`)         | Structured deliberation with PRD artifacts, tradeoff review, approval gates |
 | Persistence     | Session handoff (local ↔ cloud) | Cross-session project memory, PRDs, test specs, archived sessions           |
-| Completion      | Single agent chat               | `/omc-forge` — persistent verify-fix loop that doesn't stop until done      |
-| Clarification   | Ad hoc                          | `/omc-deep-interview` — Socratic interview with ambiguity scoring           |
+| Completion      | Single agent chat               | `/omr-forge` — persistent verify-fix loop that doesn't stop until done      |
+| Clarification   | Ad hoc                          | `/omr-deep-interview` — Socratic interview with ambiguity scoring           |
 
-Think of OMC as **better task routing + durable context**, with a few opinionated workflows on top.
+Think of OMR as **better task routing + durable context**, with a few opinionated workflows on top.
 
 ## Skills reference
 
@@ -163,42 +163,47 @@ Type `/skills` in Cursor chat or run `omr skills` in the terminal to see all ins
 ### Core path
 
 
-| Skill                 | Trigger                    | Purpose                                                                |
-| --------------------- | -------------------------- | ---------------------------------------------------------------------- |
-| `/omc-deep-interview` | "clarify", "don't assume"  | Socratic interview to clarify scope                                    |
-| `/omc-blueprint`      | "plan this", "blueprint"   | Structured planning with tradeoff review (`--quick` for lighter tasks) |
-| `/omc-forge`          | "keep going", "don't stop" | Persistent completion loop                                             |
-| `/omc-cancel`         | "cancel", "stop"           | Clean cancellation of active modes                                     |
+| Skill                 | Trigger                            | Purpose                                                                |
+| --------------------- | ---------------------------------- | ---------------------------------------------------------------------- |
+| `/omr-deep-interview` | "clarify", "don't assume"          | Socratic interview to clarify scope                                    |
+| `/omr-blueprint`      | "plan this", "blueprint"           | Structured planning with tradeoff review (`--quick` for lighter tasks) |
+| `/omr-ralplan`        | "ralplan", "consensus plan"        | Planner→Architect→Critic loop + vague-execution gate                   |
+| `/omr-forge`          | "keep going", "don't stop"         | Persistent completion loop                                             |
+| `/omr-cancel`         | "cancel", "stop"                   | Clean cancellation of active modes                                     |
 
 
 ### Supporting tools
 
 
-| Skill              | Trigger                  | Purpose                                    |
-| ------------------ | ------------------------ | ------------------------------------------ |
-| `/omc-analyze`     | "analyze", "investigate" | Deep investigation and root cause analysis |
-| `/omc-code-review` | "review code"            | Structured code review                     |
-| `/omc-ecomode`     | "eco", "budget"          | Token-efficient mode                       |
+| Skill                  | Trigger                                  | Purpose                                                |
+| ---------------------- | ---------------------------------------- | ------------------------------------------------------ |
+| `/omr-analyze`         | "analyze", "investigate"                 | Deep investigation and root cause analysis             |
+| `/omr-code-review`     | "review code"                            | Structured code review                                 |
+| `/omr-ai-slop-cleaner` | "deslop", "cleanup", "refactor slop"     | Regression-safe AI slop cleanup workflow               |
+| `/omr-ask`             | "ask claude", "ask gemini", "second opinion" | External CLI second opinion with artifact capture  |
+| `/omr-ecomode`         | "eco", "budget"                          | Token-efficient mode                                   |
 
 
 ### Optional extras
 
 
-| Skill            | Trigger                    | Purpose                                        |
-| ---------------- | -------------------------- | ---------------------------------------------- |
-| `/omc-team`      | "team", "parallel"         | Work decomposition for independent lanes       |
-| `/omc-tdd`       | "tdd", "test first"       | Test-driven development cycle                  |
-| `/omc-dashboard` | "dashboard", "show status" | Live workflow dashboard (Canvas or web server) |
-| `/omc-schedule`  | "schedule", "watch"        | Periodic checks while a Cursor session is open |
-| `/omc-autopilot` | "build me", "autopilot"    | Full lifecycle: idea → spec → plan → build     |
-| `/omc-web-clone` | "clone site", "web-clone"  | Clone a website from URL                       |
+| Skill              | Trigger                          | Purpose                                                  |
+| ------------------ | -------------------------------- | -------------------------------------------------------- |
+| `/omr-team`        | "team", "parallel"               | Work decomposition for independent lanes                 |
+| `/omr-tdd`         | "tdd", "test first"              | Test-driven development cycle                            |
+| `/omr-git-master`  | "split commits", "rebase", "git" | Atomic commits, style-matched messages, safe history ops |
+| `/omr-wiki`        | "wiki add", "wiki query"         | Persistent project knowledge base under `.omr/wiki/`     |
+| `/omr-dashboard`   | "dashboard", "show status"       | Live workflow dashboard (Canvas or web server)           |
+| `/omr-schedule`    | "schedule", "watch"              | Periodic checks while a Cursor session is open           |
+| `/omr-autopilot`   | "build me", "autopilot"          | Full lifecycle: idea → spec → plan → build               |
+| `/omr-web-clone`   | "clone site", "web-clone"        | Clone a website from URL                                 |
 
 
-> **Compatibility note**: if you previously used `/plan`, use `/omc-blueprint --quick` for the same lightweight planning intent.
+> **Compatibility note**: if you previously used `/plan`, use `/omr-blueprint --quick` for the same lightweight planning intent.
 
 ## Roles
 
-OMC ships 20 role prompts that define agent "personalities" — each with a focused identity, constraints, execution loop, and output contract. The prompt pack is useful depth, but it is not the core product story.
+OMR ships 20 role prompts that define agent "personalities" — each with a focused identity, constraints, execution loop, and output contract. The prompt pack is useful depth, but it is not the core product story.
 
 ### Core roles
 
@@ -234,18 +239,18 @@ OMC ships 20 role prompts that define agent "personalities" — each with a focu
 | `code-simplifier`      | deep-worker | Simplify: reduce complexity, remove duplication, preserve behavior     |
 
 
-### Using roles with `/omc-team`
+### Using roles with `/omr-team`
 
 ```text
-/omc-team "implement the three API endpoints" (assigns executor roles by default)
-/omc-team "audit the payment module" (auto-routes to security-reviewer)
+/omr-team "implement the three API endpoints" (assigns executor roles by default)
+/omr-team "audit the payment module" (auto-routes to security-reviewer)
 ```
 
-Each role prompt is a markdown file with `<identity>`, `<constraints>`, `<execution_loop>`, and `<output_contract>` sections. The `/omc-team` skill reads the prompt, appends the shared [`_team-protocol.md`](prompts/_team-protocol.md) partial (so the lane posts claim / progress / handoff / release events to the blackboard), and includes it in the lane brief.
+Each role prompt is a markdown file with `<identity>`, `<constraints>`, `<execution_loop>`, and `<output_contract>` sections. The `/omr-team` skill reads the prompt, appends the shared [`_team-protocol.md`](prompts/_team-protocol.md) partial (so the lane posts claim / progress / handoff / release events to the blackboard), and includes it in the lane brief.
 
 ### Team chatter in the chat session
 
-When `/omc-team` dispatches multiple lanes, the leader echoes every new blackboard post back into the main chat composer as two rendered blocks — a compact lane status table and a running chatter log — so a session feels like the oh-my-codex tmux panes even without leaving Cursor:
+When `/omr-team` dispatches multiple lanes, the leader echoes every new blackboard post back into the main chat composer as two rendered blocks — a compact lane status table and a running chatter log — so a session feels like the oh-my-codex tmux panes even without leaving Cursor:
 
 ```text
 | Lane | Role          | State    | Last update              |
@@ -264,7 +269,7 @@ Under the hood:
 
 - Lanes post to the shared blackboard via the `blackboard_post` MCP tool (with `lane` + `role` set).
 - The leader polls `blackboard_tail(cursor)` for incremental updates and re-renders the two blocks in chat.
-- At the end of the run the leader calls `team_transcript_write` to save the full log to `.omc/state/team/<runId>-transcript.md`.
+- At the end of the run the leader calls `team_transcript_write` to save the full log to `.omr/state/team/<runId>-transcript.md`.
 - For a side-terminal view (closest to tmux panes), run `omr team watch --run <runId>` while the leader runs in chat.
 
 ### Role routing
@@ -298,7 +303,7 @@ When no role is specified, keywords in the task description route to the appropr
 
 ## Optional extras
 
-OMC includes optional extras for users who want more runtime surface area, but they are intentionally secondary to the core workflow-and-context story.
+OMR includes optional extras for users who want more runtime surface area, but they are intentionally secondary to the core workflow-and-context story.
 
 ### Dashboard
 
@@ -317,7 +322,7 @@ The dashboard shows:
 
 State updates are pushed via SSE — no manual refresh needed.
 
-You can also invoke `/omc-dashboard` inside Cursor to render the dashboard as an inline Canvas.
+You can also invoke `/omr-dashboard` inside Cursor to render the dashboard as an inline Canvas.
 
 ## CLI reference
 
@@ -326,7 +331,7 @@ omr setup [--scope user|project] [--force]    # Install workflows and durable co
 omr doctor [--scope user|project] [--verbose] # Verify installation health
 omr status                                    # Show active mode and durable context state
 omr skills                                    # List core workflows and optional extras
-omr archive                                   # Archive session → .omc/archive/
+omr archive                                   # Archive session → .omr/archive/
 omr archives                                  # List archived sessions
 
 # Optional extras
@@ -356,27 +361,27 @@ Run `omr help` for the full command list and notify options.
 
 ### Notifications (optional)
 
-OMC can post to a [Slack Incoming Webhook](https://api.slack.com/messaging/webhooks) when **forge** workflow state is saved through the OMC state API (including MCP `state_write` for mode `forge`). Configure `OMC_SLACK_WEBHOOK_URL`, `OMC_FORGE_SLACK_WEBHOOK_URL`, or `notifications.slack_webhook_url` in `.omc/omc-config.json`.
+OMR can post to a [Slack Incoming Webhook](https://api.slack.com/messaging/webhooks) when **forge** workflow state is saved through the OMR state API (including MCP `state_write` for mode `forge`). Configure `OMR_SLACK_WEBHOOK_URL`, `OMR_FORGE_SLACK_WEBHOOK_URL`, or `notifications.slack_webhook_url` in `.omr/omr-config.json`.
 
-**Other modes** (`deep-interview`, `blueprint`, `team`, etc.) **do not** trigger that automatic webhook. To send a manual message or a snapshot of current forge state, use `omr notify slack` or `omr notify forge`. See `skills/omc-forge/SKILL.md` for details.
+**Other modes** (`deep-interview`, `blueprint`, `team`, etc.) **do not** trigger that automatic webhook. To send a manual message or a snapshot of current forge state, use `omr notify slack` or `omr notify forge`. See `skills/omr-forge/SKILL.md` for details.
 
-OMC also supports a built-in notification feed for non-Slack workflows such as
+OMR also supports a built-in notification feed for non-Slack workflows such as
 scheduled checks. Use `omr notify emit` to create a durable dashboard entry and,
 by default, a macOS desktop notification at the same time.
 
 For user-scoped scheduled tasks, pass `--scope user` so the durable
-notification log lives under the same user-scoped OMC runtime root as the task
+notification log lives under the same user-scoped OMR runtime root as the task
 state.
 
 ### Schedule lifecycle helpers
 
-OMC keeps scheduling generic. Use `omr schedule list`, `cancel`, `resume`, and
+OMR keeps scheduling generic. Use `omr schedule list`, `cancel`, `resume`, and
 `run-now` to inspect or adjust scheduled task state. The primary user workflow
-still lives in `/omc-schedule`, while the CLI stays a thin lifecycle surface.
+still lives in `/omr-schedule`, while the CLI stays a thin lifecycle surface.
 
 For global, cross-project tasks, use `--scope user`. User-scoped schedule state
 and resume markers live under `~/.cursor/omr/`, while project-scoped runtime
-state continues to live under the current repo's `.omc/`.
+state continues to live under the current repo's `.omr/`.
 
 The built-in RSS watcher is intentionally thin:
 
@@ -388,18 +393,18 @@ omr schedule add-rss --scope user \
 ```
 
 This registers the task, requests an immediate baseline run, and lets the
-schedule worker continue polling while the current OMC session remains active.
+schedule worker continue polling while the current OMR session remains active.
 
-Downstream products that previously depended on monitor-specific OMC commands
+Downstream products that previously depended on monitor-specific OMR commands
 should migrate to generic schedule state plus `omr notify emit`. Any
-domain-specific monitor UI belongs downstream, not in OMC core.
+domain-specific monitor UI belongs downstream, not in OMR core.
 
 ## State management
 
-All runtime state lives under `.omc/` in the project root:
+All runtime state lives under `.omr/` in the project root:
 
 ```
-.omc/
+.omr/
 ├── state/           # Mode state files (forge, team, etc.)
 ├── plans/           # PRDs and test specs from planning
 ├── logs/            # Session logs
@@ -411,29 +416,29 @@ All runtime state lives under `.omc/` in the project root:
 
 ### MCP servers
 
-OMC registers two MCP servers in Cursor:
+OMR registers two MCP servers in Cursor:
 
-- **omc-state** — read/write `.omc/` state, plans, and notepad
-- **omc-memory** — cross-session project memory (key-value store)
+- **omr-state** — read/write `.omr/` state, plans, and notepad
+- **omr-memory** — cross-session project memory (key-value store)
 
-These are implementation helpers for persistence. They are useful, but they are not the main reason to adopt OMC.
+These are implementation helpers for persistence. They are useful, but they are not the main reason to adopt OMR.
 
 ### Hooks
 
-OMC registers Cursor lifecycle hooks for automatic state management:
+OMR registers Cursor lifecycle hooks for automatic state management:
 
 
 | Hook                | Event          | Purpose                                             |
 | ------------------- | -------------- | --------------------------------------------------- |
-| `session-start.mjs` | `sessionStart` | Ensures `.omc/` dirs exist, creates/updates session |
+| `session-start.mjs` | `sessionStart` | Ensures `.omr/` dirs exist, creates/updates session |
 | `session-end.mjs`   | `stop`         | Archives completed runs, marks session ended        |
 
 
-Hooks are installed to `~/.cursor/hooks/omc/` (user scope) or `.cursor/hooks/omc/` (project scope) and registered in `hooks.json`. They run automatically on agent lifecycle events — no manual invocation needed.
+Hooks are installed to `~/.cursor/hooks/omr/` (user scope) or `.cursor/hooks/omr/` (project scope) and registered in `hooks.json`. They run automatically on agent lifecycle events — no manual invocation needed.
 
 ## Compared to oh-my-codex
 
-OMC is inspired by [oh-my-codex (OMX)](https://github.com/Yeachan-Heo/oh-my-codex) and shares the same workflow philosophy. Key differences:
+OMR is inspired by [oh-my-codex (OMX)](https://github.com/Yeachan-Heo/oh-my-codex) and shares the same workflow philosophy. Key differences:
 
 
 |               | oh-my-codex                  | oh-my-cursor                                         |
@@ -443,7 +448,7 @@ OMC is inspired by [oh-my-codex (OMX)](https://github.com/Yeachan-Heo/oh-my-code
 | Team mode     | tmux sessions                | Agents Window + Task tool (role-based decomposition) |
 | Skills format | `.codex/skills/`             | `.cursor/skills/` (native)                           |
 | Role prompts  | 33 TOML-generated prompts    | 20 markdown prompts with XML sections                |
-| State         | `.omx/`                      | `.omc/`                                              |
+| State         | `.omx/`                      | `.omr/`                                              |
 | Install       | `npm install -g oh-my-codex` | `npm install -g oh-my-cursor`                        |
 
 

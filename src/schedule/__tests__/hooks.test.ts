@@ -17,10 +17,10 @@ describe("schedule hooks", () => {
   let userRoot: string;
 
   beforeEach(() => {
-    projectRoot = makeTmpDir("omc-hook-project");
-    userRoot = makeTmpDir("omc-hook-user");
-    mkdirSync(join(projectRoot, ".omc", "state"), { recursive: true });
-    mkdirSync(join(projectRoot, ".omc", "logs"), { recursive: true });
+    projectRoot = makeTmpDir("omr-hook-project");
+    userRoot = makeTmpDir("omr-hook-user");
+    mkdirSync(join(projectRoot, ".omr", "state"), { recursive: true });
+    mkdirSync(join(projectRoot, ".omr", "logs"), { recursive: true });
     mkdirSync(join(userRoot, "state"), { recursive: true });
   });
 
@@ -30,7 +30,7 @@ describe("schedule hooks", () => {
   });
 
   it("session-end suspends running project and user schedule tasks", () => {
-    writeFileSync(join(projectRoot, ".omc", "state", "schedule-state.json"), JSON.stringify({
+    writeFileSync(join(projectRoot, ".omr", "state", "schedule-state.json"), JSON.stringify({
       mode: "schedule",
       status: "active",
       tasks: [
@@ -49,13 +49,13 @@ describe("schedule hooks", () => {
       input: JSON.stringify({ type: "stop" }),
       env: {
         ...process.env,
-        OMC_PROJECT_ROOT: projectRoot,
-        OMC_USER_OMC_ROOT: userRoot,
+        OMR_PROJECT_ROOT: projectRoot,
+        OMR_USER_DATA_ROOT: userRoot,
       },
       encoding: "utf-8",
     });
 
-    const projectState = JSON.parse(readFileSync(join(projectRoot, ".omc", "state", "schedule-state.json"), "utf-8"));
+    const projectState = JSON.parse(readFileSync(join(projectRoot, ".omr", "state", "schedule-state.json"), "utf-8"));
     const userState = JSON.parse(readFileSync(join(userRoot, "state", "schedule-state.json"), "utf-8"));
     assert.equal(projectState.tasks[0].state, "suspended");
     assert.equal(projectState.tasks[0].next_run_at, null);
@@ -64,7 +64,7 @@ describe("schedule hooks", () => {
   });
 
   it("session-start writes resume-pending markers for suspended tasks", () => {
-    writeFileSync(join(projectRoot, ".omc", "state", "schedule-state.json"), JSON.stringify({
+    writeFileSync(join(projectRoot, ".omr", "state", "schedule-state.json"), JSON.stringify({
       mode: "schedule",
       status: "active",
       tasks: [
@@ -83,15 +83,15 @@ describe("schedule hooks", () => {
       input: JSON.stringify({ type: "sessionStart" }),
       env: {
         ...process.env,
-        OMC_PROJECT_ROOT: projectRoot,
-        OMC_USER_OMC_ROOT: userRoot,
+        OMR_PROJECT_ROOT: projectRoot,
+        OMR_USER_DATA_ROOT: userRoot,
       },
       encoding: "utf-8",
     });
 
-    assert.equal(existsSync(join(projectRoot, ".omc", "state", "schedule-resume-pending.json")), true);
+    assert.equal(existsSync(join(projectRoot, ".omr", "state", "schedule-resume-pending.json")), true);
     assert.equal(existsSync(join(userRoot, "state", "schedule-resume-pending.json")), true);
-    const projectPending = JSON.parse(readFileSync(join(projectRoot, ".omc", "state", "schedule-resume-pending.json"), "utf-8"));
+    const projectPending = JSON.parse(readFileSync(join(projectRoot, ".omr", "state", "schedule-resume-pending.json"), "utf-8"));
     const userPending = JSON.parse(readFileSync(join(userRoot, "state", "schedule-resume-pending.json"), "utf-8"));
     assert.equal(projectPending.tasks[0].id, "project-task");
     assert.equal(userPending.tasks[0].id, "user-task");

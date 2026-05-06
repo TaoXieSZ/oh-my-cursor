@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-// OMC session-end hook
+// OMR session-end hook
 // Archives completed runs, updates session state, and suspends running
 // schedule tasks when the agent stops.
 // Receives: { type: "stop" | "sessionEnd" } on stdin
@@ -10,11 +10,11 @@ import { existsSync, readFileSync, readdirSync, mkdirSync, renameSync, unlinkSyn
 import { join } from "node:path";
 import { homedir } from "node:os";
 
-const projectRoot = process.env.OMC_PROJECT_ROOT || process.cwd();
-const omcDir = join(projectRoot, ".omc");
+const projectRoot = process.env.OMR_PROJECT_ROOT || process.cwd();
+const omcDir = join(projectRoot, ".omr");
 const stateDir = join(omcDir, "state");
 const archiveDir = join(omcDir, "archive");
-const userOmcDir = process.env.OMC_USER_OMC_ROOT || join(homedir(), ".cursor", "omr");
+const userOmrDir = process.env.OMR_USER_DATA_ROOT || join(homedir(), ".cursor", "omr");
 
 function archiveCompletedRuns() {
   if (!existsSync(stateDir)) return;
@@ -123,7 +123,7 @@ async function main() {
     archiveCompletedRuns();
     updateSession();
     suspendRunningScheduleTasks(omcDir);
-    suspendRunningScheduleTasks(userOmcDir);
+    suspendRunningScheduleTasks(userOmrDir);
   } catch {
     // non-fatal — don't block agent teardown
   }

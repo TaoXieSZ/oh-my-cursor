@@ -18,8 +18,8 @@ import {
 import type { ModeState } from "../mode-state.js";
 
 function makeTmpProject(): string {
-  const dir = join(tmpdir(), `omc-test-${randomUUID()}`);
-  mkdirSync(join(dir, ".omc", "state"), { recursive: true });
+  const dir = join(tmpdir(), `omr-test-${randomUUID()}`);
+  mkdirSync(join(dir, ".omr", "state"), { recursive: true });
   return dir;
 }
 
@@ -52,19 +52,19 @@ describe("parseStateFilename", () => {
 
 describe("mode-state", () => {
   let projectRoot: string;
-  const origEnv = process.env["OMC_PROJECT_ROOT"];
+  const origEnv = process.env["OMR_PROJECT_ROOT"];
 
   beforeEach(() => {
     projectRoot = makeTmpProject();
-    process.env["OMC_PROJECT_ROOT"] = projectRoot;
+    process.env["OMR_PROJECT_ROOT"] = projectRoot;
   });
 
   afterEach(() => {
     rmSync(projectRoot, { recursive: true, force: true });
     if (origEnv === undefined) {
-      delete process.env["OMC_PROJECT_ROOT"];
+      delete process.env["OMR_PROJECT_ROOT"];
     } else {
-      process.env["OMC_PROJECT_ROOT"] = origEnv;
+      process.env["OMR_PROJECT_ROOT"] = origEnv;
     }
   });
 
@@ -74,13 +74,13 @@ describe("mode-state", () => {
     });
 
     it("returns null for corrupt JSON (legacy file)", () => {
-      const path = join(projectRoot, ".omc", "state", "forge-state.json");
+      const path = join(projectRoot, ".omr", "state", "forge-state.json");
       writeFileSync(path, "not json");
       assert.equal(readModeState("forge"), null);
     });
 
     it("reads legacy state file by mode name", () => {
-      const path = join(projectRoot, ".omc", "state", "forge-state.json");
+      const path = join(projectRoot, ".omr", "state", "forge-state.json");
       writeFileSync(path, JSON.stringify({ mode: "forge", status: "active", started_at: "2026-01-01T00:00:00Z" }));
       const state = readModeState("forge");
       assert.ok(state);
@@ -88,7 +88,7 @@ describe("mode-state", () => {
     });
 
     it("reads run-scoped file by runId", () => {
-      const path = join(projectRoot, ".omc", "state", "forge-a1b2c3d4-state.json");
+      const path = join(projectRoot, ".omr", "state", "forge-a1b2c3d4-state.json");
       writeFileSync(path, JSON.stringify({ mode: "forge", runId: "a1b2c3d4", status: "active", started_at: "2026-01-01T00:00:00Z" }));
       const state = readModeState("forge", "a1b2c3d4");
       assert.ok(state);
@@ -96,7 +96,7 @@ describe("mode-state", () => {
     });
 
     it("scan returns active run over completed when no runId specified", () => {
-      const stateDir = join(projectRoot, ".omc", "state");
+      const stateDir = join(projectRoot, ".omr", "state");
       writeFileSync(join(stateDir, "forge-aaaa1111-state.json"), JSON.stringify({
         mode: "forge", runId: "aaaa1111", status: "complete", started_at: "2026-01-02T00:00:00Z",
       }));
@@ -130,7 +130,7 @@ describe("mode-state", () => {
         started_at: "2026-01-01T00:00:00Z", status: "active",
       };
       writeModeState("forge", state);
-      assert.ok(existsSync(join(projectRoot, ".omc", "state", "forge-abcd1234-state.json")));
+      assert.ok(existsSync(join(projectRoot, ".omr", "state", "forge-abcd1234-state.json")));
     });
 
     it("writes to legacy file when no runId", () => {
@@ -139,7 +139,7 @@ describe("mode-state", () => {
         started_at: "2026-01-01T00:00:00Z", status: "active",
       };
       writeModeState("forge", state);
-      assert.ok(existsSync(join(projectRoot, ".omc", "state", "forge-state.json")));
+      assert.ok(existsSync(join(projectRoot, ".omr", "state", "forge-state.json")));
     });
   });
 
@@ -163,7 +163,7 @@ describe("mode-state", () => {
 
     it("writes to run-scoped file", () => {
       const state = startMode("forge", "task");
-      const expected = join(projectRoot, ".omc", "state", `forge-${state.runId}-state.json`);
+      const expected = join(projectRoot, ".omr", "state", `forge-${state.runId}-state.json`);
       assert.ok(existsSync(expected));
     });
 
@@ -245,7 +245,7 @@ describe("mode-state", () => {
 
   describe("listActiveModes", () => {
     it("returns empty array when no state dir", () => {
-      rmSync(join(projectRoot, ".omc", "state"), { recursive: true, force: true });
+      rmSync(join(projectRoot, ".omr", "state"), { recursive: true, force: true });
       assert.deepEqual(listActiveModes(), []);
     });
 
@@ -269,7 +269,7 @@ describe("mode-state", () => {
 
     it("skips corrupt state files", () => {
       startMode("forge", "task");
-      writeFileSync(join(projectRoot, ".omc", "state", "bad-a1b2c3d4-state.json"), "{invalid");
+      writeFileSync(join(projectRoot, ".omr", "state", "bad-a1b2c3d4-state.json"), "{invalid");
       const active = listActiveModes();
       assert.equal(active.length, 1);
     });

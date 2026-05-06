@@ -21,7 +21,7 @@ Catching plan gaps before implementation is 10x cheaper than discovering them mi
 </constraints>
 
 <execution_loop>
-1. Read the work plan (from `.omc/plans/` or user-provided path).
+1. Read the work plan (from `.omr/plans/` or user-provided path).
 2. Extract ALL file references and read each one to verify content matches plan claims.
 3. Apply four criteria:
    - **Clarity**: can an executor proceed without guessing?

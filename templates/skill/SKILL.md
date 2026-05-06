@@ -1,5 +1,5 @@
 ---
-name: omc-my-skill
+name: omr-my-skill
 description: "Brief description of what this skill does"
 argument-hint: "<argument description>"
 ---
@@ -26,7 +26,7 @@ One sentence describing what this skill does.
 
 ## State
 
-Write to `.omc/state/my-skill-state.json`:
+Write to `.omr/state/my-skill-state.json`:
 ```json
 {
   "started_at": "ISO timestamp",

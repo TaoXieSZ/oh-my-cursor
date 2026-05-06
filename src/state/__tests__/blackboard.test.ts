@@ -18,16 +18,16 @@ describe("blackboard", () => {
   let origEnv: string | undefined;
 
   beforeEach(() => {
-    tempDir = mkdtempSync(join(tmpdir(), "omc-bb-test-"));
-    origEnv = process.env["OMC_PROJECT_ROOT"];
-    process.env["OMC_PROJECT_ROOT"] = tempDir;
+    tempDir = mkdtempSync(join(tmpdir(), "omr-bb-test-"));
+    origEnv = process.env["OMR_PROJECT_ROOT"];
+    process.env["OMR_PROJECT_ROOT"] = tempDir;
   });
 
   afterEach(() => {
     if (origEnv === undefined) {
-      delete process.env["OMC_PROJECT_ROOT"];
+      delete process.env["OMR_PROJECT_ROOT"];
     } else {
-      process.env["OMC_PROJECT_ROOT"] = origEnv;
+      process.env["OMR_PROJECT_ROOT"] = origEnv;
     }
     try {
       rmSync(tempDir, { recursive: true });

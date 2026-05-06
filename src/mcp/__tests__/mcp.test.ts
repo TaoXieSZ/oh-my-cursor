@@ -16,11 +16,11 @@ const STATE_SERVER = join(import.meta.dirname, "..", "state-server.js");
 const MEMORY_SERVER = join(import.meta.dirname, "..", "memory-server.js");
 
 function makeTmpProject(): string {
-  const dir = join(tmpdir(), `omc-mcp-test-${randomUUID()}`);
-  mkdirSync(join(dir, ".omc", "state"), { recursive: true });
-  mkdirSync(join(dir, ".omc", "plans"), { recursive: true });
-  writeFileSync(join(dir, ".omc", "notepad.md"), "# Test Notepad\n");
-  writeFileSync(join(dir, ".omc", "project-memory.json"), "{}\n");
+  const dir = join(tmpdir(), `omr-mcp-test-${randomUUID()}`);
+  mkdirSync(join(dir, ".omr", "state"), { recursive: true });
+  mkdirSync(join(dir, ".omr", "plans"), { recursive: true });
+  writeFileSync(join(dir, ".omr", "notepad.md"), "# Test Notepad\n");
+  writeFileSync(join(dir, ".omr", "project-memory.json"), "{}\n");
   return dir;
 }
 
@@ -28,14 +28,14 @@ async function createClient(serverPath: string, projectRoot: string) {
   const transport = new StdioClientTransport({
     command: "node",
     args: [serverPath],
-    env: { ...process.env, OMC_PROJECT_ROOT: projectRoot },
+    env: { ...process.env, OMR_PROJECT_ROOT: projectRoot },
   });
   const client = new Client({ name: "test", version: "0.1.0" }, { capabilities: {} });
   await client.connect(transport);
   return client;
 }
 
-describe("omc-state MCP server", () => {
+describe("omr-state MCP server", () => {
   let tmp: string;
   let client: any;
 
@@ -314,7 +314,7 @@ describe("omc-state MCP server", () => {
   });
 });
 
-describe("omc-memory MCP server", () => {
+describe("omr-memory MCP server", () => {
   let tmp: string;
   let client: any;
 
@@ -387,7 +387,7 @@ describe("omc-memory MCP server", () => {
   it("memory_set with runId populates index", async () => {
     await client.callTool({ name: "memory_set", arguments: { key: "tracked", value: "val1", runId: "run-abc", mode: "forge" } });
 
-    const indexPath = join(tmp, ".omc", "memory-index.json");
+    const indexPath = join(tmp, ".omr", "memory-index.json");
     assert.ok(existsSync(indexPath), "memory-index.json should exist");
     const index = JSON.parse(readFileSync(indexPath, "utf-8"));
     assert.ok(index["tracked"], "key 'tracked' should be in index");
@@ -399,7 +399,7 @@ describe("omc-memory MCP server", () => {
   it("memory_set without runId records null runId", async () => {
     await client.callTool({ name: "memory_set", arguments: { key: "anon", value: 42 } });
 
-    const indexPath = join(tmp, ".omc", "memory-index.json");
+    const indexPath = join(tmp, ".omr", "memory-index.json");
     assert.ok(existsSync(indexPath));
     const index = JSON.parse(readFileSync(indexPath, "utf-8"));
     assert.equal(index["anon"][0].runId, null);
@@ -409,7 +409,7 @@ describe("omc-memory MCP server", () => {
     await client.callTool({ name: "memory_set", arguments: { key: "temp", value: "x" } });
     await client.callTool({ name: "memory_delete", arguments: { key: "temp", runId: "run-del" } });
 
-    const indexPath = join(tmp, ".omc", "memory-index.json");
+    const indexPath = join(tmp, ".omr", "memory-index.json");
     const index = JSON.parse(readFileSync(indexPath, "utf-8"));
     assert.equal(index["temp"].length, 2);
     assert.equal(index["temp"][1].action, "delete");

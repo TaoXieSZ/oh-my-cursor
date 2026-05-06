@@ -16,32 +16,32 @@ function makeTmpDir(prefix: string): string {
 
 describe("rss schedule runtime", () => {
   const originalFetch = globalThis.fetch;
-  const origProjectRoot = process.env["OMC_PROJECT_ROOT"];
-  const origUserRoot = process.env["OMC_USER_OMC_ROOT"];
-  const origDesktopNotify = process.env["OMC_DESKTOP_NOTIFY_COMMAND"];
+  const origProjectRoot = process.env["OMR_PROJECT_ROOT"];
+  const origUserRoot = process.env["OMR_USER_DATA_ROOT"];
+  const origDesktopNotify = process.env["OMR_DESKTOP_NOTIFY_COMMAND"];
   let projectRoot: string;
   let userRoot: string;
 
   beforeEach(() => {
-    projectRoot = makeTmpDir("omc-rss-project");
-    userRoot = makeTmpDir("omc-rss-user");
-    mkdirSync(join(projectRoot, ".omc", "state"), { recursive: true });
+    projectRoot = makeTmpDir("omr-rss-project");
+    userRoot = makeTmpDir("omr-rss-user");
+    mkdirSync(join(projectRoot, ".omr", "state"), { recursive: true });
     mkdirSync(join(userRoot, "state"), { recursive: true });
-    process.env["OMC_PROJECT_ROOT"] = projectRoot;
-    process.env["OMC_USER_OMC_ROOT"] = userRoot;
-    process.env["OMC_DESKTOP_NOTIFY_COMMAND"] = "true";
+    process.env["OMR_PROJECT_ROOT"] = projectRoot;
+    process.env["OMR_USER_DATA_ROOT"] = userRoot;
+    process.env["OMR_DESKTOP_NOTIFY_COMMAND"] = "true";
   });
 
   afterEach(() => {
     globalThis.fetch = originalFetch;
     rmSync(projectRoot, { recursive: true, force: true });
     rmSync(userRoot, { recursive: true, force: true });
-    if (origProjectRoot === undefined) delete process.env["OMC_PROJECT_ROOT"];
-    else process.env["OMC_PROJECT_ROOT"] = origProjectRoot;
-    if (origUserRoot === undefined) delete process.env["OMC_USER_OMC_ROOT"];
-    else process.env["OMC_USER_OMC_ROOT"] = origUserRoot;
-    if (origDesktopNotify === undefined) delete process.env["OMC_DESKTOP_NOTIFY_COMMAND"];
-    else process.env["OMC_DESKTOP_NOTIFY_COMMAND"] = origDesktopNotify;
+    if (origProjectRoot === undefined) delete process.env["OMR_PROJECT_ROOT"];
+    else process.env["OMR_PROJECT_ROOT"] = origProjectRoot;
+    if (origUserRoot === undefined) delete process.env["OMR_USER_DATA_ROOT"];
+    else process.env["OMR_USER_DATA_ROOT"] = origUserRoot;
+    if (origDesktopNotify === undefined) delete process.env["OMR_DESKTOP_NOTIFY_COMMAND"];
+    else process.env["OMR_DESKTOP_NOTIFY_COMMAND"] = origDesktopNotify;
   });
 
   it("parses RSS items and prefers guid then link then title hash", () => {

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * MCP server for OMC cross-session project memory.
+ * MCP server for OMR cross-session project memory.
  * Provides tools to read/write persistent key-value memory.
  */
 
@@ -18,7 +18,7 @@ import { getProjectMemoryPath } from "../state/paths.js";
 import { appendMemoryIndex } from "../state/memory-index.js";
 
 const server = new Server(
-  { name: "omc-memory", version: "0.1.0" },
+  { name: "omr-memory", version: "0.1.0" },
   { capabilities: { tools: {} } }
 );
 

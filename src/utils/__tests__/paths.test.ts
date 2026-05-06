@@ -7,14 +7,14 @@ import {
   cursorRulesDir,
   cursorSkillsDir,
   cursorMcpConfigPath,
-  omcUserDataDir,
-  omcStateDir,
-  omcPlansDir,
-  omcLogsDir,
-  omcStatePath,
-  omcSetupScopePath,
-  omcProjectMemoryPath,
-  omcNotepadPath,
+  omrUserDataDir,
+  omrStateDir,
+  omrPlansDir,
+  omrLogsDir,
+  omrStatePath,
+  omrSetupScopePath,
+  omrProjectMemoryPath,
+  omrNotepadPath,
   packageRoot,
   packageRulesDir,
   packageSkillsDir,
@@ -56,63 +56,63 @@ describe("cursorMcpConfigPath", () => {
   });
 });
 
-describe("omc paths are rooted at cwd", () => {
+describe("omr paths are rooted at cwd", () => {
   const cwd = process.cwd();
 
-  it("omcUserDataDir", () => {
-    assert.equal(omcUserDataDir(), join(homedir(), ".cursor", "omr"));
+  it("omrUserDataDir", () => {
+    assert.equal(omrUserDataDir(), join(homedir(), ".cursor", "omr"));
   });
 
-  it("omcStateDir", () => {
-    assert.equal(omcStateDir(), join(cwd, ".omc"));
+  it("omrStateDir", () => {
+    assert.equal(omrStateDir(), join(cwd, ".omr"));
   });
 
-  it("omcStateDir user scope", () => {
-    assert.equal(omcStateDir("user"), join(homedir(), ".cursor", "omr"));
+  it("omrStateDir user scope", () => {
+    assert.equal(omrStateDir("user"), join(homedir(), ".cursor", "omr"));
   });
 
-  it("omcPlansDir", () => {
-    assert.equal(omcPlansDir(), join(cwd, ".omc", "plans"));
+  it("omrPlansDir", () => {
+    assert.equal(omrPlansDir(), join(cwd, ".omr", "plans"));
   });
 
-  it("omcPlansDir user scope", () => {
-    assert.equal(omcPlansDir("user"), join(homedir(), ".cursor", "omr", "plans"));
+  it("omrPlansDir user scope", () => {
+    assert.equal(omrPlansDir("user"), join(homedir(), ".cursor", "omr", "plans"));
   });
 
-  it("omcLogsDir", () => {
-    assert.equal(omcLogsDir(), join(cwd, ".omc", "logs"));
+  it("omrLogsDir", () => {
+    assert.equal(omrLogsDir(), join(cwd, ".omr", "logs"));
   });
 
-  it("omcLogsDir user scope", () => {
-    assert.equal(omcLogsDir("user"), join(homedir(), ".cursor", "omr", "logs"));
+  it("omrLogsDir user scope", () => {
+    assert.equal(omrLogsDir("user"), join(homedir(), ".cursor", "omr", "logs"));
   });
 
-  it("omcStatePath", () => {
-    assert.equal(omcStatePath(), join(cwd, ".omc", "state"));
+  it("omrStatePath", () => {
+    assert.equal(omrStatePath(), join(cwd, ".omr", "state"));
   });
 
-  it("omcStatePath user scope", () => {
-    assert.equal(omcStatePath("user"), join(homedir(), ".cursor", "omr", "state"));
+  it("omrStatePath user scope", () => {
+    assert.equal(omrStatePath("user"), join(homedir(), ".cursor", "omr", "state"));
   });
 
-  it("omcSetupScopePath", () => {
-    assert.equal(omcSetupScopePath(), join(cwd, ".omc", "setup-scope.json"));
+  it("omrSetupScopePath", () => {
+    assert.equal(omrSetupScopePath(), join(cwd, ".omr", "setup-scope.json"));
   });
 
-  it("omcProjectMemoryPath", () => {
-    assert.equal(omcProjectMemoryPath(), join(cwd, ".omc", "project-memory.json"));
+  it("omrProjectMemoryPath", () => {
+    assert.equal(omrProjectMemoryPath(), join(cwd, ".omr", "project-memory.json"));
   });
 
-  it("omcProjectMemoryPath user scope", () => {
-    assert.equal(omcProjectMemoryPath("user"), join(homedir(), ".cursor", "omr", "project-memory.json"));
+  it("omrProjectMemoryPath user scope", () => {
+    assert.equal(omrProjectMemoryPath("user"), join(homedir(), ".cursor", "omr", "project-memory.json"));
   });
 
-  it("omcNotepadPath", () => {
-    assert.equal(omcNotepadPath(), join(cwd, ".omc", "notepad.md"));
+  it("omrNotepadPath", () => {
+    assert.equal(omrNotepadPath(), join(cwd, ".omr", "notepad.md"));
   });
 
-  it("omcNotepadPath user scope", () => {
-    assert.equal(omcNotepadPath("user"), join(homedir(), ".cursor", "omr", "notepad.md"));
+  it("omrNotepadPath user scope", () => {
+    assert.equal(omrNotepadPath("user"), join(homedir(), ".cursor", "omr", "notepad.md"));
   });
 });
 

@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { appendFileSync, existsSync, readFileSync } from "node:fs";
 import { dirname } from "node:path";
-import { getScopedNotificationLogPath, type OmcStateScope } from "../state/paths.js";
+import { getScopedNotificationLogPath, type OmrStateScope } from "../state/paths.js";
 import { ensureDir } from "../utils/fs.js";
 
 export type NotificationStatus = "ok" | "warn" | "error" | "info";
@@ -54,19 +54,19 @@ export function createNotificationEvent(input: CreateNotificationInput): Notific
   };
 }
 
-export function appendNotification(event: NotificationEvent, scope: OmcStateScope = "project"): void {
+export function appendNotification(event: NotificationEvent, scope: OmrStateScope = "project"): void {
   const path = getScopedNotificationLogPath(scope);
   ensureDir(dirname(path));
   appendFileSync(path, JSON.stringify(event) + "\n");
 }
 
-export function readNotifications(scope: OmcStateScope = "project"): NotificationEvent[] {
+export function readNotifications(scope: OmrStateScope = "project"): NotificationEvent[] {
   const path = getScopedNotificationLogPath(scope);
   if (!existsSync(path)) return [];
   return parseNotificationJsonl(readFileSync(path, "utf-8"));
 }
 
-export function tailNotifications(n: number = 20, scope: OmcStateScope = "project"): NotificationEvent[] {
+export function tailNotifications(n: number = 20, scope: OmrStateScope = "project"): NotificationEvent[] {
   const all = readNotifications(scope);
   return all.slice(-n).reverse();
 }

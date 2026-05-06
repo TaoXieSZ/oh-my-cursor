@@ -7,7 +7,7 @@ import { randomUUID } from "node:crypto";
 import { ensureDir, copyDir, copyFile } from "../fs.js";
 
 function makeTmpDir(): string {
-  const dir = join(tmpdir(), `omc-test-${randomUUID()}`);
+  const dir = join(tmpdir(), `omr-test-${randomUUID()}`);
   mkdirSync(dir, { recursive: true });
   return dir;
 }
@@ -35,7 +35,7 @@ describe("copyDir", () => {
   let dest: string;
   beforeEach(() => {
     src = makeTmpDir();
-    dest = join(tmpdir(), `omc-test-dest-${randomUUID()}`);
+    dest = join(tmpdir(), `omr-test-dest-${randomUUID()}`);
   });
   afterEach(() => {
     rmSync(src, { recursive: true, force: true });

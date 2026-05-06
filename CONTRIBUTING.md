@@ -18,8 +18,8 @@ Requirements: Node.js 20+.
 
 ```
 src/
-├── cli/          # omc CLI commands (setup, doctor, status, dashboard)
-├── mcp/          # MCP servers (omc-state, omc-memory)
+├── cli/          # omr CLI commands (setup, doctor, status, dashboard)
+├── mcp/          # MCP servers (omr-state, omr-memory)
 ├── state/        # State management runtime (paths, mode lifecycle, session)
 └── utils/        # Shared utilities (fs, paths, log)
 rules/            # Cursor rules (.mdc files)
@@ -30,13 +30,13 @@ templates/        # Starter templates for custom skills, prompts, configs
 
 ## Product scope
 
-OMC is a lightweight workflow toolkit for Cursor, not a full agent platform.
+OMR is a lightweight workflow toolkit for Cursor, not a full agent platform.
 
 Core product:
 
 - `omr setup`
 - `omr doctor`
-- durable `.omc/` state
+- durable `.omr/` state
 - the core workflow spine: `deep-interview`, `blueprint`, `forge`, `cancel`
 
 Optional extras:
@@ -51,7 +51,7 @@ Before adding a feature, ask:
 
 1. Does this directly strengthen durable context or the core workflow path?
 2. Can a new user understand why it exists in one or two sentences?
-3. Should this be optional rather than part of the default OMC story?
+3. Should this be optional rather than part of the default OMR story?
 
 If a feature mainly expands runtime machinery or platform surface area, default to documenting it as optional or keeping it out of core.
 
@@ -59,9 +59,9 @@ If a feature mainly expands runtime machinery or platform surface area, default 
 
 ### Adding a new skill
 
-1. Copy `templates/skill/SKILL.md` to `skills/omc-<name>/SKILL.md`
+1. Copy `templates/skill/SKILL.md` to `skills/omr-<name>/SKILL.md`
 2. Fill in the skill definition following the template
-3. Add keyword routing to `rules/omc-orchestration.mdc`
+3. Add keyword routing to `rules/omr-orchestration.mdc`
 4. Update the Skills reference table in `README.md`
 5. Decide whether the skill is core or optional; default to optional unless it clearly strengthens durable context or the core workflow spine
 
@@ -69,7 +69,7 @@ If a feature mainly expands runtime machinery or platform surface area, default 
 
 1. Copy `templates/prompt/role.md` to `prompts/<role>.md`
 2. Fill in the four sections: `<identity>`, `<constraints>`, `<execution_loop>`, `<output_contract>`
-3. Add the role to the catalog in `rules/omc-orchestration.mdc`
+3. Add the role to the catalog in `rules/omr-orchestration.mdc`
 4. Update the Roles section in `README.md`
 
 ### Adding a CLI command

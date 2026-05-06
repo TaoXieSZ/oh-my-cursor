@@ -330,9 +330,9 @@ export async function dashboard(options: { port?: number; open?: boolean }): Pro
   const url = "http://localhost:" + port;
 
   server.listen(port, () => {
-    log.heading("OMC Dashboard");
+    log.heading("OMR Dashboard");
     log.ok("Running at " + url);
-    log.info("Watching .omc/ for changes. Ctrl+C to stop.");
+    log.info("Watching .omr/ for changes. Ctrl+C to stop.");
 
     if (options.open !== false) {
       const cmd = process.platform === "darwin" ? "open" : process.platform === "win32" ? "start" : "xdg-open";

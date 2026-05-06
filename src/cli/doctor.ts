@@ -6,12 +6,12 @@ import {
   cursorSkillsDir,
   cursorMcpConfigPath,
   cursorHooksConfigPath,
-  omcStateDir,
-  omcPlansDir,
-  omcStatePath,
-  omcSetupScopePath,
-  omcPromptsDir,
-  omcHooksDir,
+  omrStateDir,
+  omrPlansDir,
+  omrStatePath,
+  omrSetupScopePath,
+  omrPromptsDir,
+  omrHooksDir,
   isCursorInstalled,
 } from "../utils/paths.js";
 import { ok, warn, fail, info, heading, dim } from "../utils/log.js";
@@ -43,9 +43,9 @@ export async function doctor(options: DoctorOptions): Promise<void> {
   const checks: Check[] = [
     { name: "Node.js version", fn: checkNodeVersion },
     { name: "Cursor installation", fn: checkCursorInstalled },
-    { name: "OMC rules", fn: () => checkRulesInstalled(scope) },
-    { name: "OMC skills", fn: () => checkSkillsInstalled(scope) },
-    { name: "OMC prompts", fn: () => checkPromptsInstalled(scope) },
+    { name: "OMR rules", fn: () => checkRulesInstalled(scope) },
+    { name: "OMR skills", fn: () => checkSkillsInstalled(scope) },
+    { name: "OMR prompts", fn: () => checkPromptsInstalled(scope) },
     { name: "MCP servers", fn: () => checkMcpRegistered(scope) },
     { name: "Hooks", fn: () => checkHooksInstalled(scope) },
     { name: "State directory", fn: checkStateDir },
@@ -79,9 +79,9 @@ export async function doctor(options: DoctorOptions): Promise<void> {
 }
 
 function detectScope(options: DoctorOptions): "user" | "project" {
-  if (existsSync(omcSetupScopePath())) {
+  if (existsSync(omrSetupScopePath())) {
     try {
-      const meta = JSON.parse(readFileSync(omcSetupScopePath(), "utf-8"));
+      const meta = JSON.parse(readFileSync(omrSetupScopePath(), "utf-8"));
       return meta.scope ?? options.scope;
     } catch {
       // fall through
@@ -118,14 +118,14 @@ function checkRulesInstalled(scope: "user" | "project"): CheckResult {
     return { ok: false, message: `Rules directory missing: ${dir}` };
   }
 
-  const omcRules = readdirSync(dir).filter((f) => f.startsWith("omc-"));
+  const omcRules = readdirSync(dir).filter((f) => f.startsWith("omr-"));
   if (omcRules.length === 0) {
-    return { ok: false, message: `No OMC rules found in ${dir}` };
+    return { ok: false, message: `No OMR rules found in ${dir}` };
   }
 
   return {
     ok: true,
-    message: `${omcRules.length} OMC rules installed`,
+    message: `${omcRules.length} OMR rules installed`,
     detail: omcRules.join(", "),
   };
 }
@@ -136,20 +136,20 @@ function checkSkillsInstalled(scope: "user" | "project"): CheckResult {
     return { ok: false, message: `Skills directory missing: ${dir}` };
   }
 
-  const omcSkills = readdirSync(dir).filter((f) => f.startsWith("omc-"));
+  const omcSkills = readdirSync(dir).filter((f) => f.startsWith("omr-"));
   if (omcSkills.length === 0) {
-    return { ok: false, message: `No OMC skills found in ${dir}` };
+    return { ok: false, message: `No OMR skills found in ${dir}` };
   }
 
   return {
     ok: true,
-    message: `${omcSkills.length} OMC skills installed`,
+    message: `${omcSkills.length} OMR skills installed`,
     detail: omcSkills.join(", "),
   };
 }
 
 function checkPromptsInstalled(scope: "user" | "project"): CheckResult {
-  const dir = omcPromptsDir(scope);
+  const dir = omrPromptsDir(scope);
   if (!existsSync(dir)) {
     return { ok: false, message: `Prompts directory missing: ${dir}` };
   }
@@ -180,10 +180,10 @@ function checkMcpRegistered(scope: "user" | "project"): CheckResult {
   try {
     const config = JSON.parse(readFileSync(configPath, "utf-8"));
     const servers = config.mcpServers ?? {};
-    const omcServers = Object.keys(servers).filter((k) => k.startsWith("omc-"));
+    const omcServers = Object.keys(servers).filter((k) => k.startsWith("omr-"));
 
     if (omcServers.length === 0) {
-      return { ok: false, message: "No OMC MCP servers registered" };
+      return { ok: false, message: "No OMR MCP servers registered" };
     }
 
     return {
@@ -197,7 +197,7 @@ function checkMcpRegistered(scope: "user" | "project"): CheckResult {
 }
 
 function checkHooksInstalled(scope: "user" | "project"): CheckResult {
-  const hooksDir = omcHooksDir(scope);
+  const hooksDir = omrHooksDir(scope);
   const configPath = cursorHooksConfigPath(scope);
 
   if (!existsSync(hooksDir)) {
@@ -206,7 +206,7 @@ function checkHooksInstalled(scope: "user" | "project"): CheckResult {
 
   const hookFiles = readdirSync(hooksDir).filter((f) => f.endsWith(".mjs"));
   if (hookFiles.length === 0) {
-    return { ok: false, message: "No OMC hook scripts found" };
+    return { ok: false, message: "No OMR hook scripts found" };
   }
 
   for (const file of hookFiles) {
@@ -235,9 +235,9 @@ function checkHooksInstalled(scope: "user" | "project"): CheckResult {
 }
 
 function checkStateDir(): CheckResult {
-  const dir = omcStateDir();
+  const dir = omrStateDir();
   if (!existsSync(dir)) {
-    return { ok: false, message: ".omc/ directory missing" };
+    return { ok: false, message: ".omr/ directory missing" };
   }
 
   const subdirs = ["state", "plans", "logs"].filter((d) =>
@@ -246,13 +246,13 @@ function checkStateDir(): CheckResult {
 
   return {
     ok: subdirs.length === 3,
-    message: `.omc/ structure: ${subdirs.length}/3 subdirectories`,
+    message: `.omr/ structure: ${subdirs.length}/3 subdirectories`,
     detail: subdirs.join(", "),
   };
 }
 
 function checkSetupMeta(): CheckResult {
-  const path = omcSetupScopePath();
+  const path = omrSetupScopePath();
   if (!existsSync(path)) {
     return { ok: false, message: "Setup metadata missing (run 'omr setup')" };
   }

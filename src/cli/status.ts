@@ -1,9 +1,9 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import {
-  omcStateDir,
-  omcStatePath,
-  omcPlansDir,
-  omcSetupScopePath,
+  omrStateDir,
+  omrStatePath,
+  omrPlansDir,
+  omrSetupScopePath,
 } from "../utils/paths.js";
 import { ok, warn, info, heading, dim } from "../utils/log.js";
 
@@ -23,7 +23,7 @@ export async function status(_options: StatusOptions): Promise<void> {
 }
 
 function showSetupInfo(): void {
-  const metaPath = omcSetupScopePath();
+  const metaPath = omrSetupScopePath();
   if (!existsSync(metaPath)) {
     warn("Not set up. Run 'omr setup' first.");
     return;
@@ -38,7 +38,7 @@ function showSetupInfo(): void {
 }
 
 function showActiveMode(): void {
-  const stateDir = omcStatePath();
+  const stateDir = omrStatePath();
   if (!existsSync(stateDir)) {
     dim("No active mode");
     return;
@@ -68,7 +68,7 @@ function showActiveMode(): void {
 }
 
 function showPlans(): void {
-  const plansDir = omcPlansDir();
+  const plansDir = omrPlansDir();
   if (!existsSync(plansDir)) return;
 
   const plans = readdirSync(plansDir).filter((f) => f.endsWith(".md"));
@@ -84,7 +84,7 @@ function showPlans(): void {
 }
 
 function showTeamState(): void {
-  const teamDir = `${omcStatePath()}/team`;
+  const teamDir = `${omrStatePath()}/team`;
   if (!existsSync(teamDir)) return;
 
   const teamStatePath = `${teamDir}/team-state.json`;

@@ -18,7 +18,7 @@ describe("role-registry", () => {
   let tempDir: string;
 
   beforeEach(() => {
-    tempDir = mkdtempSync(join(tmpdir(), "omc-role-test-"));
+    tempDir = mkdtempSync(join(tmpdir(), "omr-role-test-"));
   });
 
   afterEach(() => {

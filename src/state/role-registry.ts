@@ -130,8 +130,8 @@ export function loadTeamProtocol(promptsDirs: string[]): string | null {
 /**
  * Append the team-protocol partial to a role's body so the subagent knows to
  * post its claim / progress / handoff / release events to the blackboard.
- * Use this when composing the lane prompt for an `/omc-team` dispatch — the
- * unmodified role is still returned to single-owner callers like `/omc-forge`.
+ * Use this when composing the lane prompt for an `/omr-team` dispatch — the
+ * unmodified role is still returned to single-owner callers like `/omr-forge`.
  */
 export function withTeamProtocol(role: Role, promptsDirs: string[]): string {
   const protocol = loadTeamProtocol(promptsDirs);

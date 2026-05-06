@@ -7,25 +7,25 @@ import { randomUUID } from "node:crypto";
 import { inspectHarnessReadiness } from "../harness.js";
 
 function makeTmpProject(): string {
-  const dir = join(tmpdir(), `omc-harness-test-${randomUUID()}`);
-  mkdirSync(join(dir, ".omc", "state"), { recursive: true });
-  mkdirSync(join(dir, ".omc", "logs"), { recursive: true });
+  const dir = join(tmpdir(), `omr-harness-test-${randomUUID()}`);
+  mkdirSync(join(dir, ".omr", "state"), { recursive: true });
+  mkdirSync(join(dir, ".omr", "logs"), { recursive: true });
   return dir;
 }
 
 describe("harness readiness", () => {
   let projectRoot: string;
-  const origEnv = process.env["OMC_PROJECT_ROOT"];
+  const origEnv = process.env["OMR_PROJECT_ROOT"];
 
   beforeEach(() => {
     projectRoot = makeTmpProject();
-    process.env["OMC_PROJECT_ROOT"] = projectRoot;
+    process.env["OMR_PROJECT_ROOT"] = projectRoot;
   });
 
   afterEach(() => {
     rmSync(projectRoot, { recursive: true, force: true });
-    if (origEnv === undefined) delete process.env["OMC_PROJECT_ROOT"];
-    else process.env["OMC_PROJECT_ROOT"] = origEnv;
+    if (origEnv === undefined) delete process.env["OMR_PROJECT_ROOT"];
+    else process.env["OMR_PROJECT_ROOT"] = origEnv;
   });
 
   it("passes when no schedule state exists yet", () => {
@@ -37,7 +37,7 @@ describe("harness readiness", () => {
 
   it("fails when schedule-state.json violates the contract", () => {
     writeFileSync(
-      join(projectRoot, ".omc", "state", "schedule-state.json"),
+      join(projectRoot, ".omr", "state", "schedule-state.json"),
       JSON.stringify({
         mode: "schedule",
         status: "active",
@@ -64,7 +64,7 @@ describe("harness readiness", () => {
 
   it("ignores deprecated monitor artifacts when checking schedule readiness", () => {
     writeFileSync(
-      join(projectRoot, ".omc", "state", "monitor-deadbeef-state.json"),
+      join(projectRoot, ".omr", "state", "monitor-deadbeef-state.json"),
       JSON.stringify({
         mode: "monitor",
         runId: "deadbeef",

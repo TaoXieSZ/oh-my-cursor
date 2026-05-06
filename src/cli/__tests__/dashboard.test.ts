@@ -7,7 +7,7 @@ import { randomUUID } from "node:crypto";
 import { collectState, computeStats, type DashboardState, type PlanInfo, type ModeInfo, type StatsData } from "../dashboard.js";
 
 function makeTmpProject(): string {
-  const dir = join(tmpdir(), `omc-dash-test-${randomUUID()}`);
+  const dir = join(tmpdir(), `omr-dash-test-${randomUUID()}`);
   mkdirSync(dir, { recursive: true });
   return dir;
 }
@@ -20,15 +20,15 @@ describe("collectState", () => {
   beforeEach(() => {
     tmp = makeTmpProject();
     origCwd = process.cwd();
-    origEnv = process.env["OMC_PROJECT_ROOT"];
+    origEnv = process.env["OMR_PROJECT_ROOT"];
     process.chdir(tmp);
-    delete process.env["OMC_PROJECT_ROOT"];
+    delete process.env["OMR_PROJECT_ROOT"];
   });
 
   afterEach(() => {
     process.chdir(origCwd);
-    if (origEnv === undefined) delete process.env["OMC_PROJECT_ROOT"];
-    else process.env["OMC_PROJECT_ROOT"] = origEnv;
+    if (origEnv === undefined) delete process.env["OMR_PROJECT_ROOT"];
+    else process.env["OMR_PROJECT_ROOT"] = origEnv;
     rmSync(tmp, { recursive: true, force: true });
   });
 
@@ -47,7 +47,7 @@ describe("collectState", () => {
   });
 
   it("reads active modes from state directory", () => {
-    const stateDir = join(tmp, ".omc", "state");
+    const stateDir = join(tmp, ".omr", "state");
     mkdirSync(stateDir, { recursive: true });
     writeFileSync(join(stateDir, "forge-a1b2c3d4-state.json"), JSON.stringify({
       mode: "forge", runId: "a1b2c3d4", status: "active",
@@ -62,7 +62,7 @@ describe("collectState", () => {
   });
 
   it("reads legacy active modes (active: true)", () => {
-    const stateDir = join(tmp, ".omc", "state");
+    const stateDir = join(tmp, ".omr", "state");
     mkdirSync(stateDir, { recursive: true });
     writeFileSync(join(stateDir, "forge-state.json"), JSON.stringify({
       mode: "forge", active: true,
@@ -76,7 +76,7 @@ describe("collectState", () => {
   });
 
   it("reads completed modes", () => {
-    const stateDir = join(tmp, ".omc", "state");
+    const stateDir = join(tmp, ".omr", "state");
     mkdirSync(stateDir, { recursive: true });
     writeFileSync(join(stateDir, "blueprint-b1b2c3d4-state.json"), JSON.stringify({
       mode: "blueprint", runId: "b1b2c3d4", status: "complete",
@@ -90,7 +90,7 @@ describe("collectState", () => {
   });
 
   it("shows multiple active runs of the same mode", () => {
-    const stateDir = join(tmp, ".omc", "state");
+    const stateDir = join(tmp, ".omr", "state");
     mkdirSync(stateDir, { recursive: true });
     writeFileSync(join(stateDir, "forge-aaaa1111-state.json"), JSON.stringify({
       mode: "forge", runId: "aaaa1111", status: "active",
@@ -108,7 +108,7 @@ describe("collectState", () => {
   });
 
   it("includes archived sessions", () => {
-    const archiveDir = join(tmp, ".omc", "archive");
+    const archiveDir = join(tmp, ".omr", "archive");
     mkdirSync(archiveDir, { recursive: true });
     writeFileSync(join(archiveDir, "old-run.json"), JSON.stringify({
       runId: "old-run",
@@ -122,7 +122,7 @@ describe("collectState", () => {
   });
 
   it("reads plans with content preview, title, and modifiedAt", () => {
-    const plansDir = join(tmp, ".omc", "plans");
+    const plansDir = join(tmp, ".omr", "plans");
     mkdirSync(plansDir, { recursive: true });
     writeFileSync(join(plansDir, "prd-auth.md"), "# Auth PRD\n\nDesign the auth flow.");
 
@@ -134,7 +134,7 @@ describe("collectState", () => {
   });
 
   it("extracts activeTask from mode task field", () => {
-    const stateDir = join(tmp, ".omc", "state");
+    const stateDir = join(tmp, ".omr", "state");
     mkdirSync(stateDir, { recursive: true });
     writeFileSync(join(stateDir, "forge-a1b2c3d4-state.json"), JSON.stringify({
       mode: "forge", runId: "a1b2c3d4", status: "active",
@@ -148,7 +148,7 @@ describe("collectState", () => {
   });
 
   it("reads project memory", () => {
-    const omcDir = join(tmp, ".omc");
+    const omcDir = join(tmp, ".omr");
     mkdirSync(omcDir, { recursive: true });
     writeFileSync(join(omcDir, "project-memory.json"), JSON.stringify({
       preferred_pm: "pnpm",
@@ -159,7 +159,7 @@ describe("collectState", () => {
   });
 
   it("reads notepad", () => {
-    const omcDir = join(tmp, ".omc");
+    const omcDir = join(tmp, ".omr");
     mkdirSync(omcDir, { recursive: true });
     writeFileSync(join(omcDir, "notepad.md"), "# TODO\n- Fix auth bug");
 
@@ -168,7 +168,7 @@ describe("collectState", () => {
   });
 
   it("reads notifications newest first", () => {
-    const stateDir = join(tmp, ".omc", "state");
+    const stateDir = join(tmp, ".omr", "state");
     mkdirSync(stateDir, { recursive: true });
     writeFileSync(
       join(stateDir, "notifications.jsonl"),
@@ -201,7 +201,7 @@ describe("collectState", () => {
   });
 
   it("ignores deprecated monitor state files in the generic dashboard view", () => {
-    const stateDir = join(tmp, ".omc", "state");
+    const stateDir = join(tmp, ".omr", "state");
     mkdirSync(stateDir, { recursive: true });
     writeFileSync(join(stateDir, "monitor-a1b2c3d4-state.json"), JSON.stringify({
       mode: "monitor",
@@ -235,7 +235,7 @@ describe("collectState", () => {
   });
 
   it("skips corrupt notification lines", () => {
-    const stateDir = join(tmp, ".omc", "state");
+    const stateDir = join(tmp, ".omr", "state");
     mkdirSync(stateDir, { recursive: true });
     writeFileSync(
       join(stateDir, "notifications.jsonl"),
@@ -259,7 +259,7 @@ describe("collectState", () => {
   });
 
   it("reads session", () => {
-    const stateDir = join(tmp, ".omc", "state");
+    const stateDir = join(tmp, ".omr", "state");
     mkdirSync(stateDir, { recursive: true });
     writeFileSync(join(stateDir, "session.json"), JSON.stringify({
       id: "abc-123-def",
@@ -272,7 +272,7 @@ describe("collectState", () => {
   });
 
   it("handles malformed JSON gracefully", () => {
-    const stateDir = join(tmp, ".omc", "state");
+    const stateDir = join(tmp, ".omr", "state");
     mkdirSync(stateDir, { recursive: true });
     writeFileSync(join(stateDir, "broken-a1b2c3d4-state.json"), "not json{{{");
 
@@ -282,7 +282,7 @@ describe("collectState", () => {
   });
 
   it("derives runId from filename when not in JSON", () => {
-    const stateDir = join(tmp, ".omc", "state");
+    const stateDir = join(tmp, ".omr", "state");
     mkdirSync(stateDir, { recursive: true });
     writeFileSync(join(stateDir, "forge-a1b2c3d4-state.json"), JSON.stringify({
       mode: "forge", status: "active",
@@ -294,8 +294,8 @@ describe("collectState", () => {
   });
 
   it("populates recentEvents for active modes with event log", () => {
-    const stateDir = join(tmp, ".omc", "state");
-    const logsDir = join(tmp, ".omc", "logs");
+    const stateDir = join(tmp, ".omr", "state");
+    const logsDir = join(tmp, ".omr", "logs");
     mkdirSync(stateDir, { recursive: true });
     mkdirSync(logsDir, { recursive: true });
     writeFileSync(join(stateDir, "forge-ev123456-state.json"), JSON.stringify({
@@ -317,7 +317,7 @@ describe("collectState", () => {
   });
 
   it("recentEvents is empty for modes without event log", () => {
-    const stateDir = join(tmp, ".omc", "state");
+    const stateDir = join(tmp, ".omr", "state");
     mkdirSync(stateDir, { recursive: true });
     writeFileSync(join(stateDir, "forge-nolog123-state.json"), JSON.stringify({
       mode: "forge", runId: "nolog123", status: "active",
@@ -330,7 +330,7 @@ describe("collectState", () => {
   });
 
   it("collectState includes stats", () => {
-    const stateDir = join(tmp, ".omc", "state");
+    const stateDir = join(tmp, ".omr", "state");
     mkdirSync(stateDir, { recursive: true });
     writeFileSync(join(stateDir, "forge-s1111111-state.json"), JSON.stringify({
       mode: "forge", runId: "s1111111", status: "complete",
@@ -406,17 +406,17 @@ describe("computeStats", () => {
 
 describe("memoryIndex in collectState", () => {
   let tmp: string;
-  const origEnv = process.env["OMC_PROJECT_ROOT"];
+  const origEnv = process.env["OMR_PROJECT_ROOT"];
 
   beforeEach(() => {
     tmp = makeTmpProject();
-    process.env["OMC_PROJECT_ROOT"] = tmp;
+    process.env["OMR_PROJECT_ROOT"] = tmp;
   });
 
   afterEach(() => {
     rmSync(tmp, { recursive: true, force: true });
-    if (origEnv !== undefined) process.env["OMC_PROJECT_ROOT"] = origEnv;
-    else delete process.env["OMC_PROJECT_ROOT"];
+    if (origEnv !== undefined) process.env["OMR_PROJECT_ROOT"] = origEnv;
+    else delete process.env["OMR_PROJECT_ROOT"];
   });
 
   it("collectState includes empty memoryIndex when no index file", () => {
@@ -425,18 +425,18 @@ describe("memoryIndex in collectState", () => {
   });
 
   it("collectState reads memoryIndex from file", () => {
-    mkdirSync(join(tmp, ".omc"), { recursive: true });
+    mkdirSync(join(tmp, ".omr"), { recursive: true });
     const indexData = {
       "project.name": [{ runId: "r1", mode: "forge", action: "set", ts: "2026-04-07T10:00:00Z", key: "project.name" }],
     };
-    writeFileSync(join(tmp, ".omc", "memory-index.json"), JSON.stringify(indexData));
+    writeFileSync(join(tmp, ".omr", "memory-index.json"), JSON.stringify(indexData));
     const state = collectState();
     assert.ok(state.memoryIndex["project.name"]);
     assert.equal(state.memoryIndex["project.name"]!.length, 1);
   });
 
   it("derives memoryKeysModified for active modes", () => {
-    const stateDir = join(tmp, ".omc", "state");
+    const stateDir = join(tmp, ".omr", "state");
     mkdirSync(stateDir, { recursive: true });
     writeFileSync(join(stateDir, "forge-run123-state.json"), JSON.stringify({
       mode: "forge", runId: "run123", status: "active",
@@ -446,7 +446,7 @@ describe("memoryIndex in collectState", () => {
       "config.theme": [{ runId: "run123", mode: "forge", action: "set", ts: "2026-04-07T10:00:00Z", key: "config.theme" }],
       "unrelated": [{ runId: "other", mode: "forge", action: "set", ts: "2026-04-07T10:00:00Z", key: "unrelated" }],
     };
-    writeFileSync(join(tmp, ".omc", "memory-index.json"), JSON.stringify(indexData));
+    writeFileSync(join(tmp, ".omr", "memory-index.json"), JSON.stringify(indexData));
 
     const state = collectState();
     assert.equal(state.activeModes.length, 1);
@@ -454,7 +454,7 @@ describe("memoryIndex in collectState", () => {
   });
 
   it("memoryKeysModified is undefined when no index match", () => {
-    const stateDir = join(tmp, ".omc", "state");
+    const stateDir = join(tmp, ".omr", "state");
     mkdirSync(stateDir, { recursive: true });
     writeFileSync(join(stateDir, "forge-run999-state.json"), JSON.stringify({
       mode: "forge", runId: "run999", status: "active",

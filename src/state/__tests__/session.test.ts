@@ -7,26 +7,26 @@ import { randomUUID } from "node:crypto";
 import { getOrCreateSession, readSession } from "../session.js";
 
 function makeTmpProject(): string {
-  const dir = join(tmpdir(), `omc-test-${randomUUID()}`);
-  mkdirSync(join(dir, ".omc", "state"), { recursive: true });
+  const dir = join(tmpdir(), `omr-test-${randomUUID()}`);
+  mkdirSync(join(dir, ".omr", "state"), { recursive: true });
   return dir;
 }
 
 describe("session", () => {
   let projectRoot: string;
-  const origEnv = process.env["OMC_PROJECT_ROOT"];
+  const origEnv = process.env["OMR_PROJECT_ROOT"];
 
   beforeEach(() => {
     projectRoot = makeTmpProject();
-    process.env["OMC_PROJECT_ROOT"] = projectRoot;
+    process.env["OMR_PROJECT_ROOT"] = projectRoot;
   });
 
   afterEach(() => {
     rmSync(projectRoot, { recursive: true, force: true });
     if (origEnv === undefined) {
-      delete process.env["OMC_PROJECT_ROOT"];
+      delete process.env["OMR_PROJECT_ROOT"];
     } else {
-      process.env["OMC_PROJECT_ROOT"] = origEnv;
+      process.env["OMR_PROJECT_ROOT"] = origEnv;
     }
   });
 
@@ -36,7 +36,7 @@ describe("session", () => {
     });
 
     it("returns null for corrupt session file", () => {
-      writeFileSync(join(projectRoot, ".omc", "state", "session.json"), "broken");
+      writeFileSync(join(projectRoot, ".omr", "state", "session.json"), "broken");
       assert.equal(readSession(), null);
     });
   });
@@ -64,7 +64,7 @@ describe("session", () => {
     });
 
     it("creates new session when existing is corrupt", () => {
-      writeFileSync(join(projectRoot, ".omc", "state", "session.json"), "{{bad");
+      writeFileSync(join(projectRoot, ".omr", "state", "session.json"), "{{bad");
       const session = getOrCreateSession();
 
       assert.ok(session.id);

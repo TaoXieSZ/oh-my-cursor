@@ -5,19 +5,19 @@ import {
   cursorSkillsDir,
   cursorMcpConfigPath,
   cursorHooksConfigPath,
-  omcStateDir,
-  omcPlansDir,
-  omcLogsDir,
-  omcStatePath,
-  omcSetupScopePath,
-  omcNotepadPath,
-  omcProjectMemoryPath,
+  omrStateDir,
+  omrPlansDir,
+  omrLogsDir,
+  omrStatePath,
+  omrSetupScopePath,
+  omrNotepadPath,
+  omrProjectMemoryPath,
   packageRulesDir,
   packageSkillsDir,
   packagePromptsDir,
   packageHooksDir,
-  omcPromptsDir,
-  omcHooksDir,
+  omrPromptsDir,
+  omrHooksDir,
   isCursorInstalled,
 } from "../utils/paths.js";
 import { ensureDir, copyDir, copyFile } from "../utils/fs.js";
@@ -29,7 +29,7 @@ interface SetupOptions {
   verbose: boolean;
 }
 
-const DEPRECATED_SKILLS = ["omc-plan", "omc-ralph", "omc-ralplan"];
+const DEPRECATED_SKILLS = ["omr-plan", "omr-ralph", "omr-ralplan"];
 
 export async function setup(options: SetupOptions): Promise<void> {
   heading("oh-my-cursor setup");
@@ -114,7 +114,7 @@ function removeDeprecatedSkills(skillsDir: string): string[] {
 
 function installPrompts(options: SetupOptions): void {
   const srcDir = packagePromptsDir();
-  const destDir = omcPromptsDir(options.scope);
+  const destDir = omrPromptsDir(options.scope);
 
   if (!existsSync(srcDir)) {
     throw new Error(`Prompts source not found: ${srcDir}`);
@@ -141,19 +141,19 @@ function registerMcp(options: SetupOptions): void {
 
   const mcpServers = (config.mcpServers ?? {}) as Record<string, unknown>;
 
-  mcpServers["omc-state"] = {
+  mcpServers["omr-state"] = {
     command: "node",
     args: [getMcpServerPath("state-server.js")],
     env: {
-      OMC_PROJECT_ROOT: process.cwd(),
+      OMR_PROJECT_ROOT: process.cwd(),
     },
   };
 
-  mcpServers["omc-memory"] = {
+  mcpServers["omr-memory"] = {
     command: "node",
     args: [getMcpServerPath("memory-server.js")],
     env: {
-      OMC_PROJECT_ROOT: process.cwd(),
+      OMR_PROJECT_ROOT: process.cwd(),
     },
   };
 
@@ -166,7 +166,7 @@ function registerMcp(options: SetupOptions): void {
 
 function installHooks(options: SetupOptions): void {
   const srcDir = packageHooksDir();
-  const destDir = omcHooksDir(options.scope);
+  const destDir = omrHooksDir(options.scope);
 
   if (!existsSync(srcDir)) {
     warn("Hooks source not found, skipping hooks installation");
@@ -214,24 +214,24 @@ function installHooks(options: SetupOptions): void {
 }
 
 function createStateDirs(options: SetupOptions): void {
-  const dirs = [omcStateDir(), omcPlansDir(), omcLogsDir(), omcStatePath()];
+  const dirs = [omrStateDir(), omrPlansDir(), omrLogsDir(), omrStatePath()];
 
   for (const dir of dirs) {
     ensureDir(dir);
   }
 
-  if (!existsSync(omcNotepadPath())) {
-    writeFileSync(omcNotepadPath(), "# OMC Notepad\n\nScratch notes for the current project.\n");
+  if (!existsSync(omrNotepadPath())) {
+    writeFileSync(omrNotepadPath(), "# OMR Notepad\n\nScratch notes for the current project.\n");
   }
-  if (!existsSync(omcProjectMemoryPath())) {
-    writeFileSync(omcProjectMemoryPath(), "{}\n");
+  if (!existsSync(omrProjectMemoryPath())) {
+    writeFileSync(omrProjectMemoryPath(), "{}\n");
   }
 
   if (options.scope === "project") {
     appendToGitignore();
   }
 
-  ok(`Created .omc/ state directories`);
+  ok(`Created .omr/ state directories`);
 }
 
 function writeSetupMeta(options: SetupOptions): void {
@@ -242,13 +242,13 @@ function writeSetupMeta(options: SetupOptions): void {
     projectRoot: process.cwd(),
   };
 
-  writeFileSync(omcSetupScopePath(), JSON.stringify(meta, null, 2) + "\n");
+  writeFileSync(omrSetupScopePath(), JSON.stringify(meta, null, 2) + "\n");
   ok("Wrote setup metadata");
 }
 
 function appendToGitignore(): void {
   const gitignorePath = join(process.cwd(), ".gitignore");
-  const marker = ".omc/";
+  const marker = ".omr/";
 
   if (existsSync(gitignorePath)) {
     const content = readFileSync(gitignorePath, "utf-8");
@@ -257,7 +257,7 @@ function appendToGitignore(): void {
   } else {
     writeFileSync(gitignorePath, marker + "\n");
   }
-  dim("Added .omc/ to .gitignore");
+  dim("Added .omr/ to .gitignore");
 }
 
 function getMcpServerPath(filename: string): string {

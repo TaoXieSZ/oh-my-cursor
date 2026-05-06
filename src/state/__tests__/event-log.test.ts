@@ -12,16 +12,16 @@ describe("event-log", () => {
   let origEnv: string | undefined;
 
   beforeEach(() => {
-    tmp = join(tmpdir(), `omc-eventlog-test-${randomUUID()}`);
+    tmp = join(tmpdir(), `omr-eventlog-test-${randomUUID()}`);
     mkdirSync(tmp, { recursive: true });
-    origEnv = process.env["OMC_PROJECT_ROOT"];
-    process.env["OMC_PROJECT_ROOT"] = tmp;
+    origEnv = process.env["OMR_PROJECT_ROOT"];
+    process.env["OMR_PROJECT_ROOT"] = tmp;
   });
 
   afterEach(() => {
     rmSync(tmp, { recursive: true, force: true });
-    if (origEnv === undefined) delete process.env["OMC_PROJECT_ROOT"];
-    else process.env["OMC_PROJECT_ROOT"] = origEnv;
+    if (origEnv === undefined) delete process.env["OMR_PROJECT_ROOT"];
+    else process.env["OMR_PROJECT_ROOT"] = origEnv;
   });
 
   it("appends a single event and reads it back", () => {
@@ -43,7 +43,7 @@ describe("event-log", () => {
   });
 
   it("creates log dir if missing", () => {
-    const logDir = join(tmp, ".omc", "logs");
+    const logDir = join(tmp, ".omr", "logs");
     assert.ok(!existsSync(logDir));
     appendEvent("run3", { ts: "2026-04-07T10:00:00Z", kind: "note", summary: "Test" });
     assert.ok(existsSync(logDir));
@@ -54,14 +54,14 @@ describe("event-log", () => {
   });
 
   it("readEvents returns [] for empty file", () => {
-    mkdirSync(join(tmp, ".omc", "logs"), { recursive: true });
-    writeFileSync(join(tmp, ".omc", "logs", "empty.jsonl"), "");
+    mkdirSync(join(tmp, ".omr", "logs"), { recursive: true });
+    writeFileSync(join(tmp, ".omr", "logs", "empty.jsonl"), "");
     assert.deepEqual(readEvents("empty"), []);
   });
 
   it("readEvents skips corrupt JSONL lines", () => {
-    mkdirSync(join(tmp, ".omc", "logs"), { recursive: true });
-    writeFileSync(join(tmp, ".omc", "logs", "corrupt.jsonl"),
+    mkdirSync(join(tmp, ".omr", "logs"), { recursive: true });
+    writeFileSync(join(tmp, ".omr", "logs", "corrupt.jsonl"),
       JSON.stringify({ ts: "2026-04-07T10:00:00Z", kind: "status", summary: "ok" }) + "\n" +
       "NOT JSON\n" +
       JSON.stringify({ ts: "2026-04-07T10:01:00Z", kind: "phase", summary: "next" }) + "\n"
@@ -101,7 +101,7 @@ describe("event-log", () => {
   });
 
   it("truncates log when exceeding 1000 events", () => {
-    const logDir = join(tmp, ".omc", "logs");
+    const logDir = join(tmp, ".omr", "logs");
     mkdirSync(logDir, { recursive: true });
     const lines: string[] = [];
     for (let i = 0; i < 1001; i++) {

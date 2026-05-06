@@ -1,0 +1,78 @@
+---
+description: "OMR state management — .omr/ directory layout and lifecycle"
+alwaysApply: true
+---
+
+# OMR State Management
+
+All OMR runtime state lives under `.omr/` in the project root.
+
+## Directory layout
+
+```
+.omr/
+├── state/
+│   ├── session.json            # current session metadata
+│   ├── {mode}-state.json       # per-mode state (forge, team, etc.)
+│   └── team/
+│       ├── team-state.json     # team metadata and status
+│       └── {worker}/
+│           └── progress.json   # per-worker progress
+├── plans/
+│   ├── prd-{task}.md           # PRD from blueprint
+│   └── test-spec-{task}.md     # test spec from blueprint
+├── logs/
+│   └── {session}.log           # session activity logs
+├── prompts/                    # role prompt files (project scope)
+├── notepad.md                  # scratch notes (append-only during session)
+├── project-memory.json         # cross-session persistent memory
+└── setup-scope.json            # installation metadata
+```
+
+## Mode state lifecycle
+
+Every workflow mode (forge, team, deep-interview, blueprint) follows this lifecycle:
+
+1. **Start**: Write `{mode}-state.json` with `started_at`, initial `phase`.
+2. **Progress**: Update on each phase transition or iteration increment.
+3. **Complete**: Set `completed_at` and `status: "complete"`.
+4. **Cancel**: Set `cancelled_at` and `status: "cancelled"`.
+
+## Plan artifacts
+
+The `$blueprint` skill writes to `.omr/plans/`:
+- `prd-{task-slug}.md` — the approved PRD.
+- `test-spec-{task-slug}.md` — the approved test specification.
+
+The `$forge` and `$team` skills check for these before starting implementation.
+
+## Project memory
+
+`.omr/project-memory.json` stores cross-session knowledge as key-value pairs.
+Skills and rules may read from it to maintain context across conversations.
+
+## Shared Blackboard
+
+`.omr/blackboard.jsonl` is an append-only log for multi-agent coordination. When multiple agents run in parallel (e.g. via Agents Window or `$team`), they use the blackboard to share status, claim files, report blockers, and hand off work.
+
+MCP tools: `blackboard_post`, `blackboard_read`, `blackboard_status`, `blackboard_clear`.
+
+Message kinds: `status`, `progress`, `blocker`, `handoff`, `note`, `claim`, `release`.
+
+Clear the blackboard between team sessions to avoid stale data.
+
+## Notepad
+
+`.omr/notepad.md` is an append-only scratch space for the current session.
+Use it for observations, blockers, and decisions that should persist beyond the chat.
+
+## Hooks
+
+OMR registers Cursor lifecycle hooks for automatic state management:
+
+- **`sessionStart`**: Ensures `.omr/` directories exist and initializes/updates `session.json`.
+- **`stop`**: Archives completed/cancelled runs to `.omr/archive/` and marks the session as ended.
+
+Hooks are installed via `omr setup` into `~/.cursor/hooks/omr/` (user scope) or `.cursor/hooks/omr/` (project scope), with entries registered in `hooks.json`.
+
+Keyword routing remains in rules (the agent decides which skill to activate based on user intent — hooks cannot observe message content for this purpose).

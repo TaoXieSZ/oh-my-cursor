@@ -1,10 +1,10 @@
 import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
-import { getStatePath, type OmcStateScope } from "../state/paths.js";
+import { getStatePath, type OmrStateScope } from "../state/paths.js";
 import { ensureDir } from "../utils/fs.js";
 
 export type ScheduleTaskLifecycle = "running" | "suspended" | "completed" | "cancelled";
-export type ScheduleTaskScope = OmcStateScope;
+export type ScheduleTaskScope = OmrStateScope;
 
 export interface ScheduleTaskState {
   id: string;

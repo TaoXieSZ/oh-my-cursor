@@ -8,18 +8,18 @@ import { appendMemoryIndex, readMemoryIndex, getKeysForRun, getRunsForKey } from
 import { getMemoryIndexPath } from "../paths.js";
 
 let tmp: string;
-const origEnv = process.env["OMC_PROJECT_ROOT"];
+const origEnv = process.env["OMR_PROJECT_ROOT"];
 
 beforeEach(() => {
-  tmp = join(tmpdir(), "omc-memidx-test-" + randomUUID().slice(0, 8));
+  tmp = join(tmpdir(), "omr-memidx-test-" + randomUUID().slice(0, 8));
   mkdirSync(tmp, { recursive: true });
-  process.env["OMC_PROJECT_ROOT"] = tmp;
+  process.env["OMR_PROJECT_ROOT"] = tmp;
 });
 
 afterEach(() => {
   rmSync(tmp, { recursive: true, force: true });
-  if (origEnv !== undefined) process.env["OMC_PROJECT_ROOT"] = origEnv;
-  else delete process.env["OMC_PROJECT_ROOT"];
+  if (origEnv !== undefined) process.env["OMR_PROJECT_ROOT"] = origEnv;
+  else delete process.env["OMR_PROJECT_ROOT"];
 });
 
 describe("memory-index", () => {
@@ -48,7 +48,7 @@ describe("memory-index", () => {
   });
 
   it("readMemoryIndex returns {} for corrupt JSON", () => {
-    const dir = join(tmp, ".omc");
+    const dir = join(tmp, ".omr");
     mkdirSync(dir, { recursive: true });
     writeFileSync(join(dir, "memory-index.json"), "not json");
     const index = readMemoryIndex();

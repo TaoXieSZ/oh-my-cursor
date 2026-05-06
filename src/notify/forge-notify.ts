@@ -99,10 +99,10 @@ export function notifyForgeStateChange(
   return postSlackIncomingWebhook(url, { text })
     .then((res) => {
       if (!res.ok) {
-        console.error(`[omc] Slack webhook HTTP ${res.status}`);
+        console.error(`[omr] Slack webhook HTTP ${res.status}`);
       }
     })
     .catch((err: unknown) => {
-      console.error("[omc] Slack webhook failed:", err);
+      console.error("[omr] Slack webhook failed:", err);
     });
 }

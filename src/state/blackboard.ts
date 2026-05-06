@@ -111,7 +111,7 @@ export function clearBlackboard(): void {
 
 /**
  * Canonical one-line render of a blackboard message, shared by the leader's
- * chat echo, the transcript writer, and the `omc team watch` CLI so all three
+ * chat echo, the transcript writer, and the `omr team watch` CLI so all three
  * display the same format.
  *
  * Example: `[14:22:01] lane-1·executor  claim     src/api/users.ts`
@@ -136,7 +136,7 @@ function formatTime(ts: string): string {
 
 /**
  * Write a per-run team transcript as markdown to
- * `.omc/state/team/<runId>-transcript.md`. The transcript includes the final
+ * `.omr/state/team/<runId>-transcript.md`. The transcript includes the final
  * blackboard chatter rendered with {@link formatLine}. Returns the absolute
  * path of the written file.
  *

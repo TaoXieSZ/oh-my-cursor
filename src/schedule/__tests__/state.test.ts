@@ -18,32 +18,32 @@ import {
 } from "../state.js";
 
 function makeTmpProject(): string {
-  const dir = join(tmpdir(), `omc-schedule-test-${randomUUID()}`);
-  mkdirSync(join(dir, ".omc", "state"), { recursive: true });
+  const dir = join(tmpdir(), `omr-schedule-test-${randomUUID()}`);
+  mkdirSync(join(dir, ".omr", "state"), { recursive: true });
   return dir;
 }
 
 describe("schedule state helpers", () => {
   let projectRoot: string;
   let userRoot: string;
-  const origEnv = process.env["OMC_PROJECT_ROOT"];
-  const origUserRoot = process.env["OMC_USER_OMC_ROOT"];
+  const origEnv = process.env["OMR_PROJECT_ROOT"];
+  const origUserRoot = process.env["OMR_USER_DATA_ROOT"];
 
   beforeEach(() => {
     projectRoot = makeTmpProject();
-    userRoot = join(tmpdir(), `omc-schedule-user-${randomUUID()}`);
+    userRoot = join(tmpdir(), `omr-schedule-user-${randomUUID()}`);
     mkdirSync(join(userRoot, "state"), { recursive: true });
-    process.env["OMC_PROJECT_ROOT"] = projectRoot;
-    process.env["OMC_USER_OMC_ROOT"] = userRoot;
+    process.env["OMR_PROJECT_ROOT"] = projectRoot;
+    process.env["OMR_USER_DATA_ROOT"] = userRoot;
   });
 
   afterEach(() => {
     rmSync(projectRoot, { recursive: true, force: true });
     rmSync(userRoot, { recursive: true, force: true });
-    if (origEnv === undefined) delete process.env["OMC_PROJECT_ROOT"];
-    else process.env["OMC_PROJECT_ROOT"] = origEnv;
-    if (origUserRoot === undefined) delete process.env["OMC_USER_OMC_ROOT"];
-    else process.env["OMC_USER_OMC_ROOT"] = origUserRoot;
+    if (origEnv === undefined) delete process.env["OMR_PROJECT_ROOT"];
+    else process.env["OMR_PROJECT_ROOT"] = origEnv;
+    if (origUserRoot === undefined) delete process.env["OMR_USER_DATA_ROOT"];
+    else process.env["OMR_USER_DATA_ROOT"] = origUserRoot;
   });
 
   it("creates schedule state and inserts a task", () => {
@@ -136,7 +136,7 @@ describe("schedule state helpers", () => {
     assert.equal(tasks[1].state, "running");
   });
 
-  it("stores user-scope tasks outside the project .omc directory", () => {
+  it("stores user-scope tasks outside the project .omr directory", () => {
     const userTask = upsertScheduleTask({
       id: "agents-radar-rss",
       scope: "user",

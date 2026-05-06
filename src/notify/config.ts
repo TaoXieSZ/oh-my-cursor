@@ -4,16 +4,16 @@ import { getBaseStateDir } from "../state/paths.js";
 
 /**
  * Resolve Slack webhook URL for forge notifications.
- * Precedence: OMC_FORGE_SLACK_WEBHOOK_URL → OMC_SLACK_WEBHOOK_URL → .omc/omc-config.json notifications.slack_webhook_url
+ * Precedence: OMR_FORGE_SLACK_WEBHOOK_URL → OMR_SLACK_WEBHOOK_URL → .omr/omr-config.json notifications.slack_webhook_url
  */
 export function getForgeSlackWebhookUrl(): string | undefined {
-  const envForge = process.env["OMC_FORGE_SLACK_WEBHOOK_URL"]?.trim();
+  const envForge = process.env["OMR_FORGE_SLACK_WEBHOOK_URL"]?.trim();
   if (envForge) return envForge;
 
-  const envGeneral = process.env["OMC_SLACK_WEBHOOK_URL"]?.trim();
+  const envGeneral = process.env["OMR_SLACK_WEBHOOK_URL"]?.trim();
   if (envGeneral) return envGeneral;
 
-  const path = join(getBaseStateDir(), "omc-config.json");
+  const path = join(getBaseStateDir(), "omr-config.json");
   if (!existsSync(path)) return undefined;
 
   try {
@@ -29,6 +29,6 @@ export function getForgeSlackWebhookUrl(): string | undefined {
 }
 
 export function isForgeSlackVerbose(): boolean {
-  const v = process.env["OMC_SLACK_FORGE_VERBOSE"]?.toLowerCase();
+  const v = process.env["OMR_SLACK_FORGE_VERBOSE"]?.toLowerCase();
   return v === "1" || v === "true" || v === "yes";
 }

@@ -42,7 +42,7 @@ export async function schedule(args: string[]): Promise<void> {
   if (sub === "cancel") {
     const taskId = rest[0];
     if (!taskId) {
-      log.fail("Use: omc schedule cancel <task-id> [--scope user|project]");
+      log.fail("Use: omr schedule cancel <task-id> [--scope user|project]");
       process.exit(1);
     }
     const task = cancelScheduleTask(taskId, "Cancelled manually", scope);
@@ -79,7 +79,7 @@ export async function schedule(args: string[]): Promise<void> {
   if (sub === "run-now") {
     const taskId = rest[0];
     if (!taskId) {
-      log.fail("Use: omc schedule run-now <task-id> [--scope user|project]");
+      log.fail("Use: omr schedule run-now <task-id> [--scope user|project]");
       process.exit(1);
     }
     const task = requestScheduleRunNow(taskId, scope);
@@ -95,7 +95,7 @@ export async function schedule(args: string[]): Promise<void> {
   if (sub === "add-rss") {
     const parsed = parseAddRssArgs(rest);
     if (!parsed.url) {
-      log.fail("Use: omc schedule add-rss --url <feed-url> [--id <task-id>] [--every <interval>] [--title <text>] [--scope user|project]");
+      log.fail("Use: omr schedule add-rss --url <feed-url> [--id <task-id>] [--every <interval>] [--title <text>] [--scope user|project]");
       process.exit(1);
     }
 
@@ -131,7 +131,7 @@ export async function schedule(args: string[]): Promise<void> {
     return;
   }
 
-  log.fail("Use: omc schedule list [--scope user|project] | cancel <task-id> | resume [task-id] | run-now <task-id> | add-rss --url <feed-url> | worker [--once]");
+  log.fail("Use: omr schedule list [--scope user|project] | cancel <task-id> | resume [task-id] | run-now <task-id> | add-rss --url <feed-url> | worker [--once]");
   process.exit(1);
 }
 
@@ -226,7 +226,7 @@ function parseInterval(value: string): number {
 }
 
 function ensureScheduleWorker(scope: ScheduleTaskScope): void {
-  if (process.env["OMC_DISABLE_SCHEDULE_WORKER_AUTOSTART"] === "1") {
+  if (process.env["OMR_DISABLE_SCHEDULE_WORKER_AUTOSTART"] === "1") {
     return;
   }
 
@@ -234,7 +234,7 @@ function ensureScheduleWorker(scope: ScheduleTaskScope): void {
     return;
   }
 
-  const cliPath = fileURLToPath(new URL("./omc.js", import.meta.url));
+  const cliPath = fileURLToPath(new URL("./omr.js", import.meta.url));
   const child = spawn(process.execPath, [cliPath, "schedule", "worker", "--scope", scope], {
     detached: true,
     stdio: "ignore",

@@ -72,7 +72,7 @@ export function sendDesktopNotification(
   options: DesktopNotificationOptions = {},
   runner: DesktopCommandRunner = defaultDesktopCommandRunner,
 ): DesktopNotificationResult {
-  const command = process.env["OMC_DESKTOP_NOTIFY_COMMAND"]?.trim() || "osascript";
+  const command = process.env["OMR_DESKTOP_NOTIFY_COMMAND"]?.trim() || "osascript";
   const script = buildDesktopAppleScript(title, message, options);
   const result = runner(command, ["-e", script]);
 

@@ -6,15 +6,15 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
 
-const OMC_BIN = join(import.meta.dirname, "..", "omc.js");
+const OMR_BIN = join(import.meta.dirname, "..", "omr.js");
 
 function run(args: string[], cwd?: string, env?: Record<string, string>): { stdout: string; stderr: string; exitCode: number } {
   try {
-    const stdout = execFileSync("node", [OMC_BIN, ...args], {
+    const stdout = execFileSync("node", [OMR_BIN, ...args], {
       cwd,
       encoding: "utf-8",
       timeout: 10000,
-      env: { ...process.env, OMC_DISABLE_SCHEDULE_WORKER_AUTOSTART: "1", ...env },
+      env: { ...process.env, OMR_DISABLE_SCHEDULE_WORKER_AUTOSTART: "1", ...env },
     });
     return { stdout, stderr: "", exitCode: 0 };
   } catch (err: any) {
@@ -27,12 +27,12 @@ function run(args: string[], cwd?: string, env?: Record<string, string>): { stdo
 }
 
 function makeTmpProject(): string {
-  const dir = join(tmpdir(), `omc-cli-test-${randomUUID()}`);
+  const dir = join(tmpdir(), `omr-cli-test-${randomUUID()}`);
   mkdirSync(dir, { recursive: true });
   return dir;
 }
 
-describe("omc help", () => {
+describe("omr help", () => {
   it("prints usage info", () => {
     const { stdout, exitCode } = run(["help"]);
     assert.equal(exitCode, 0);
@@ -44,7 +44,7 @@ describe("omc help", () => {
   });
 });
 
-describe("omc version", () => {
+describe("omr version", () => {
   it("prints version number", () => {
     const { stdout, exitCode } = run(["version"]);
     assert.equal(exitCode, 0);
@@ -52,7 +52,7 @@ describe("omc version", () => {
   });
 });
 
-describe("omc (unknown command)", () => {
+describe("omr (unknown command)", () => {
   it("exits with code 1 and shows help", () => {
     const { stdout, stderr, exitCode } = run(["nonexistent"]);
     assert.equal(exitCode, 1);
@@ -61,12 +61,12 @@ describe("omc (unknown command)", () => {
   });
 });
 
-describe("omc setup --scope project", () => {
+describe("omr setup --scope project", () => {
   let tmp: string;
   beforeEach(() => { tmp = makeTmpProject(); });
   afterEach(() => { rmSync(tmp, { recursive: true, force: true }); });
 
-  it("installs rules, skills, MCP config, and .omc/ dirs", () => {
+  it("installs rules, skills, MCP config, and .omr/ dirs", () => {
     const { stdout, exitCode } = run(["setup", "--scope", "project"], tmp);
     assert.equal(exitCode, 0);
     assert.ok(stdout.includes("Setup complete"));
@@ -74,24 +74,24 @@ describe("omc setup --scope project", () => {
     // Rules installed
     const rulesDir = join(tmp, ".cursor", "rules");
     assert.ok(existsSync(rulesDir));
-    const rules = readdirSync(rulesDir).filter((f) => f.startsWith("omc-"));
+    const rules = readdirSync(rulesDir).filter((f) => f.startsWith("omr-"));
     assert.ok(rules.length >= 3, `Expected >= 3 rules, got ${rules.length}`);
 
     // Skills installed
     const skillsDir = join(tmp, ".cursor", "skills");
     assert.ok(existsSync(skillsDir));
-    const skills = readdirSync(skillsDir).filter((f) => f.startsWith("omc-"));
+    const skills = readdirSync(skillsDir).filter((f) => f.startsWith("omr-"));
     assert.ok(skills.length >= 10, `Expected >= 10 skills, got ${skills.length}`);
 
     // MCP config
     const mcpPath = join(tmp, ".cursor", "mcp.json");
     assert.ok(existsSync(mcpPath));
     const mcp = JSON.parse(readFileSync(mcpPath, "utf-8"));
-    assert.ok(mcp.mcpServers["omc-state"]);
-    assert.ok(mcp.mcpServers["omc-memory"]);
+    assert.ok(mcp.mcpServers["omr-state"]);
+    assert.ok(mcp.mcpServers["omr-memory"]);
 
     // Prompts installed
-    const promptsDir = join(tmp, ".omc", "prompts");
+    const promptsDir = join(tmp, ".omr", "prompts");
     assert.ok(existsSync(promptsDir), "Prompts directory should exist");
     const prompts = readdirSync(promptsDir).filter((f) => f.endsWith(".md"));
     assert.ok(prompts.length >= 20, `Expected >= 20 prompts, got ${prompts.length}`);
@@ -114,22 +114,22 @@ describe("omc setup --scope project", () => {
     assert.ok(executorContent.includes("<execution_loop>"), "executor.md should have <execution_loop> section");
     assert.ok(executorContent.includes("<output_contract>"), "executor.md should have <output_contract> section");
 
-    // .omc/ state dirs
-    assert.ok(existsSync(join(tmp, ".omc", "state")));
-    assert.ok(existsSync(join(tmp, ".omc", "plans")));
-    assert.ok(existsSync(join(tmp, ".omc", "logs")));
-    assert.ok(existsSync(join(tmp, ".omc", "notepad.md")));
-    assert.ok(existsSync(join(tmp, ".omc", "project-memory.json")));
-    assert.ok(existsSync(join(tmp, ".omc", "setup-scope.json")));
+    // .omr/ state dirs
+    assert.ok(existsSync(join(tmp, ".omr", "state")));
+    assert.ok(existsSync(join(tmp, ".omr", "plans")));
+    assert.ok(existsSync(join(tmp, ".omr", "logs")));
+    assert.ok(existsSync(join(tmp, ".omr", "notepad.md")));
+    assert.ok(existsSync(join(tmp, ".omr", "project-memory.json")));
+    assert.ok(existsSync(join(tmp, ".omr", "setup-scope.json")));
 
     // setup-scope.json content
-    const meta = JSON.parse(readFileSync(join(tmp, ".omc", "setup-scope.json"), "utf-8"));
+    const meta = JSON.parse(readFileSync(join(tmp, ".omr", "setup-scope.json"), "utf-8"));
     assert.equal(meta.scope, "project");
     assert.equal(meta.version, "0.1.0");
 
     // .gitignore updated
     const gitignore = readFileSync(join(tmp, ".gitignore"), "utf-8");
-    assert.ok(gitignore.includes(".omc/"));
+    assert.ok(gitignore.includes(".omr/"));
   });
 
   it("is idempotent (running twice works)", () => {
@@ -139,7 +139,7 @@ describe("omc setup --scope project", () => {
   });
 
   it("removes deprecated built-in skills from existing installs", () => {
-    const deprecatedNames = ["omc-plan", "omc-ralph", "omc-ralplan"];
+    const deprecatedNames = ["omr-plan", "omr-ralph", "omr-ralplan"];
     for (const name of deprecatedNames) {
       const deprecated = join(tmp, ".cursor", "skills", name);
       mkdirSync(deprecated, { recursive: true });
@@ -154,7 +154,7 @@ describe("omc setup --scope project", () => {
   });
 });
 
-describe("omc doctor --scope project", () => {
+describe("omr doctor --scope project", () => {
   let tmp: string;
   beforeEach(() => { tmp = makeTmpProject(); });
   afterEach(() => { rmSync(tmp, { recursive: true, force: true }); });
@@ -174,7 +174,7 @@ describe("omc doctor --scope project", () => {
   });
 });
 
-describe("omc status", () => {
+describe("omr status", () => {
   let tmp: string;
   beforeEach(() => { tmp = makeTmpProject(); });
   afterEach(() => { rmSync(tmp, { recursive: true, force: true }); });
@@ -193,17 +193,18 @@ describe("omc status", () => {
   });
 });
 
-describe("omc skills", () => {
+describe("omr skills", () => {
   it("lists installed skills from package dir", () => {
     const { stdout, exitCode } = run(["skills"]);
     assert.equal(exitCode, 0);
-    assert.ok(stdout.includes("OMC Skills"));
+    assert.ok(stdout.includes("OMR Skills"));
     assert.ok(stdout.includes("Core Path"));
     assert.ok(stdout.includes("Optional Extras"));
     const expected = [
-      "omc-analyze", "omc-autopilot", "omc-blueprint", "omc-cancel", "omc-code-review",
-      "omc-dashboard", "omc-deep-interview", "omc-ecomode", "omc-forge",
-      "omc-tdd", "omc-team", "omc-web-clone",
+      "omr-ai-slop-cleaner", "omr-analyze", "omr-ask", "omr-autopilot",
+      "omr-blueprint", "omr-cancel", "omr-code-review", "omr-dashboard",
+      "omr-deep-interview", "omr-ecomode", "omr-forge", "omr-git-master",
+      "omr-ralplan", "omr-tdd", "omr-team", "omr-web-clone", "omr-wiki",
     ];
     for (const name of expected) {
       assert.ok(stdout.includes(`/${name}`), `Missing skill: /${name}`);
@@ -212,7 +213,7 @@ describe("omc skills", () => {
   });
 });
 
-describe("omc team watch", () => {
+describe("omr team watch", () => {
   let tmp: string;
   beforeEach(() => { tmp = makeTmpProject(); });
   afterEach(() => { rmSync(tmp, { recursive: true, force: true }); });
@@ -224,7 +225,7 @@ describe("omc team watch", () => {
   });
 
   it("dumps existing blackboard messages with --no-follow", () => {
-    const stateDir = join(tmp, ".omc");
+    const stateDir = join(tmp, ".omr");
     mkdirSync(stateDir, { recursive: true });
     const bbPath = join(stateDir, "blackboard.jsonl");
     const rows = [
@@ -243,7 +244,7 @@ describe("omc team watch", () => {
   });
 
   it("dumps the full blackboard when no --run is given", () => {
-    const stateDir = join(tmp, ".omc");
+    const stateDir = join(tmp, ".omr");
     mkdirSync(stateDir, { recursive: true });
     const bbPath = join(stateDir, "blackboard.jsonl");
     writeFileSync(
@@ -268,7 +269,7 @@ describe("omc team watch", () => {
   });
 });
 
-describe("omc notify", () => {
+describe("omr notify", () => {
   let tmp: string;
   beforeEach(() => { tmp = makeTmpProject(); });
   afterEach(() => { rmSync(tmp, { recursive: true, force: true }); });
@@ -300,20 +301,20 @@ describe("omc notify", () => {
     const result = run(
       ["notify", "test-desktop", "hello from test"],
       tmp,
-      { OMC_DESKTOP_NOTIFY_COMMAND: "true" },
+      { OMR_DESKTOP_NOTIFY_COMMAND: "true" },
     );
     assert.equal(result.exitCode, 0);
     assert.ok(result.stdout.includes("Desktop notification sent."));
   });
 });
 
-describe("omc schedule", () => {
+describe("omr schedule", () => {
   let tmp: string;
   beforeEach(() => { tmp = makeTmpProject(); });
   afterEach(() => { rmSync(tmp, { recursive: true, force: true }); });
 
   it("lists schedule tasks", () => {
-    const stateDir = join(tmp, ".omc", "state");
+    const stateDir = join(tmp, ".omr", "state");
     mkdirSync(stateDir, { recursive: true });
     writeFileSync(join(stateDir, "schedule-state.json"), JSON.stringify({
       mode: "schedule",
@@ -347,7 +348,7 @@ describe("omc schedule", () => {
   });
 
   it("cancel, resume, and run-now update schedule state", () => {
-    const stateDir = join(tmp, ".omc", "state");
+    const stateDir = join(tmp, ".omr", "state");
     mkdirSync(stateDir, { recursive: true });
     writeFileSync(join(stateDir, "schedule-state.json"), JSON.stringify({
       mode: "schedule",
@@ -387,7 +388,7 @@ describe("omc schedule", () => {
   });
 
   it("registers a user-scope RSS task", () => {
-    const userRoot = join(tmp, "user-omc");
+    const userRoot = join(tmp, "user-omr");
     mkdirSync(join(userRoot, "state"), { recursive: true });
 
     const result = run([
@@ -397,7 +398,7 @@ describe("omc schedule", () => {
       "--url", "https://duanyytop.github.io/agents-radar/feed.xml",
       "--every", "15m",
       "--title", "Agents Radar RSS",
-    ], tmp, { OMC_USER_OMC_ROOT: userRoot });
+    ], tmp, { OMR_USER_DATA_ROOT: userRoot });
 
     assert.equal(result.exitCode, 0);
     assert.ok(result.stdout.includes("Registered RSS scheduled task"));
@@ -411,7 +412,7 @@ describe("omc schedule", () => {
   });
 });
 
-describe("omc setup --scope invalid", () => {
+describe("omr setup --scope invalid", () => {
   it("exits with error for invalid scope", () => {
     const { exitCode } = run(["setup", "--scope", "invalid"]);
     assert.equal(exitCode, 1);

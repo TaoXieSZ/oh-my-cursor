@@ -19,25 +19,30 @@ const SKILL_CATEGORY_ORDER: SkillCategory[] = [
 ];
 
 const CORE_PATH_SKILLS = new Set([
-  "omc-deep-interview",
-  "omc-blueprint",
-  "omc-forge",
-  "omc-cancel",
+  "omr-deep-interview",
+  "omr-blueprint",
+  "omr-ralplan",
+  "omr-forge",
+  "omr-cancel",
 ]);
 
 const SUPPORTING_SKILLS = new Set([
-  "omc-analyze",
-  "omc-code-review",
-  "omc-ecomode",
+  "omr-analyze",
+  "omr-code-review",
+  "omr-ai-slop-cleaner",
+  "omr-ask",
+  "omr-ecomode",
 ]);
 
 const OPTIONAL_SKILLS = new Set([
-  "omc-autopilot",
-  "omc-dashboard",
-  "omc-schedule",
-  "omc-tdd",
-  "omc-team",
-  "omc-web-clone",
+  "omr-autopilot",
+  "omr-dashboard",
+  "omr-git-master",
+  "omr-schedule",
+  "omr-tdd",
+  "omr-team",
+  "omr-web-clone",
+  "omr-wiki",
 ]);
 
 function parseSkillFrontmatter(skillDir: string): SkillMeta | null {
@@ -59,7 +64,7 @@ function parseSkillFrontmatter(skillDir: string): SkillMeta | null {
 function scanSkillDirs(baseDir: string): SkillMeta[] {
   if (!existsSync(baseDir)) return [];
   return readdirSync(baseDir, { withFileTypes: true })
-    .filter((d) => d.isDirectory() && d.name.startsWith("omc-"))
+    .filter((d) => d.isDirectory() && d.name.startsWith("omr-"))
     .map((d) => parseSkillFrontmatter(join(baseDir, d.name)))
     .filter((s): s is SkillMeta => s !== null);
 }
@@ -72,7 +77,7 @@ function categorizeSkill(name: string): SkillCategory {
 }
 
 export async function skills(): Promise<void> {
-  heading("OMC Skills");
+  heading("OMR Skills");
 
   const seen = new Set<string>();
   const all: SkillMeta[] = [];
@@ -96,7 +101,7 @@ export async function skills(): Promise<void> {
   }
 
   if (all.length === 0) {
-    warn("No OMC skills found. Run 'omr setup' first.");
+    warn("No OMR skills found. Run 'omr setup' first.");
     return;
   }
 
@@ -115,6 +120,6 @@ export async function skills(): Promise<void> {
     console.log();
   }
 
-  dim("Start with the core path: /omc-deep-interview -> /omc-blueprint -> /omc-forge.");
-  dim(`${all.length} skills available. Use /omc-name (primary), /name (legacy), or $name in Cursor chat.`);
+  dim("Start with the core path: /omr-deep-interview -> /omr-blueprint -> /omr-forge.");
+  dim(`${all.length} skills available. Use /omr-name (primary), /name (legacy), or $name in Cursor chat.`);
 }

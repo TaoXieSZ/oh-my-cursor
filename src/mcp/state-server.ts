@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 /**
- * MCP server for OMC state management.
- * Provides tools to read/write .omc/ state, plans, and logs.
+ * MCP server for OMR state management.
+ * Provides tools to read/write .omr/ state, plans, and logs.
  */
 
 import { randomUUID } from "node:crypto";
@@ -30,7 +30,7 @@ import type { BlackboardMessage } from "../state/blackboard.js";
 import { inspectHarnessReadiness } from "../state/harness.js";
 
 const server = new Server(
-  { name: "omc-state", version: "0.2.0" },
+  { name: "omr-state", version: "0.2.0" },
   { capabilities: { tools: {} } }
 );
 
@@ -38,7 +38,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
   tools: [
     {
       name: "state_read",
-      description: "Read a mode state file from .omc/state/. Without runId, returns the latest active run for that mode.",
+      description: "Read a mode state file from .omr/state/. Without runId, returns the latest active run for that mode.",
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -50,7 +50,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: "state_write",
-      description: "Write a mode state file to .omc/state/. Auto-generates runId for new runs. Without runId, updates the existing active run or creates a new one.",
+      description: "Write a mode state file to .omr/state/. Auto-generates runId for new runs. Without runId, updates the existing active run or creates a new one.",
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -62,12 +62,12 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: "state_list",
-      description: "List all mode state files in .omc/state/ with summary info (mode, runId, status).",
+      description: "List all mode state files in .omr/state/ with summary info (mode, runId, status).",
       inputSchema: { type: "object" as const, properties: {} },
     },
     {
       name: "plan_read",
-      description: "Read a plan file from .omc/plans/",
+      description: "Read a plan file from .omr/plans/",
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -78,7 +78,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: "plan_write",
-      description: "Write a plan file to .omc/plans/",
+      description: "Write a plan file to .omr/plans/",
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -90,17 +90,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: "plan_list",
-      description: "List all plan files in .omc/plans/",
+      description: "List all plan files in .omr/plans/",
       inputSchema: { type: "object" as const, properties: {} },
     },
     {
       name: "notepad_read",
-      description: "Read the notepad from .omc/notepad.md",
+      description: "Read the notepad from .omr/notepad.md",
       inputSchema: { type: "object" as const, properties: {} },
     },
     {
       name: "notepad_append",
-      description: "Append text to .omc/notepad.md",
+      description: "Append text to .omr/notepad.md",
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -111,7 +111,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: "event_append",
-      description: "Append a custom event to a run's event log (.omc/logs/{runId}.jsonl)",
+      description: "Append a custom event to a run's event log (.omr/logs/{runId}.jsonl)",
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -137,7 +137,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: "harness_readiness",
-      description: "Summarize OMC harness readiness for schedule-state contracts and generic workflow setup.",
+      description: "Summarize OMR harness readiness for schedule-state contracts and generic workflow setup.",
       inputSchema: { type: "object" as const, properties: {} },
     },
     {
@@ -191,7 +191,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: "team_transcript_write",
-      description: "Write a per-run team transcript to `.omc/state/team/<runId>-transcript.md` from the current blackboard contents. If `runId` is omitted, the full blackboard is captured. Returns the absolute path of the written file so the leader can cite it in the final summary.",
+      description: "Write a per-run team transcript to `.omr/state/team/<runId>-transcript.md` from the current blackboard contents. If `runId` is omitted, the full blackboard is captured. Returns the absolute path of the written file so the leader can cite it in the final summary.",
       inputSchema: {
         type: "object" as const,
         properties: {
@@ -294,7 +294,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const text = (args as { text: string }).text;
       const path = getNotepadPath();
       ensureDir(dirname(path));
-      const existing = existsSync(path) ? readFileSync(path, "utf-8") : "# OMC Notepad\n";
+      const existing = existsSync(path) ? readFileSync(path, "utf-8") : "# OMR Notepad\n";
       writeFileSync(path, existing.trimEnd() + "\n\n" + text + "\n");
       return { content: [{ type: "text", text: "Appended to notepad" }] };
     }

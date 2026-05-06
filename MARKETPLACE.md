@@ -11,10 +11,10 @@ The `.cursor-plugin/plugin.json` manifest exists. The plugin components are stru
 | Component | Path | Count | Notes |
 |-----------|------|-------|-------|
 | Rules | `rules/*.mdc` | 4 | Orchestration, workflow, state, interactive options |
-| Skills | `skills/omc-*/SKILL.md` | 12 | Core workflow + supporting skills |
+| Skills | `skills/omr-*/SKILL.md` | 12 | Core workflow + supporting skills |
 | Prompts | `prompts/*.md` | 20 | Role prompts with mode/complexity metadata |
 | Hooks | `hooks/*.mjs` | 2 | Session start/end lifecycle automation |
-| MCP Servers | `src/mcp/` | 2 | omc-state (14 tools), omc-memory (5 tools) |
+| MCP Servers | `src/mcp/` | 2 | omr-state (14 tools), omr-memory (5 tools) |
 
 ## Pre-submission checklist
 
@@ -35,10 +35,10 @@ The marketplace install should replicate what `omr setup` does:
 
 1. Rules → copied to user or project `.cursor/rules/`
 2. Skills → copied to `.cursor/skills/`
-3. Prompts → copied to `~/.cursor/omr-prompts/` or `.omc/prompts/`
-4. Hooks → copied to `~/.cursor/hooks/omc/`, registered in `hooks.json`
+3. Prompts → copied to `~/.cursor/omr-prompts/` or `.omr/prompts/`
+4. Hooks → copied to `~/.cursor/hooks/omr/`, registered in `hooks.json`
 5. MCP → registered in `mcp.json` with correct server paths
-6. State dirs → `.omc/` created in project root
+6. State dirs → `.omr/` created in project root
 
 The `omr` CLI remains available as an optional companion tool for:
 - `omr dashboard` — live web dashboard

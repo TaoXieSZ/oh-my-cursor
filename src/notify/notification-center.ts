@@ -1,4 +1,4 @@
-import type { OmcStateScope } from "../state/paths.js";
+import type { OmrStateScope } from "../state/paths.js";
 import { sendDesktopNotification } from "./desktop-notify.js";
 import {
   appendNotification,
@@ -9,7 +9,7 @@ import {
 
 export interface EmitNotificationInput extends CreateNotificationInput {
   title?: string;
-  scope?: OmcStateScope;
+  scope?: OmrStateScope;
 }
 
 export function emitNotification(input: EmitNotificationInput): NotificationEvent {
@@ -34,6 +34,6 @@ export function emitNotification(input: EmitNotificationInput): NotificationEven
 }
 
 function defaultNotificationTitle(source: string): string {
-  if (source === "schedule") return "OMC Schedule";
-  return `OMC ${source.charAt(0).toUpperCase()}${source.slice(1)}`;
+  if (source === "schedule") return "OMR Schedule";
+  return `OMR ${source.charAt(0).toUpperCase()}${source.slice(1)}`;
 }
