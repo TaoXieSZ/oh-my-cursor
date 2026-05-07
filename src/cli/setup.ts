@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   cursorRulesDir,
@@ -45,6 +45,7 @@ export async function setup(options: SetupOptions): Promise<void> {
   }
 
   const steps = [
+    { name: "Migrate legacy .omc/", fn: () => migrateLegacyProjectStateDir(options) },
     { name: "Install rules", fn: () => installRules(options) },
     { name: "Install skills", fn: () => installSkills(options) },
     { name: "Install prompts", fn: () => installPrompts(options) },
@@ -217,6 +218,52 @@ function installHooks(options: SetupOptions): void {
 
   ok(`Installed ${count} hook files → ${destDir}`);
   ok(`Registered hooks → ${hooksConfigPath}`);
+}
+
+function migrateLegacyProjectStateDir(options: SetupOptions): void {
+  if (options.scope !== "project") {
+    dim("Skipping legacy .omc/ check (user scope)");
+    return;
+  }
+
+  const cwd = process.cwd();
+  const oldDir = join(cwd, ".omc");
+  const newDir = join(cwd, ".omr");
+
+  if (!existsSync(oldDir)) {
+    return;
+  }
+
+  const looksLikeLegacyOmr =
+    existsSync(join(oldDir, "setup-scope.json")) ||
+    existsSync(join(oldDir, "omc-config.json")) ||
+    existsSync(join(oldDir, "state")) ||
+    existsSync(join(oldDir, "plans")) ||
+    existsSync(join(oldDir, "logs"));
+
+  if (!looksLikeLegacyOmr) {
+    warn(`Found .omc/ but it doesn't look like an OMR legacy state dir — leaving it untouched`);
+    return;
+  }
+
+  if (existsSync(newDir)) {
+    const backupDir = join(cwd, ".omc.bak");
+    if (existsSync(backupDir)) {
+      warn(`Both .omr/ and .omc.bak/ already exist — leaving .omc/ alone for manual review`);
+      return;
+    }
+    renameSync(oldDir, backupDir);
+    ok(`Backed up legacy .omc/ → .omc.bak/ (.omr/ already exists; merge manually if needed)`);
+    return;
+  }
+
+  renameSync(oldDir, newDir);
+  const oldConfig = join(newDir, "omc-config.json");
+  const newConfig = join(newDir, "omr-config.json");
+  if (existsSync(oldConfig) && !existsSync(newConfig)) {
+    renameSync(oldConfig, newConfig);
+  }
+  ok(`Migrated legacy .omc/ → .omr/ (data preserved, including config rename)`);
 }
 
 function createStateDirs(options: SetupOptions): void {

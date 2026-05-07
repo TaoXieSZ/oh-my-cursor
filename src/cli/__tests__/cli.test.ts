@@ -152,6 +152,60 @@ describe("omr setup --scope project", () => {
       assert.ok(!existsSync(join(tmp, ".cursor", "skills", name)), `${name} should be removed by setup`);
     }
   });
+
+  it("migrates legacy .omc/ to .omr/ when .omr/ does not exist", () => {
+    const oldDir = join(tmp, ".omc");
+    mkdirSync(join(oldDir, "state"), { recursive: true });
+    mkdirSync(join(oldDir, "plans"), { recursive: true });
+    writeFileSync(join(oldDir, "state", "forge-state.json"), '{"mode":"forge"}\n');
+    writeFileSync(join(oldDir, "omc-config.json"), '{"notifications":{}}\n');
+
+    const { stdout, exitCode } = run(["setup", "--scope", "project"], tmp);
+    assert.equal(exitCode, 0);
+    assert.ok(stdout.includes("Migrated legacy .omc/"));
+    assert.ok(!existsSync(join(tmp, ".omc")), ".omc/ should be gone after migration");
+    assert.ok(existsSync(join(tmp, ".omr", "state", "forge-state.json")), "state file should be preserved");
+    assert.ok(existsSync(join(tmp, ".omr", "omr-config.json")), "config should be renamed");
+    assert.ok(!existsSync(join(tmp, ".omr", "omc-config.json")), "old config name should be gone");
+  });
+
+  it("backs up legacy .omc/ to .omc.bak/ when .omr/ already exists", () => {
+    mkdirSync(join(tmp, ".omr", "state"), { recursive: true });
+    writeFileSync(join(tmp, ".omr", "state", "session.json"), '{"id":"new"}\n');
+    const oldDir = join(tmp, ".omc");
+    mkdirSync(join(oldDir, "state"), { recursive: true });
+    writeFileSync(join(oldDir, "state", "forge-state.json"), '{"mode":"forge"}\n');
+
+    const { stdout, exitCode } = run(["setup", "--scope", "project"], tmp);
+    assert.equal(exitCode, 0);
+    assert.ok(stdout.includes("Backed up legacy .omc/ → .omc.bak/"));
+    assert.ok(!existsSync(join(tmp, ".omc")), ".omc/ should be moved");
+    assert.ok(existsSync(join(tmp, ".omc.bak", "state", "forge-state.json")), "backup should preserve data");
+    assert.ok(existsSync(join(tmp, ".omr", "state", "session.json")), ".omr/ should be untouched");
+  });
+
+  it("leaves .omc/ alone when both .omr/ and .omc.bak/ already exist", () => {
+    mkdirSync(join(tmp, ".omr"), { recursive: true });
+    mkdirSync(join(tmp, ".omc.bak"), { recursive: true });
+    const oldDir = join(tmp, ".omc");
+    mkdirSync(join(oldDir, "state"), { recursive: true });
+
+    const { stdout, exitCode } = run(["setup", "--scope", "project"], tmp);
+    assert.equal(exitCode, 0);
+    assert.ok(stdout.includes("Both .omr/ and .omc.bak/ already exist"));
+    assert.ok(existsSync(join(tmp, ".omc", "state")), ".omc/ should be preserved");
+  });
+
+  it("ignores .omc/ that doesn't look like an OMR legacy state dir", () => {
+    const unrelatedDir = join(tmp, ".omc");
+    mkdirSync(unrelatedDir, { recursive: true });
+    writeFileSync(join(unrelatedDir, "random-user-file.txt"), "user data\n");
+
+    const { stdout, exitCode } = run(["setup", "--scope", "project"], tmp);
+    assert.equal(exitCode, 0);
+    assert.ok(stdout.includes("doesn't look like an OMR legacy state dir"));
+    assert.ok(existsSync(join(tmp, ".omc", "random-user-file.txt")), "unrelated .omc/ should be untouched");
+  });
 });
 
 describe("omr doctor --scope project", () => {

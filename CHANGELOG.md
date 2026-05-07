@@ -6,6 +6,26 @@ the project tracks [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added — `omr setup` migrates legacy `.omc/` project state automatically
+
+Running `omr setup --scope project` in a directory left over from a pre-rename
+oh-my-cursor install now detects the legacy `.omc/` state directory and
+performs the right action up-front (before installing rules / skills / hooks):
+
+- `.omc/` exists, `.omr/` doesn't → `mv .omc/ .omr/` (data preserved). Renames
+  the embedded `omc-config.json` to `omr-config.json` so the config file
+  matches the new layout.
+- `.omc/` exists, `.omr/` exists too → `mv .omc/ .omc.bak/` so the new install
+  is not overwritten and the user can merge manually.
+- `.omc/` exists but `.omc.bak/` already exists → leave `.omc/` alone with a
+  warning, so a second setup run never clobbers the first backup.
+- `.omc/` exists but doesn't look like an OMR state dir (no
+  `setup-scope.json`, no `omc-config.json`, no `state/`/`plans/`/`logs/`)
+  → leave it untouched with a warning. Avoids touching unrelated user data.
+
+Skipped entirely under `--scope user`. Full coverage in `cli.test.ts` (4 new
+test cases for the four branches above).
+
 ### Added — Five new skills ported from oh-my-codex 0.16.0
 
 OMR ports five high-value skills from upstream oh-my-codex, adapted to
